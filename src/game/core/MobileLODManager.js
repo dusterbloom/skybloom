@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { deviceCapabilities } from "./utils/DeviceCapabilities";
+import { System } from "./System";
 
 /**
  * MobileLODManager
@@ -8,9 +9,9 @@ import { deviceCapabilities } from "./utils/DeviceCapabilities";
  * This centralized approach ensures consistent LOD policies across all systems
  * and provides dynamic adjustment based on performance metrics.
  */
-export class MobileLODManager {
+export class MobileLODManager extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'mobileLOD');
     this.isMobile = deviceCapabilities.isMobile;
     
     // Base LOD distances that will be scaled based on device performance
@@ -32,7 +33,7 @@ export class MobileLODManager {
       }
     };
 
-      // Increase minimum scaling factor for water
+    // Increase minimum scaling factor for water
   this.minWaterScalingFactor = 0.7; // New property for water-specific scaling
 
     
@@ -50,6 +51,7 @@ export class MobileLODManager {
     this.adjustmentInterval = 5000; // Check every 5 seconds
     this.targetFPS = 60; // Target framerate for mobile
 
+ 
 
     // Quality level state variables for hysteresis
     this.qualityLevel = this.isMobile ? 1 : 2; // 0=Low, 1=Medium, 2=High
@@ -96,8 +98,7 @@ export class MobileLODManager {
     this.benchmarkFpsSamples = [];
     
     // Reference to current LOD settings (to avoid frequent recalculations)
-    this.cachedLODDistances = null;
-    this.updateLODSettings();
+    // this.cachedLODDistances = null; // Don't call updateLODSettings in constructor
     // Add frame timing tracking
     this.frameTimings = new Array(60).fill(16.67); // Target 60fps
     this.frameIndex = 0;
@@ -109,33 +110,33 @@ export class MobileLODManager {
       high: { fps: 120, triangles: 150000 }
     };
   }
-  
   /**
    * Initialize the manager
    */
-  async initialize() {
-    console.log("Initializing MobileLODManager...");
-    
-    // Detect device capabilities beyond just mobile/desktop classification
-    this.detectDeviceCapabilities();
-    
-    // Apply initial optimizations based on device type
-    this.applyInitialOptimizations();
-    
-    // Run a short initial benchmark if mobile
-    if (this.isMobile) {
-      console.log("Starting initial FPS benchmark for better LOD calibration...");
-      this.benchmarkStartTime = Date.now();
-    }
-    
-    console.log("MobileLODManager initialized");
-    return true;
+  async _initialize() {
+      console.log("Initializing MobileLODManager...");
+      
+      // Detect device capabilities beyond just mobile/desktop classification
+      this.detectDeviceCapabilities();
+      
+      // Apply initial optimizations based on device type
+      this.applyInitialOptimizations();
+      
+      this.updateLODSettings();
+      
+      // Run a short initial benchmark if mobile
+      if (this.isMobile) {
+        console.log("Starting initial FPS benchmark for better LOD calibration...");
+        this.benchmarkStartTime = Date.now();
+      }
+      
+      console.log("MobileLODManager initialized");
   }
   
   /**
    * Update method called every frame
    */
-  update(deltaTime) {
+  _update(deltaTime) {
     // Skip if not on mobile
     if (!this.isMobile) return;
     
