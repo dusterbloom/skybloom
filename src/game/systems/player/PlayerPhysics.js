@@ -1,9 +1,9 @@
 import * as THREE from "three";
+import { System } from "../../core/System.js";
 
-export class PlayerPhysics {
-  constructor(playerSystem) {
-    this.playerSystem = playerSystem;
-    this.engine = playerSystem.engine;
+export class PlayerPhysics extends System {
+  constructor(engine) {
+    super(engine, 'playerPhysics');
 
     // Physics constants (unchanged)
     this.gravity = 5.8;
@@ -23,6 +23,17 @@ export class PlayerPhysics {
     this._skipThreshold = 0.0005; // Skip physics updates below this delta
     this._lastSignificantUpdate = 0; // Time tracking for forced updates
     this._forceUpdateInterval = 0.1; // Force update every 100ms regardless of delta
+  }
+
+  async _initialize() {
+    this.playerSystem = this.engine.systems.get('playerState');
+    if (!this.playerSystem) {
+      throw new Error('PlayerPhysics requires playerState system');
+    }
+  }
+
+  _update(delta, elapsed) {
+    this.updatePhysics(delta);
   }
 
   updatePhysics(delta) {
@@ -90,7 +101,12 @@ export class PlayerPhysics {
     }
 
     // Enforce minimum altitude (above terrain)
-    const terrainHeight = this.engine.systems.world.getTerrainHeight(
+    const worldSystem = this.engine.systemManager.get('world');
+    if (!worldSystem) {
+      console.warn('PlayerPhysics: world system not available');
+      return;
+    }
+    const terrainHeight = worldSystem.getTerrainHeight(
       player.position.x,
       player.position.z
     );
