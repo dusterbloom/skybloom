@@ -6,27 +6,81 @@ export class PlayerSpells {
     this.engine = playerSystem.engine;
     this.scene = playerSystem.scene;
     
-    // Spell casting
-    this.spellCooldown = 0;
-    this.spellTypes = [
-      { name: 'Fireball', color: 0xff3300, damage: 20, speed: 100, cooldown: 0.5 },
-      { name: 'Lightning', color: 0x33ccff, damage: 15, speed: 150, cooldown: 0.3 },
-      { name: 'Shield', color: 0xffcc00, damage: 0, speed: 0, cooldown: 2 }
-    ];
-    this.activeSpells = [];
+    // Spell system
+    this.spells = [];
+    this.cooldowns = {}; // per spell name
+    this.activeEffects = []; // {spell, startTime, duration}
+    this.unlockedSpells = new Set(); // indices of unlocked spells
+    this.particlesTexture = null;
+    this.particlesGeometry = null;
+    this.maxParticles = 50;
   }
   
   async initialize() {
-    // Load spell assets or setup spell effects
-    // In a real implementation, you might load particle textures, sound effects, etc.
-    console.log("Spell system initialized");
+    // Load particles texture
+    const loader = new THREE.TextureLoader();
+    this.particlesTexture = loader.load('/assets/textures/particles.png');
+    
+    // Precompute particles geometry
+    this.particlesGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(this.maxParticles * 3);
+    for (let i = 0; i < this.maxParticles; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 10;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    }
+    this.particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    // Load spells from JSON
+    try {
+      const response = await fetch('/assets/spells.json');
+      this.spells = await response.json();
+      console.log('Spells loaded:', this.spells);
+      
+      // Initialize cooldowns
+      this.spells.forEach(spell => {
+        this.cooldowns[spell.name] = 0;
+      });
+    } catch (error) {
+      console.error('Failed to load spells:', error);
+      // Fallback to empty
+    }
+    
+    // Load audio
+    this.spellSound = new Audio('/assets/audio/spell.mp3');
+  }
+  
+  checkUnlock(spell, player) {
+    const condition = spell.unlockCondition;
+    if (!condition) return true;
+    
+    switch (condition.type) {
+      case 'mana':
+        return player.totalMana >= condition.value;
+      case 'landmarks':
+        return (player.landmarksVisited || 0) >= condition.value;
+      default:
+        return false;
+    }
   }
   
   selectSpell(index) {
     const player = this.playerSystem.localPlayer;
     if (!player) return;
     
-    if (index >= 0 && index < this.spellTypes.length) {
+    if (index >= 0 && index < this.spells.length) {
+      const spell = this.spells[index];
+      if (!this.unlockedSpells.has(index) && !this.checkUnlock(spell, player)) {
+        if (this.engine.systems.ui) {
+          this.engine.systems.ui.showMessage(`Spell "${spell.name}" not unlocked yet.`);
+        }
+        return;
+      }
+      // Unlock if condition met but not yet unlocked
+      if (!this.unlockedSpells.has(index) && this.checkUnlock(spell, player)) {
+        this.unlockedSpells.add(index);
+      }
+      
       player.currentSpell = index;
       
       // Update UI
@@ -38,310 +92,190 @@ export class PlayerSpells {
   
   castSpell() {
     const player = this.playerSystem.localPlayer;
-    if (!player || this.spellCooldown > 0) return;
+    if (!player) return;
     
-    const spellType = this.spellTypes[player.currentSpell];
+    const index = player.currentSpell;
+    if (index < 0 || index >= this.spells.length) return;
     
-    // Set cooldown
-    this.spellCooldown = spellType.cooldown;
+    const spell = this.spells[index];
+    const cooldown = this.cooldowns[spell.name];
     
-    // Handle shield spell separately
-    if (spellType.name === 'Shield') {
-      this.createShieldEffect();
+    if (cooldown > 0) {
+      if (this.engine.systems.ui) {
+        this.engine.systems.ui.showMessage(`Spell on cooldown: ${Math.ceil(cooldown)}s`);
+      }
       return;
     }
     
-    // Create spell projectile
-    const geometry = new THREE.SphereGeometry(0.5, 8, 8);
-    const material = new THREE.MeshBasicMaterial({
-      color: spellType.color,
-      transparent: true,
-      opacity: 0.8
-    });
-    
-    const spell = new THREE.Mesh(geometry, material);
-    
-    // Position in front of player
-    const spellOffset = new THREE.Vector3(0, 0, 2).applyEuler(player.rotation);
-    spell.position.copy(player.position).add(spellOffset);
-    
-    // Calculate direction from camera
-    const direction = new THREE.Vector3(0, 0, 1).applyEuler(player.rotation);
-    
-    spell.userData = {
-      type: spellType.name,
-      damage: spellType.damage,
-      velocity: direction.multiplyScalar(spellType.speed),
-      life: 3.0, // 3 seconds lifetime
-      owner: player.id
-    };
-    
-    // Add to scene and active spells
-    this.scene.add(spell);
-    this.activeSpells.push(spell);
-    
-    // Play sound effect
-    // this.playSound('spell');
-    
-    // Create muzzle flash effect
-    this.createMuzzleFlash(spell.position.clone(), spellType.color);
-  }
-  
-  createShieldEffect() {
-    const player = this.playerSystem.localPlayer;
-    if (!player) return;
-    
-    // Create shield geometry
-    const geometry = new THREE.SphereGeometry(5, 16, 16);
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xffcc00,
-      transparent: true,
-      opacity: 0.3,
-      side: THREE.DoubleSide
-    });
-    
-    const shield = new THREE.Mesh(geometry, material);
-    
-    // Add to player
-    player.model.add(shield);
-    
-    // Add shield data
-    player.shield = {
-      mesh: shield,
-      duration: 3.0 // 3 seconds
-    };
-  }
-  
-  createMuzzleFlash(position, color) {
-    // Create particle effect for spell casting
-    const particleCount = 15;
-    const particles = new THREE.Group();
-    
-    for (let i = 0; i < particleCount; i++) {
-      const particle = new THREE.Mesh(
-        new THREE.SphereGeometry(0.2, 8, 8),
-        new THREE.MeshBasicMaterial({
-          color: color,
-          transparent: true,
-          opacity: 0.8
-        })
-      );
-      
-      // Random position within sphere
-      const radius = 0.5;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI;
-      
-      particle.position.set(
-        position.x + radius * Math.sin(phi) * Math.cos(theta),
-        position.y + radius * Math.sin(phi) * Math.sin(theta),
-        position.z + radius * Math.cos(phi)
-      );
-      
-      // Random velocity
-      particle.userData = {
-        velocity: new THREE.Vector3(
-          (Math.random() - 0.5) * 5,
-          (Math.random() - 0.5) * 5,
-          (Math.random() - 0.5) * 5
-        ),
-        life: 0.5 // Shorter life
-      };
-      
-      particles.add(particle);
+    if (player.mana < spell.manaCost) {
+      if (this.engine.systems.ui) {
+        this.engine.systems.ui.showMessage('Insufficient mana');
+      }
+      return;
     }
     
-    this.scene.add(particles);
-    
-    // Animate particles
-    const animateParticles = (delta) => {
-      let allDead = true;
-      
-      for (let i = 0; i < particles.children.length; i++) {
-        const particle = particles.children[i];
-        
-        // Update position
-        particle.position.add(particle.userData.velocity.clone().multiplyScalar(delta));
-        
-        // Update life
-        particle.userData.life -= delta * 2;
-        
-        // Update scale and opacity
-        const life = particle.userData.life;
-        particle.scale.set(life, life, life);
-        particle.material.opacity = life;
-        
-        if (life > 0) {
-          allDead = false;
-        }
-      }
-      
-      // Remove particles if all are dead
-      if (allDead) {
-        this.scene.remove(particles);
-        return;
-      }
-      
-      // Continue animation
-      requestAnimationFrame(() => animateParticles(0.016));
-    };
-    
-    // Start animation
-    animateParticles(0.016);
-  }
-  
-  createImpactEffect(position, color) {
-    // Create particle effect for spell impact
-    const particleCount = 20;
-    const particles = new THREE.Group();
-    
-    for (let i = 0; i < particleCount; i++) {
-      const particle = new THREE.Mesh(
-        new THREE.SphereGeometry(0.2, 8, 8),
-        new THREE.MeshBasicMaterial({
-          color: color.getHex(),
-          transparent: true,
-          opacity: 0.8
-        })
-      );
-      
-      particle.position.copy(position);
-      
-      // Random velocity - explode outward
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.random() * Math.PI;
-      const speed = 5 + Math.random() * 5;
-      
-      particle.userData = {
-        velocity: new THREE.Vector3(
-          Math.sin(phi) * Math.cos(theta),
-          Math.sin(phi) * Math.sin(theta),
-          Math.cos(phi)
-        ).multiplyScalar(speed),
-        life: 1.0
-      };
-      
-      particles.add(particle);
+    // Deduct mana
+    player.mana -= spell.manaCost;
+    if (this.engine.systems.ui) {
+      this.engine.systems.ui.updateManaDisplay(player.mana);
     }
     
-    this.scene.add(particles);
+    // Set cooldown in seconds
+    this.cooldowns[spell.name] = spell.cooldown;
     
-    // Animate particles
-    const animateParticles = (delta) => {
-      let allDead = true;
-      
-      for (let i = 0; i < particles.children.length; i++) {
-        const particle = particles.children[i];
-        
-        // Update position
-        particle.position.add(particle.userData.velocity.clone().multiplyScalar(delta));
-        
-        // Update life
-        particle.userData.life -= delta * 1.5;
-        
-        // Update scale and opacity
-        const life = particle.userData.life;
-        particle.scale.set(life, life, life);
-        particle.material.opacity = life;
-        
-        if (life > 0) {
-          allDead = false;
-        }
-      }
-      
-      // Remove particles if all are dead
-      if (allDead) {
-        this.scene.remove(particles);
-        return;
-      }
-      
-      // Continue animation
-      requestAnimationFrame(() => animateParticles(0.016));
+    // Apply effect
+    this.applyEffect(spell, player);
+    
+    // VFX
+    this.createVFX(spell, player.position);
+    
+    // Play sound
+    this.spellSound.play().catch(e => console.log('Audio play failed:', e));
+  }
+  
+  applyEffect(spell, player) {
+    const effect = spell.effect;
+    let effectData = {
+      spell: spell.name,
+      startTime: this.engine.elapsed,
+      duration: effect.duration
     };
     
-    // Start animation
-    animateParticles(0.016);
+    switch (effect.type) {
+      case 'speed_boost':
+        player.speedMultiplier = (player.speedMultiplier || 1) * effect.value;
+        effectData.reset = () => { player.speedMultiplier = player.speedMultiplier / effect.value || 1; };
+        break;
+      case 'invulnerability':
+        player.invulnerable = true;
+        effectData.reset = () => { player.invulnerable = false; };
+        break;
+      case 'scan':
+        // Query world for mana/landmarks in radius
+        if (this.engine.systems.world) {
+          const nodes = this.engine.systems.world.getManaNodesInRadius(player.position, effect.value.radius);
+          // Highlight on minimap or UI
+          if (this.engine.systems.ui) {
+            this.engine.systems.ui.highlightNodes(nodes);
+          }
+          if (this.engine.systems.minimap) {
+            this.engine.systems.minimap.markNodes(nodes);
+          }
+        }
+        // No duration, immediate
+        return;
+      case 'mana_multiplier':
+        player.manaMultiplier = (player.manaMultiplier || 1) * effect.value;
+        effectData.reset = () => { player.manaMultiplier = player.manaMultiplier / effect.value || 1; };
+        break;
+      default:
+        console.warn('Unknown effect type:', effect.type);
+        return;
+    }
+    
+    this.activeEffects.push(effectData);
+  }
+  
+  createVFX(spell, position) {
+    const vfx = spell.vfx;
+    const color = new THREE.Color(vfx.color); // Assume color name to hex mapping or use 0x for simplicity
+    
+    let emitter;
+    if (vfx.type === 'aura' || vfx.type === 'shield') {
+      // Attach to player
+      const player = this.playerSystem.localPlayer;
+      emitter = this.createParticleEmitter(color, true);
+      player.model.add(emitter);
+    } else if (vfx.type === 'scan') {
+      // World space
+      emitter = this.createParticleEmitter(color, false);
+      emitter.position.copy(position);
+      this.scene.add(emitter);
+    }
+    
+    // Animate and remove after duration
+    const duration = spell.effect.duration || 5;
+    const startTime = this.engine.elapsed;
+    const animate = () => {
+      const elapsed = this.engine.elapsed - startTime;
+      if (elapsed > duration) {
+        if (emitter.parent === player.model) {
+          player.model.remove(emitter);
+        } else {
+          this.scene.remove(emitter);
+        }
+        return;
+      }
+      emitter.material.opacity = 1 - (elapsed / duration);
+      requestAnimationFrame(animate);
+    };
+    animate();
+  }
+  
+  createParticleEmitter(color, attach = false) {
+    const material = new THREE.PointsMaterial({
+      map: this.particlesTexture,
+      color: color,
+      transparent: true,
+      opacity: 1,
+      size: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+    
+    const points = new THREE.Points(this.particlesGeometry, material);
+    if (attach) {
+      points.position.set(0, 0, 0);
+    }
+    
+    return points;
   }
   
   updateSpells(delta) {
-    // Update spell cooldown
-    if (this.spellCooldown > 0) {
-      this.spellCooldown -= delta;
-    }
+    const elapsed = this.engine.elapsed;
     
-    // Update shield duration
-    this.updateShield(delta);
-    
-    // Update active spell projectiles
-    for (let i = this.activeSpells.length - 1; i >= 0; i--) {
-      const spell = this.activeSpells[i];
-      
-      // Update position
-      spell.position.add(spell.userData.velocity.clone().multiplyScalar(delta));
-      
-      // Update life
-      spell.userData.life -= delta;
-      
-      // Check collision with terrain
-      const terrainY = this.engine.systems.world.getTerrainHeight(
-        spell.position.x,
-        spell.position.z
-      );
-      console.log("Checking terrain collision at:", spell.position, "Terrain Y:", terrainY);
-      
-      if (spell.position.y < terrainY || spell.userData.life <= 0) {
-        // Remove spell
-        this.scene.remove(spell);
-        this.activeSpells.splice(i, 1);
-        
-        // Create impact effect if hit terrain
-        if (spell.position.y < terrainY) {
-          this.createImpactEffect(spell.position.clone(), spell.material.color);
-        }
-        continue;
+    // Update cooldowns
+    Object.keys(this.cooldowns).forEach(name => {
+      if (this.cooldowns[name] > 0) {
+        this.cooldowns[name] -= delta;
       }
-      
-      // Check collision with players
-      this.playerSystem.players.forEach(player => {
-        if (player.id !== spell.userData.owner) {
-          const distance = player.position.distanceTo(spell.position);
-          console.log("Checking player collision. Distance:", distance);
-          if (distance < 3) { // Hit radius
-            // Apply damage
-            player.health -= spell.userData.damage;
-            player.health = Math.max(0, player.health);
-
-            // Update UI if this is local player
-            if (player.isLocal && this.engine.systems.ui) {
-              this.engine.systems.ui.updateHealthDisplay(player.health, player.maxHealth);
-            }
-
-            // Remove spell
-            this.scene.remove(spell);
-            this.activeSpells.splice(i, 1);
-
-            // Create impact effect
-            this.createImpactEffect(spell.position.clone(), spell.material.color);
-          }
+    });
+    
+    // Update active effects
+    for (let i = this.activeEffects.length - 1; i >= 0; i--) {
+      const effect = this.activeEffects[i];
+      const timeElapsed = elapsed - effect.startTime;
+      if (timeElapsed >= effect.duration) {
+        if (effect.reset) {
+          effect.reset();
         }
-      });
+        this.activeEffects.splice(i, 1);
+      }
+    }
+
+    // Check for spell unlocks occasionally
+    if (Math.random() < 0.01) { // 1% chance per frame, adjust as needed
+      this.unlockNextSpell();
     }
   }
-  
-  updateShield(delta) {
-    const player = this.playerSystem.localPlayer;
-    if (!player || !player.shield) return;
+
+  unlockNextSpell() {
+    const playerState = this.playerSystem.engine.systemManager.get('playerState');
+    const player = playerState?.localPlayer;
+    if (!player) {
+      console.warn('PlayerSpells.unlockNextSpell: No localPlayer available');
+      return;
+    }
     
-    player.shield.duration -= delta;
-    
-    // Pulse effect
-    const opacity = 0.3 + 0.2 * Math.sin(this.engine.elapsed * 5);
-    player.shield.mesh.material.opacity = opacity;
-    
-    if (player.shield.duration <= 0) {
-      // Remove shield
-      player.model.remove(player.shield.mesh);
-      player.shield = null;
+    for (let i = 0; i < this.spells.length; i++) {
+      if (!this.unlockedSpells.has(i) && this.checkUnlock(this.spells[i], player)) {
+        this.unlockedSpells.add(i);
+        if (this.engine.systemManager.get('ui')) {
+          this.engine.systemManager.get('ui').showMessage(`Unlocked spell: ${this.spells[i].name}`);
+        }
+        player.currentSpell = i;
+        console.log('PlayerSpells.unlockNextSpell: Unlocked spell', i, this.spells[i].name);
+        return;
+      }
     }
   }
 }
