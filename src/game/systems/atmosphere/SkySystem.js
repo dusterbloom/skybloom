@@ -41,7 +41,13 @@ export class SkySystem {
     this.originalBackgroundColor = new THREE.Color(0x88ccff);
 
     // Set renderer tone mapping exposure
-    this.engine.renderer.toneMappingExposure = 0.6;
+    console.log('SkySystem: engine.rendererManager:', this.engine.rendererManager);
+    const renderer = this.engine.rendererManager ? this.engine.rendererManager.renderer : this.engine.renderer;
+    if (renderer) {
+      renderer.toneMappingExposure = 0.6;
+    } else {
+      console.log('SkySystem: no renderer found');
+    }
 
     // Initialize scene fog
     this.scene.fog = new THREE.FogExp2(0x88ccff, 0.00003);
@@ -166,9 +172,13 @@ export class SkySystem {
     // Update background clear color (applies regardless of sky type)
     if (nightFactor > 0) {
       const bgColor = new THREE.Color(0x000014).lerp(this.originalBackgroundColor, 1 - nightFactor);
-      this.engine.renderer.setClearColor(bgColor);
+      if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
+        this.engine.rendererManager.renderer.setClearColor(bgColor);
+      }
     } else {
-      this.engine.renderer.setClearColor(this.originalBackgroundColor);
+      if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
+        this.engine.rendererManager.renderer.setClearColor(this.originalBackgroundColor);
+      }
     }
 
     // Update the actual sky object
@@ -184,25 +194,48 @@ export class SkySystem {
       // Adjust sky parameters based on time (existing logic)
       if (timeOfDay < 0.25) {
         const t = timeOfDay / 0.25;
-        this.engine.renderer.toneMappingExposure = 0.1 + t * 0.4;
+        console.log('SkySystem.updateSkyColors: Setting toneMappingExposure for night to sunrise');
+        console.log('SkySystem.updateSkyColors: engine exists:', !!this.engine);
+        console.log('SkySystem.updateSkyColors: rendererManager exists:', !!this.engine?.rendererManager);
+        console.log('SkySystem.updateSkyColors: renderer exists:', !!this.engine?.rendererManager?.renderer);
+        if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
+          this.engine.rendererManager.renderer.toneMappingExposure = 0.1 + t * 0.4;
+        } else {
+          console.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
+        }
         uniforms['turbidity'].value = 0.5 + t * 7.5;
         uniforms['rayleigh'].value = 0.05 + t * 0.95;
         uniforms['mieCoefficient'].value = 0.001 + t * 0.024;
       } else if (timeOfDay < 0.5) {
         const t = (timeOfDay - 0.25) / 0.25;
-        this.engine.renderer.toneMappingExposure = 0.6;
+        console.log('SkySystem.updateSkyColors: Setting toneMappingExposure for sunrise to noon');
+        if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
+          this.engine.rendererManager.renderer.toneMappingExposure = 0.6;
+        } else {
+          console.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
+        }
         uniforms['turbidity'].value = 8;
         uniforms['rayleigh'].value = 1 + t * 0.5;
         uniforms['mieCoefficient'].value = 0.025;
       } else if (timeOfDay < 0.75) {
         const t = (timeOfDay - 0.5) / 0.25;
-        this.engine.renderer.toneMappingExposure = 0.6;
+        console.log('SkySystem.updateSkyColors: Setting toneMappingExposure for noon to sunset');
+        if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
+          this.engine.rendererManager.renderer.toneMappingExposure = 0.6;
+        } else {
+          console.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
+        }
         uniforms['turbidity'].value = 8 + t * 2;
         uniforms['rayleigh'].value = 1.5 - t * 0.5;
         uniforms['mieCoefficient'].value = 0.025;
       } else {
         const t = (timeOfDay - 0.75) / 0.25;
-        this.engine.renderer.toneMappingExposure = 0.6 - t * 0.5;
+        console.log('SkySystem.updateSkyColors: Setting toneMappingExposure for sunset to night');
+        if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
+          this.engine.rendererManager.renderer.toneMappingExposure = 0.6 - t * 0.5;
+        } else {
+          console.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
+        }
         uniforms['turbidity'].value = 10 - t * 9.5;
         uniforms['rayleigh'].value = 1 - t * 0.95;
         uniforms['mieCoefficient'].value = 0.025 - t * 0.024;

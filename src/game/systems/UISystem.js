@@ -3,7 +3,7 @@ import { System } from '../core/System.js';
 
 export class UISystem extends System {
   constructor(engine) {
-    super(engine, 'uiSystem');
+    super(engine, 'ui');
     this.container = document.getElementById('ui-container');
     this.elements = {};
     this.unsubscribeState = null;
@@ -39,7 +39,7 @@ export class UISystem extends System {
     };
   }
   
-  async initialize() {
+  async _initialize() {
     this.createBaseUI();
     this.createManaDisplay();
     // this.createHealthDisplay();
@@ -276,14 +276,16 @@ export class UISystem extends System {
   }
 
   _worldToMap(x, z) {
-    const player = this.engine.systems.player?.localPlayer;
+    const playerState = this.engine.systemManager.get('playerState');
+    const player = playerState?.localPlayer;
     if (!player) return { mapX: this.size / 2, mapY: this.size / 2 };
 
     const playerX = player.position.x;
     const playerZ = player.position.z;
 
+    // Consistent mapping: X to mapX, Z to mapY (with inversion for north-up)
     const mapX = this.size / 2 + (x - playerX) / this.range * this.size;
-    const mapY = this.size / 2 - (z - playerZ) / this.range * this.size; // Y inverted for map
+    const mapY = this.size / 2 - (z - playerZ) / this.range * this.size;
 
     // Clamp to map bounds
     const clampedX = Math.max(0, Math.min(this.size, mapX));
@@ -331,38 +333,56 @@ export class UISystem extends System {
   }
 
   _drawTerrain() {
-    const worldSystem = this.engine.systems.world;
+    const worldSystem = this.engine.systemManager.get('world');
     if (!worldSystem) return;
 
-    const player = this.engine.systems.player?.localPlayer;
+    const playerState = this.engine.systemManager.get('playerState');
+    const player = playerState?.localPlayer;
     if (!player) return;
 
     const playerX = player.position.x;
     const playerZ = player.position.z;
-    const sampleSize = 15; // Reduced from 30 for performance
+    const numSamples = 30; // Higher resolution for better detail
+    const sampleStep = this.size / numSamples;
 
     // Create ImageData for batch pixel operations
     const imageData = this.context.createImageData(this.size, this.size);
     const data = imageData.data;
 
-    for (let mapX = 0; mapX < this.size; mapX += sampleSize) {
-      for (let mapZ = 0; mapZ < this.size; mapZ += sampleSize) {
-        // Convert map coordinates back to world coordinates
-        const worldX = playerX + (mapX - this.size / 2) / this.size * this.range;
-        const worldZ = playerZ + (mapZ - this.size / 2) / this.size * this.range;
+    for (let i = 0; i < numSamples; i++) {
+      for (let j = 0; j < numSamples; j++) {
+        // Map coordinates
+        const mapX = i * sampleStep;
+        const mapY = j * sampleStep; // Use mapY for vertical axis
+
+        // Convert map coordinates to world coordinates (inverse of _worldToMap)
+        const worldX = playerX + (mapX - this.size / 2) * this.range / this.size;
+        const worldZ = playerZ + (this.size / 2 - mapY) * this.range / this.size; // Account for inversion
 
         // Sample terrain at this world position
-        const height = worldSystem.getHeightAt(worldX, worldZ);
-        const biome = worldSystem.getBiomeAt(worldX, worldZ) || 'plains';
+        const height = worldSystem.getTerrainHeight(worldX, worldZ);
+        
+        // Determine biome based on height (simple classification)
+        let biome = 'plains';
+        if (height < -10) biome = 'ocean';
+        else if (height < 5) biome = 'beach';
+        else if (height < 50) biome = 'plains';
+        else if (height < 100) biome = 'forest';
+        else if (height < 200) biome = 'hills';
+        else if (height < 300) biome = 'mountains';
+        else biome = 'snow';
 
         // Get color for this terrain sample
         const color = this._getTerrainColor(height, biome);
         const [r, g, b] = this.hexToRgb(color);
 
-        // Set pixels for this sample area using ImageData (batch operation)
-        for (let px = 0; px < sampleSize && (mapX + px) < this.size; px++) {
-          for (let pz = 0; pz < sampleSize && (mapZ + pz) < this.size; pz++) {
-            const pixelIndex = ((mapZ + pz) * this.size + (mapX + px)) * 4;
+        // Fill the pixel block for this sample
+        const blockSize = Math.ceil(sampleStep);
+        for (let px = 0; px < blockSize && mapX + px < this.size; px++) {
+          for (let py = 0; py < blockSize && mapY + py < this.size; py++) {
+            const pixelX = Math.floor(mapX + px);
+            const pixelY = Math.floor(mapY + py);
+            const pixelIndex = (pixelY * this.size + pixelX) * 4;
             data[pixelIndex] = r;     // Red
             data[pixelIndex + 1] = g; // Green
             data[pixelIndex + 2] = b; // Blue
@@ -386,7 +406,7 @@ export class UISystem extends System {
   }
 
   _drawLandmarks() {
-    const landmarkSystem = this.engine.systems.landmarks;
+    const landmarkSystem = this.engine.systemManager.get('landmarks');
     if (!landmarkSystem || !landmarkSystem.landmarks) return;
 
     landmarkSystem.landmarks.forEach(landmark => {
@@ -407,7 +427,7 @@ export class UISystem extends System {
   }
 
   _drawMana() {
-    const worldSystem = this.engine.systems.world;
+    const worldSystem = this.engine.systemManager.get('world');
     if (!worldSystem || !worldSystem.manaNodes) return;
 
     worldSystem.manaNodes.forEach(manaNode => {
@@ -438,13 +458,15 @@ export class UISystem extends System {
   }
 
   _drawPlayers() {
-    const playerSystem = this.engine.systems.player;
-    if (!playerSystem || !playerSystem.players) return;
+    const playerState = this.engine.systemManager.get('playerState');
+    const playerSystem = this.engine.systemManager.get('player');
+    if (!playerState) return;
 
-    const localPlayer = playerSystem.localPlayer;
+    const localPlayer = playerState.localPlayer;
+    const players = playerSystem?.players || {};
 
     // Draw other players
-    Object.values(playerSystem.players).forEach(player => {
+    Object.values(players).forEach(player => {
       if (player.id === localPlayer?.id) return; // Skip local player
 
       const { mapX, mapY } = this._worldToMap(player.position.x, player.position.z);
@@ -468,28 +490,27 @@ export class UISystem extends System {
     if (localPlayer) {
       const { mapX, mapY } = this._worldToMap(localPlayer.position.x, localPlayer.position.z);
       
-      // Draw local player dot (white)
+      // Draw local player dot (smaller white dot at center)
       this.context.beginPath();
-      this.context.arc(mapX, mapY, 3, 0, 2 * Math.PI);
+      this.context.arc(this.size / 2, this.size / 2, 2, 0, 2 * Math.PI);
       this.context.fillStyle = this.colors.player;
       this.context.fill();
 
-      // Draw direction indicator (triangle pointing forward)
+      // Draw direction indicator (triangle pointing forward) - fixed to center since player is always at center
       const directionAngle = localPlayer.rotation.y || 0;
-      const dirLength = 4;
-      const dirX = mapX + Math.sin(directionAngle) * dirLength;
-      const dirY = mapY - Math.cos(directionAngle) * dirLength;
+      const dirLength = 6;
+      const centerX = this.size / 2;
+      const centerY = this.size / 2;
+      const dirX = centerX + Math.sin(directionAngle) * dirLength;
+      const dirY = centerY - Math.cos(directionAngle) * dirLength;
 
       this.context.beginPath();
-      this.context.moveTo(mapX, mapY);
+      this.context.moveTo(centerX, centerY);
       this.context.lineTo(dirX, dirY);
-      this.context.lineTo(dirX - Math.cos(directionAngle) * 2, dirY + Math.sin(directionAngle) * 2);
+      this.context.lineTo(dirX - Math.cos(directionAngle) * 3, dirY + Math.sin(directionAngle) * 3);
       this.context.closePath();
       this.context.fillStyle = this.colors.player;
       this.context.fill();
-
-      // Draw FOV cone (optional, for debugging)
-      // Implementation would draw a sector from player position
     }
   }
 
@@ -497,38 +518,23 @@ export class UISystem extends System {
     const centerX = this.size / 2;
     const centerY = this.size / 2;
 
-    const player = this.engine.systems.player?.localPlayer;
-    const playerRotation = player?.rotation.y || 0;
-
-    // Save current transformation
-    this.context.save();
-
-    // Translate to center and rotate opposite to player rotation
-    this.context.translate(centerX, centerY);
-    this.context.rotate(-playerRotation);
-
-    // Draw compass labels
+    // Fixed compass (no rotation for now to avoid spinning)
+    // Draw compass labels at fixed positions
     const labels = [
-      { text: 'N', angle: 0, color: this.colors.compassN },
-      { text: 'E', angle: Math.PI / 2, color: this.colors.compassE },
-      { text: 'S', angle: Math.PI, color: this.colors.compassS },
-      { text: 'W', angle: 3 * Math.PI / 2, color: this.colors.compassW }
+      { text: 'N', x: centerX, y: 15, color: this.colors.compassN },
+      { text: 'E', x: this.size - 15, y: centerY, color: this.colors.compassE },
+      { text: 'S', x: centerX, y: this.size - 15, color: this.colors.compassS },
+      { text: 'W', x: 15, y: centerY, color: this.colors.compassW }
     ];
 
+    this.context.font = 'bold 12px Arial';
+    this.context.textAlign = 'center';
+    this.context.textBaseline = 'middle';
+
     labels.forEach(label => {
-      const rad = label.angle;
-      const x = Math.cos(rad) * (this.size / 2 - 15);
-      const y = Math.sin(rad) * (this.size / 2 - 15);
-
       this.context.fillStyle = label.color;
-      this.context.font = 'bold 12px Arial';
-      this.context.textAlign = 'center';
-      this.context.textBaseline = 'middle';
-      this.context.fillText(label.text, x, y);
+      this.context.fillText(label.text, label.x, label.y);
     });
-
-    // Restore transformation
-    this.context.restore();
 
     // Draw center dot
     this.context.beginPath();
@@ -550,8 +556,9 @@ export class UISystem extends System {
     });
     
     // Notify game about spell selection
-    if (this.engine.systems.player && this.engine.systems.player.localPlayer) {
-      this.engine.systems.player.localPlayer.currentSpell = index;
+    const playerState = this.engine.systemManager.get('playerState');
+    if (playerState && playerState.localPlayer) {
+      playerState.localPlayer.currentSpell = index;
     }
   }
   
@@ -583,12 +590,13 @@ export class UISystem extends System {
     }
   }
   
-  update(delta) {
+  _update(delta) {
     // Update UI elements that need continuous updates
     
     // Update health display if local player exists
-    if (this.engine.systems.player && this.engine.systems.player.localPlayer) {
-      const player = this.engine.systems.player.localPlayer;
+    const playerSystem = this.engine.systemManager.get('player');
+    if (playerSystem && playerSystem.localPlayer) {
+      const player = playerSystem.localPlayer;
       this.updateHealthDisplay(player.health, player.maxHealth);
     }
     
@@ -596,7 +604,8 @@ export class UISystem extends System {
     this.updateTimeDisplay();
     
     // Update minimap if initialized and game is playing
-    if (this.minimapInitialized && this.engine.gameState === GameStates.PLAYING) {
+    const currentState = useGameState.getState().currentState;
+    if (this.minimapInitialized && currentState === GameStates.PLAYING) {
       this.lastUpdate += delta;
       if (this.lastUpdate >= this.updateInterval) {
         this.lastUpdate = 0;
@@ -616,7 +625,7 @@ export class UISystem extends System {
    * Update time display showing current time of day
    */
   updateTimeDisplay() {
-    const atmosphereSystem = this.engine.systems.atmosphere;
+    const atmosphereSystem = this.engine.systemManager.get('atmosphere');
     if (!atmosphereSystem) return;
     
     // Update current time display
@@ -763,7 +772,7 @@ export class UISystem extends System {
       
       // Click handler
       button.addEventListener('click', () => {
-        const atmosphereSystem = this.engine.systems.atmosphere;
+        const atmosphereSystem = this.engine.systemManager.get('atmosphere');
         if (atmosphereSystem) {
           atmosphereSystem.setTime(preset.hour, preset.minute);
         }
@@ -821,7 +830,7 @@ export class UISystem extends System {
       
       // Click handler
       button.addEventListener('click', () => {
-        const atmosphereSystem = this.engine.systems.atmosphere;
+        const atmosphereSystem = this.engine.systemManager.get('atmosphere');
         if (atmosphereSystem) {
           atmosphereSystem.timeScale = scale.value;
           console.log(`Time scale set to ${scale.value}x`);
@@ -906,7 +915,7 @@ export class UISystem extends System {
       const hour = Math.floor(percentage * 24);
       const minute = Math.floor((percentage * 24 * 60) % 60);
       
-      const atmosphereSystem = this.engine.systems.atmosphere;
+      const atmosphereSystem = this.engine.systemManager.get('atmosphere');
       if (atmosphereSystem) {
         atmosphereSystem.setTime(hour, minute);
       }
@@ -975,9 +984,10 @@ export class UISystem extends System {
         motionControlsEnabled = !motionControlsEnabled;
         updateToggleState(motionControlsEnabled);
         
-        // Toggle motion controls in the player system
-        if (this.engine.systems.player && this.engine.systems.player.input) {
-          this.engine.systems.player.input.toggleMotionControls(motionControlsEnabled);
+        // Toggle motion controls in the player input system
+        const playerInput = this.engine.systemManager.get('playerInput');
+        if (playerInput && typeof playerInput.toggleMotionControls === 'function') {
+          playerInput.toggleMotionControls(motionControlsEnabled);
         }
       });
       
@@ -1041,7 +1051,7 @@ export class UISystem extends System {
   showQuestLog() {
     // Minimal implementation: log active quests to console or show simple alert
     // In full implementation, this would open a quest log UI panel
-    const questManager = this.engine.systems.questManager;
+    const questManager = this.engine.systemManager.get('questManager');
     if (questManager) {
       const activeQuests = questManager.getActiveQuests();
       console.log('Quest Log:', activeQuests);

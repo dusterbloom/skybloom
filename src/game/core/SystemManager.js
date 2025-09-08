@@ -34,11 +34,11 @@ export class SystemManager {
   }
 
   update(delta, elapsed) {
-    console.log('SystemManager.update: Starting update cycle at', Date.now(), 'with delta', delta, 'systems:', this.updateOrder);
+    // console.log('SystemManager.update: Starting update cycle at', Date.now(), 'with delta', delta, 'systems:', this.updateOrder);
     for (let i = 0; i < this.updateOrder.length; i++) {
       const systemName = this.updateOrder[i];
       const system = this.get(systemName);
-      console.log(`SystemManager.update: Updating system ${i+1}/${this.updateOrder.length}:`, systemName, 'system exists:', !!system);
+      // console.log(`SystemManager.update: Updating system ${i+1}/${this.updateOrder.length}:`, systemName, 'system exists:', !!system);
       if (system && typeof system.update === 'function') {
         try {
           system.update(delta, elapsed);
@@ -47,7 +47,7 @@ export class SystemManager {
         }
       }
     }
-    console.log('SystemManager.update: Finished update cycle');
+    // console.log('SystemManager.update: Finished update cycle');
   }
 
   handleVisibilityChange(visible) {

@@ -45,21 +45,22 @@ export class PerformanceMonitor {
    * @param {THREE.WebGLRenderer} renderer - The Three.js renderer
    * @param {Engine} engine - The game engine instance
    */
-  update(renderer, engine) {
+  update(renderer, engine, delta) {
     const now = Date.now();
     if (now - this.metrics.lastUpdate < this.sampleInterval) return;
     
     // Get renderer stats
     const info = renderer.info;
     
-    // Calculate FPS - use a moving average to smooth out spikes
-    // Get direct frame time from engine's delta time if available
+    // Calculate FPS using provided delta for accuracy
     let fps = 0;
-    if (engine && engine.delta > 0) {
-      fps = 1 / engine.delta; // More accurate when using engine's delta time
+    if (delta > 0) {
+      fps = 1 / delta; // Direct FPS from delta time
+    } else if (engine && engine.delta > 0) {
+      fps = 1 / engine.delta;
     } else {
       const elapsed = now - this.metrics.lastUpdate;
-      if (elapsed > 0) { // Avoid division by zero
+      if (elapsed > 0) {
         fps = 1000 / elapsed;
       }
     }

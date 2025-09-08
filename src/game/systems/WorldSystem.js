@@ -500,9 +500,9 @@ export class WorldSystem extends System {
 
   createInitialTerrain() {
     console.log("Creating initial terrain...");
-    // Increased initial terrain area to reduce visible terrain loading
-    for (let x = -4; x <= 4; x++) {
-      for (let z = -4; z <= 4; z++) {
+    // Expanded initial terrain area for larger starting world
+    for (let x = -8; x <= 8; x++) {
+      for (let z = -8; z <= 8; z++) {
         const startX = x * this.chunkSize;
         const startZ = z * this.chunkSize;
         const key = `${startX},${startZ}`;
@@ -529,8 +529,8 @@ export class WorldSystem extends System {
     const resolution = this.terrainResolution;
     
     // Pre-calculate some heights for nearby terrain
-    for (let x = -2; x <= 2; x++) {
-      for (let z = -2; z <= 2; z++) {
+    for (let x = -4; x <= 4; x++) {
+      for (let z = -4; z <= 4; z++) {
         const startX = x * chunkSize;
         const startZ = z * chunkSize;
         
@@ -551,7 +551,7 @@ export class WorldSystem extends System {
     // Clear existing nodes
     this.manaNodes.forEach(node => { if (node.parent) { this.scene.remove(node); } });
     this.manaNodes = [];
-    const player = this.engine.systems.player?.localPlayer; if (!player) return;
+    const player = this.engine.systemManager.get('playerState')?.localPlayer; if (!player) return;
 
     // Procedural generation using noise for density
     const spawnRadius = this.chunkSize * 5; // 5120
@@ -1696,7 +1696,7 @@ createPalmTree(parentGroup, height, angle, distance) {
  * Should be called periodically during gameplay
  */
 checkForLandmarkLocations() {
-  const player = this.engine.systems.player?.localPlayer;
+  const player = this.engine.systemManager.get('playerState')?.localPlayer;
   if (!player) return;
   
   // Only check occasionally
@@ -1785,7 +1785,7 @@ updateLandmarks(delta, elapsed) {
   }}
 
   updateChunks() {
-    const player = this.engine.systems.player?.localPlayer;
+    const player = this.engine.systemManager.get('playerState')?.localPlayer;
     if (!player) return;
 
     // Get camera for frustum culling
@@ -1794,9 +1794,9 @@ updateLandmarks(delta, elapsed) {
 
     // Updated: Use MobileLODManager view distance if available for determining chunks to keep
     let viewDistance = this.viewDistance;
-    if (this.engine.systems.mobileLOD && this.engine.settings && this.engine.settings.isMobile) {
+    if (this.engine.systemManager.get('mobileLOD') && this.engine.settings && this.engine.settings.isMobile) {
       // Get extended view distance for horizon for better terrain continuity
-      const horizonExtendedDistance = Math.ceil(this.engine.systems.mobileLOD.getHorizonLODDistance() / this.chunkSize);
+      const horizonExtendedDistance = Math.ceil(this.engine.systemManager.get('mobileLOD').getHorizonLODDistance() / this.chunkSize);
       viewDistance = Math.max(viewDistance, horizonExtendedDistance / this.chunkSize);
     }
     
@@ -1892,10 +1892,9 @@ updateLandmarks(delta, elapsed) {
   // --- updateVisibility method remains unchanged ---
   updateVisibility(camera) { /* ... */ }
 
-  update(delta, elapsed) {
-    const player = this.engine.systems.player?.localPlayer;
+  _update(delta, elapsed) {
+    const player = this.engine.systemManager.get('playerState')?.localPlayer;
     if (!player) {
-      // console.warn("WorldSystem.update: No player available");
       return;
     }
 

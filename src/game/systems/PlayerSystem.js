@@ -183,11 +183,11 @@ export class PlayerSystem extends System {
       // console.warn('PlayerSystem._update: models is undefined');
     }
     
-    console.log('PlayerSystem._update: spells exists:', !!this.spells);
+    // console.log('PlayerSystem._update: spells exists:', !!this.spells);
     if (this.spells) {
       this.spells.updateSpells(delta);
     } else {
-      console.warn('PlayerSystem._update: spells is undefined');
+      // console.warn('PlayerSystem._update: spells is undefined');
     }
 
     // Forward events and checks

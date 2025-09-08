@@ -47,6 +47,31 @@ export class PlayerModels {
   }
   
   createCarpetModel(playerId) {
+    if (this.carpetModels.length === 0) {
+      // Fallback: create a default carpet model if none available
+      console.warn('PlayerModels.createCarpetModel: No carpet models available, creating default');
+      
+      // Create default material
+      const defaultMaterial = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.7, metalness: 0.3 });
+      const defaultGeometry = new THREE.BoxGeometry(5, 0.5, 8);
+      const defaultModel = new THREE.Mesh(defaultGeometry, defaultMaterial);
+      defaultModel.castShadow = true;
+      defaultModel.receiveShadow = false;
+      
+      // Add floating marker
+      const markerGeometry = new THREE.SphereGeometry(1, 8, 8);
+      const markerMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff6600,
+        transparent: true,
+        opacity: 0.8
+      });
+      const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+      marker.position.y = 3;
+      defaultModel.add(marker);
+      
+      return defaultModel;
+    }
+    
     // Use player ID to determine carpet color consistently
     let carpetIndex = 0;
     
@@ -67,10 +92,10 @@ export class PlayerModels {
     
     // Add a floating marker above the carpet for better visibility
     const markerGeometry = new THREE.SphereGeometry(1, 8, 8);
-    const markerMaterial = new THREE.MeshBasicMaterial({ 
+    const markerMaterial = new THREE.MeshBasicMaterial({
       color: this.carpetMaterials[carpetIndex].color,
       transparent: true,
-      opacity: 0.8 
+      opacity: 0.8
     });
     
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
@@ -279,7 +304,18 @@ export class PlayerModels {
   }
   
   updateModels() {
-    this.playerSystem.players.forEach(player => {
+    const playerState = this.playerSystem.engine.systemManager.get('playerState');
+    if (!playerState || !playerState.players) {
+      console.warn('PlayerModels.updateModels: playerState or players is undefined');
+      return;
+    }
+    
+    console.log('PlayerModels.updateModels: Updating', playerState.players.size, 'players');
+    playerState.players.forEach(player => {
+      if (!player.model) {
+        console.warn('PlayerModels.updateModels: Player missing model:', player.id);
+        return;
+      }
       // Update model position
       player.model.position.copy(player.position);
       

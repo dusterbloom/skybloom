@@ -40,6 +40,9 @@ export class Engine {
     this.isRunning = false;
     this.isVisible = true;
     this.maxDeltaTime = 1/15; // Cap at 15 FPS equivalent
+
+    // Minimap toggle flag - set to false to disable at startup
+    this.minimapEnabled = true;
     this.gameStarted = false; // Flag to track if the game has started
     this._frameCounter = 0;
     
@@ -121,9 +124,14 @@ export class Engine {
       .register(new AtmosphereSystem(this))
       .register(new UISystem(this))
       .register(new CarpetTrailSystem(this))
-      .register(new LandmarkSystem(this))
-      // .register(new MinimapSystem(this))
-      .register(new QuestManager(this));
+      .register(new LandmarkSystem(this));
+  
+      // Conditionally register MinimapSystem based on flag
+      if (this.minimapEnabled !== false) {
+        sm = sm.register(new MinimapSystem(this));
+      }
+  
+      sm = sm.register(new QuestManager(this));
 
     console.log('All systems registered, keys:', Array.from(this.systemManager.systems.keys()));
 
@@ -161,6 +169,13 @@ export class Engine {
     // Set up event handling
     this.input.initialize();
 
+    // Bind minimap toggle to 'M' key
+    this.input.on('keydown', (event) => {
+      if (event.code === 'KeyM' && useGameState.getState().currentState === GameStates.PLAYING) {
+        this.toggleMinimap();
+      }
+    });
+
     // Hide loading screen
     document.getElementById("loading").style.display = "none";
 
@@ -172,7 +187,7 @@ export class Engine {
     this.introScreen = new IntroScreen(this);
     
     // Set callback for when play button is clicked
-    this.introScreen.onPlay(() => {
+    this.introScreen.onPlay(async () => {
       console.log("Game started from intro screen");
       this.gameStarted = true;
       
@@ -184,7 +199,7 @@ export class Engine {
           player.enable();
         }
       }
-    
+
       const playerInput = this.systemManager.get('playerInput');
       if (this.input.isTouchDevice && playerInput && typeof playerInput.showMobileControls === 'function') {
         playerInput.showMobileControls();
@@ -195,6 +210,9 @@ export class Engine {
         console.log("Starting network systems");
         network.connect();
       }
+
+      // Set game state to PLAYING to enable UI updates including minimap
+      useGameState.getState().setGameState(GameStates.PLAYING);
     });
     
     // Show intro screen and transition to INTRO state
@@ -248,9 +266,9 @@ export class Engine {
     this.qualityManager.update(this.delta);
 
     // Update systems
-    console.log('Engine.animate: Starting system updates at frame', this._frameCounter, 'time', this.elapsed);
+    // console.log('Engine.animate: Starting system updates at frame', this._frameCounter, 'time', this.elapsed);
     this.systemManager.update(this.delta, this.elapsed);
-    console.log('Engine.animate: Finished system updates');
+    // console.log('Engine.animate: Finished system updates');
 
     // Update performance monitor with delta for accurate FPS
     this.performanceMonitor.update(this.rendererManager.renderer, this, this.delta);

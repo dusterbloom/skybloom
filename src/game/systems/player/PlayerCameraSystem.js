@@ -24,10 +24,10 @@ export class PlayerCameraSystem extends System {
       return;
     }
     
-    console.log('PlayerCameraSystem._update: localPlayer exists:', !!playerState.localPlayer);
+    // console.log('PlayerCameraSystem._update: localPlayer exists:', !!playerState.localPlayer);
     const player = playerState.localPlayer;
     if (!player) {
-      console.warn('PlayerCameraSystem._update: No player available');
+      // console.warn('PlayerCameraSystem._update: No player available');
       return;
     }
 
