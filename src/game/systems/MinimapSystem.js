@@ -1,14 +1,14 @@
 import * as THREE from "three";
+import { System } from '../core/System';
 
-export class MinimapSystem {
+export class MinimapSystem extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'MinimapSystem');
     this.canvas = null;
     this.context = null;
     this.size = 150;             // Size in pixels
     this.range = 10000;            // World units to show on map
     this.minimapContainer = null;
-    this.initialized = false;
     this.lastUpdate = 0;         // For throttling updates
     this.updateInterval = 1/60;  // Update at 30fps max
     

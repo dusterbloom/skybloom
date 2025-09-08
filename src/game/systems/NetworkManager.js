@@ -2,11 +2,12 @@ import { io } from 'socket.io-client';
 import { EventEmitter } from '../../utils/EventEmitter';
 import { IntroScreen } from '../ui/screens/IntroScreen';
 import { PlayerList } from '../ui/components/PlayerList';
+import { System } from '../core/System';
 
-export class NetworkManager extends EventEmitter {
+export class NetworkManager extends System {
   constructor(engine) {
-    super();
-    this.engine = engine;
+    super(engine, 'network');
+    this.eventEmitter = new EventEmitter();
     this.socket = null;
     this.players = new Map();
     this.localPlayerId = null;
@@ -23,7 +24,7 @@ export class NetworkManager extends EventEmitter {
     this.useSimulation = this.isDev && import.meta.env.VITE_USE_NETWORK_SIMULATION === 'true';
   }
   
-  async initialize() {
+  async _initialize() {
     // Initialize and show intro screen
     this.introScreen.initialize();
     this.introScreen.show();
@@ -36,15 +37,15 @@ export class NetworkManager extends EventEmitter {
     // Set up server URL - FIXED for mobile devices
     // Use VITE_SERVER_URL if provided, otherwise use window.location.origin
     // This will use the same domain/IP that the website is loaded from
-// Set up server URL
-  this.serverUrl = import.meta.env.VITE_SERVER_URL || window.location.origin;
+    // Set up server URL
+    this.serverUrl = import.meta.env.VITE_SERVER_URL || window.location.origin;
 
-  // If using auto IP detection
-  if (import.meta.env.VITE_AUTO_IP === 'true') {
-    // Use current window host but port 4000
-    const url = new URL(window.location.href);
-    this.serverUrl = `${url.protocol}//${url.hostname}:4000`;
-  }    
+    // If using auto IP detection
+    if (import.meta.env.VITE_AUTO_IP === 'true') {
+      // Use current window host but port 4000
+      const url = new URL(window.location.href);
+      this.serverUrl = `${url.protocol}//${url.hostname}:4000`;
+    }    
     // For local development on computer only, use localhost if needed
     // To specifically test on localhost during development for desktop
     if (this.isDev && window.location.hostname === 'localhost') {
@@ -84,7 +85,7 @@ export class NetworkManager extends EventEmitter {
       console.log('Connected to server');
       this.isConnected = true;
       this.introScreen.updateServerStatus('Connected to server', 'success');
-      this.emit('connected');
+      this.eventEmitter.emit('connected');
       
       // Request player ID from server
       this.socket.emit('request_id');
@@ -94,7 +95,7 @@ export class NetworkManager extends EventEmitter {
       console.log('Disconnected from server');
       this.isConnected = false;
       this.introScreen.updateServerStatus('Disconnected from server. Reconnecting...', 'error');
-      this.emit('disconnected');
+      this.eventEmitter.emit('disconnected');
     });
     
     this.socket.on('connect_error', (error) => {
@@ -105,7 +106,7 @@ export class NetworkManager extends EventEmitter {
     this.socket.on('player_id', (data) => {
       this.localPlayerId = data.id;
       console.log('Received player ID:', this.localPlayerId);
-      this.emit('connected', { id: this.localPlayerId });
+      this.eventEmitter.emit('connected', { id: this.localPlayerId });
       
       // Hide intro screen after successful connection
       this.introScreen.hide();
@@ -171,7 +172,7 @@ export class NetworkManager extends EventEmitter {
       
       // Emit connected event
       this.isConnected = true;
-      this.emit('connected', { id: this.localPlayerId });
+      this.eventEmitter.emit('connected', { id: this.localPlayerId });
       
       // Hide intro screen
       this.introScreen.hide();
@@ -207,25 +208,25 @@ export class NetworkManager extends EventEmitter {
   handlePlayerJoin(data) {
     this.players.set(data.id, data);
     this.playerList.updatePlayerList(Array.from(this.players.values()), this.localPlayerId);
-    this.emit('player_join', data);
+    this.eventEmitter.emit('player_join', data);
   }
   
   handlePlayerLeave(data) {
     this.players.delete(data.id);
     this.playerList.updatePlayerList(Array.from(this.players.values()), this.localPlayerId);
-    this.emit('player_leave', data);
+    this.eventEmitter.emit('player_leave', data);
   }
   
   handlePlayerUpdate(data) {
     if (this.players.has(data.id)) {
       const player = this.players.get(data.id);
       Object.assign(player, data);
-      this.emit('player_update', player);
+      this.eventEmitter.emit('player_update', player);
     }
   }
   
   handleGameState(data) {
-    this.emit('game_state', data);
+    this.eventEmitter.emit('game_state', data);
   }
   
   // Send player updates to server
@@ -249,7 +250,7 @@ export class NetworkManager extends EventEmitter {
   sendPlayerAction(action, data) {
     if (this.useSimulation) {
       // For simulation, handle locally
-      this.emit('player_action', { 
+      this.eventEmitter.emit('player_action', { 
         playerId: this.localPlayerId,
         action, 
         ...data 
@@ -263,7 +264,7 @@ export class NetworkManager extends EventEmitter {
     }
   }
   
-  update(delta) {
+  _update(delta) {
     // If in simulation mode, simulate network updates for AI players
     if (this.useSimulation && Math.random() < 0.05) {
       this.players.forEach((player, id) => {

@@ -3,13 +3,14 @@
 import * as THREE from "three";
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { TextureLoader } from 'three';
+import { System } from '../core/System.js';
 
 /**
  * Water system that integrates with the terrain's ocean beds
  */
-export class WaterSystem {
+export class WaterSystem extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'water');
     this.scene = engine.scene;
     this.waterLevel = 0;
     this.water = null;
@@ -32,7 +33,7 @@ export class WaterSystem {
     this._debugChecked = false;
   }
 
-  async initialize() {
+  async _initialize() {
     console.log("Initializing WaterSystem...");
 
     // Debug info about world's state
@@ -465,7 +466,7 @@ export class WaterSystem {
   }
 
 
-  update(deltaTime) {
+  _update(deltaTime) {
     if (!this.water) return; // Safety check
 
     const isAndroid = this.isAndroid || /android/i.test(navigator.userAgent);

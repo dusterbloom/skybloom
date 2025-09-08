@@ -1,9 +1,12 @@
 import * as THREE from "three";
 import { LOD } from "three";
+import { System } from "../core/System.js";
 
-export class VegetationSystem {
+export class VegetationSystem extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'vegetation');
+    this.requireDependencies(['world']);
+    console.log('Vegetation init: engine.systems exists?', !!engine.systems, 'engine.systemManager exists?', !!engine.systemManager, 'world via systemManager:', engine.systemManager?.systems?.get('world'));
     this.scene = engine.scene;
     this.worldSystem = engine.systems.world;
     this.performanceMonitor = engine.performanceMonitor;
@@ -41,11 +44,11 @@ export class VegetationSystem {
     
     // Vegetation parameters - enhanced for biome-specific distribution
     this.treeTypes = [
-      { 
-        name: "pine", 
-        minHeight: 20, 
-        maxHeight: 200, 
-        avoidWater: true, 
+      {
+        name: "pine",
+        minHeight: 20,
+        maxHeight: 200,
+        avoidWater: true,
         baseDensity: 1.0,
         biomes: {
           mountains: { densityMult: 1.5, clusterRadius: 150, minTemp: 0, maxTemp: 0.7 },
@@ -53,11 +56,11 @@ export class VegetationSystem {
           plains: { densityMult: 0.3, clusterRadius: 60, minTemp: 0, maxTemp: 0.6 }
         }
       },
-      { 
-        name: "oak", 
-        minHeight: 10, 
-        maxHeight: 100, 
-        avoidWater: true, 
+      {
+        name: "oak",
+        minHeight: 10,
+        maxHeight: 100,
+        avoidWater: true,
         baseDensity: 0.8,
         biomes: {
           forest: { densityMult: 1.8, clusterRadius: 120, minTemp: 0.3, maxTemp: 0.8 },
@@ -65,11 +68,11 @@ export class VegetationSystem {
           mountains: { densityMult: 0.2, clusterRadius: 50, minTemp: 0.3, maxTemp: 0.7 }
         }
       },
-      { 
-        name: "palm", 
-        minHeight: 5, 
-        maxHeight: 30, 
-        avoidWater: false, 
+      {
+        name: "palm",
+        minHeight: 5,
+        maxHeight: 30,
+        avoidWater: false,
         baseDensity: 0.5,
         biomes: {
           plains: { densityMult: 0.8, clusterRadius: 70, minTemp: 0.7, maxTemp: 1.0 },
@@ -84,7 +87,7 @@ export class VegetationSystem {
     this.chunksWithTrees = new Set(); // Track which chunks have trees
   }
   
-  async initialize() {
+  async _initialize() {
     console.log("Initializing VegetationSystem...");
     
     // Create tree models with LOD
@@ -780,8 +783,8 @@ export class VegetationSystem {
   /**
    * Update method called every frame
    */
-  update() {
-    const player = this.engine.systems.player?.localPlayer;
+  _update(delta, elapsed) {
+    const player = this.engine.systems.playerState?.localPlayer;
     if (!player) return;
     
     // Calculate current chunk
@@ -849,6 +852,12 @@ export class VegetationSystem {
         }
         return true;
       });
+    }
+  }
+
+  handleVisibilityChange(visible) {
+    if (visible) {
+      this.regenerateVegetation();
     }
   }
   

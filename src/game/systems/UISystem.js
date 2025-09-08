@@ -1,11 +1,42 @@
 import { useGameState, GameStates } from '../state/gameState';
+import { System } from '../core/System.js';
 
-export class UISystem {
+export class UISystem extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'uiSystem');
     this.container = document.getElementById('ui-container');
     this.elements = {};
     this.unsubscribeState = null;
+
+    // Minimap properties
+    this.canvas = null;
+    this.context = null;
+    this.size = 150;
+    this.range = 10000;
+    this.minimapContainer = null;
+    this.lastUpdate = 0;
+    this.updateInterval = 1/60;
+
+    // Colors for minimap rendering
+    this.colors = {
+      ocean: '#1e3a8a',
+      beach: '#f4a460',
+      plains: '#90ee90',
+      forest: '#228b22',
+      hills: '#8b4513',
+      mountains: '#696969',
+      snow: '#ffffff',
+      player: '#ffffff',
+      otherPlayer: '#ff0000',
+      landmark: '#ffff00',
+      mana: '#00ff00',
+      compassN: '#ffffff',
+      compassE: '#ffffff',
+      compassS: '#ffffff',
+      compassW: '#ffffff',
+      background: 'rgba(0, 0, 0, 0.8)',
+      border: '#ffffff'
+    };
   }
   
   async initialize() {
@@ -13,7 +44,7 @@ export class UISystem {
     this.createManaDisplay();
     // this.createHealthDisplay();
     // this.createSpellsUI();
-    this.createMinimapUI();
+    this.createMinimapContainer();
     this.createTimeControls();
     
     // Subscribe to game state changes
@@ -22,6 +53,7 @@ export class UISystem {
     );
     
     console.log("UI system initialized");
+    this.minimapInitialized = true;
   }
   
   /**
@@ -32,16 +64,19 @@ export class UISystem {
     const currentState = state.currentState;
     switch (currentState) {
       case GameStates.LOADING:
-        // Keep loading screen visible
+        if (this.minimapContainer) this.minimapContainer.style.display = 'none';
         break;
       case GameStates.INTRO:
+        if (this.minimapContainer) this.minimapContainer.style.display = 'none';
         // IntroScreen handles its own visibility
         break;
       case GameStates.PLAYING:
         this.showGameUI();
+        if (this.minimapContainer) this.minimapContainer.style.display = 'block';
         break;
       case GameStates.PAUSED:
         this.showPauseMenu();
+        if (this.minimapContainer) this.minimapContainer.style.display = 'none';
         break;
     }
   }
@@ -201,16 +236,305 @@ export class UISystem {
     });
   }
   
-  createMinimapUI() {
-    // We're now using MinimapSystem for the actual minimap implementation
-    // This method is kept for backwards compatibility, but doesn't create a visible minimap
-    
-    // Create empty references to ensure no errors
-    const dummyCanvas = document.createElement('canvas');
-    this.elements.minimapCanvas = dummyCanvas;
-    this.elements.minimapContext = dummyCanvas.getContext('2d');
-    
-    console.log("Minimap functionality moved to MinimapSystem");
+  createMinimapContainer() {
+    // Remove existing container if present
+    const existingContainer = document.getElementById('minimap-container');
+    if (existingContainer) {
+      existingContainer.remove();
+    }
+
+    // Create canvas for the minimap
+    this.canvas = document.createElement('canvas');
+    this.context = this.canvas.getContext('2d');
+    this.canvas.width = this.size;
+    this.canvas.height = this.size;
+    this.canvas.style.borderRadius = '50%'; // Circular map
+    this.canvas.style.display = 'block';
+
+    // Create container for the minimap
+    this.minimapContainer = document.createElement('div');
+    this.minimapContainer.id = 'minimap-container';
+    this.minimapContainer.style.position = 'absolute';
+    this.minimapContainer.style.top = '10px';
+    this.minimapContainer.style.left = '10px';
+    this.minimapContainer.style.width = `${this.size}px`;
+    this.minimapContainer.style.height = `${this.size}px`;
+    this.minimapContainer.style.border = '2px solid ' + this.colors.border;
+    this.minimapContainer.style.backgroundColor = this.colors.background;
+    this.minimapContainer.style.borderRadius = '50%';
+    this.minimapContainer.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.3)';
+    this.minimapContainer.style.pointerEvents = 'none';
+    this.minimapContainer.style.zIndex = '1000';
+
+    // Append canvas to container
+    this.minimapContainer.appendChild(this.canvas);
+
+    // Append container to UI container
+    this.container.appendChild(this.minimapContainer);
+
+    console.log("Minimap container created in UISystem");
+  }
+
+  _worldToMap(x, z) {
+    const player = this.engine.systems.player?.localPlayer;
+    if (!player) return { mapX: this.size / 2, mapY: this.size / 2 };
+
+    const playerX = player.position.x;
+    const playerZ = player.position.z;
+
+    const mapX = this.size / 2 + (x - playerX) / this.range * this.size;
+    const mapY = this.size / 2 - (z - playerZ) / this.range * this.size; // Y inverted for map
+
+    // Clamp to map bounds
+    const clampedX = Math.max(0, Math.min(this.size, mapX));
+    const clampedY = Math.max(0, Math.min(this.size, mapY));
+
+    return { mapX: clampedX, mapY: clampedY };
+  }
+
+  _clear() {
+    // Clear canvas with background color
+    this.context.fillStyle = this.colors.background;
+    this.context.fillRect(0, 0, this.size, this.size);
+
+    // Draw circular border
+    this.context.beginPath();
+    this.context.arc(this.size / 2, this.size / 2, this.size / 2 - 1, 0, 2 * Math.PI);
+    this.context.strokeStyle = this.colors.border;
+    this.context.lineWidth = 2;
+    this.context.stroke();
+
+    // Clip future drawing to circular area
+    this.context.beginPath();
+    this.context.arc(this.size / 2, this.size / 2, this.size / 2 - 2, 0, 2 * Math.PI);
+    this.context.clip();
+  }
+
+  _getTerrainColor(height, biome) {
+    // Helper to determine terrain color based on height and biome
+    if (biome === 'ocean') return this.colors.ocean;
+    if (biome === 'beach') return this.colors.beach;
+    if (biome === 'plains') return this.colors.plains;
+    if (biome === 'forest') return this.colors.forest;
+    if (biome === 'hills') return this.colors.hills;
+    if (biome === 'mountains') return this.colors.mountains;
+    if (biome === 'snow') return this.colors.snow;
+
+    // Default based on height
+    if (height < 0) return this.colors.ocean;
+    if (height < 10) return this.colors.beach;
+    if (height < 50) return this.colors.plains;
+    if (height < 100) return this.colors.forest;
+    if (height < 200) return this.colors.hills;
+    if (height < 300) return this.colors.mountains;
+    return this.colors.snow;
+  }
+
+  _drawTerrain() {
+    const worldSystem = this.engine.systems.world;
+    if (!worldSystem) return;
+
+    const player = this.engine.systems.player?.localPlayer;
+    if (!player) return;
+
+    const playerX = player.position.x;
+    const playerZ = player.position.z;
+    const sampleSize = 15; // Reduced from 30 for performance
+
+    // Create ImageData for batch pixel operations
+    const imageData = this.context.createImageData(this.size, this.size);
+    const data = imageData.data;
+
+    for (let mapX = 0; mapX < this.size; mapX += sampleSize) {
+      for (let mapZ = 0; mapZ < this.size; mapZ += sampleSize) {
+        // Convert map coordinates back to world coordinates
+        const worldX = playerX + (mapX - this.size / 2) / this.size * this.range;
+        const worldZ = playerZ + (mapZ - this.size / 2) / this.size * this.range;
+
+        // Sample terrain at this world position
+        const height = worldSystem.getHeightAt(worldX, worldZ);
+        const biome = worldSystem.getBiomeAt(worldX, worldZ) || 'plains';
+
+        // Get color for this terrain sample
+        const color = this._getTerrainColor(height, biome);
+        const [r, g, b] = this.hexToRgb(color);
+
+        // Set pixels for this sample area using ImageData (batch operation)
+        for (let px = 0; px < sampleSize && (mapX + px) < this.size; px++) {
+          for (let pz = 0; pz < sampleSize && (mapZ + pz) < this.size; pz++) {
+            const pixelIndex = ((mapZ + pz) * this.size + (mapX + px)) * 4;
+            data[pixelIndex] = r;     // Red
+            data[pixelIndex + 1] = g; // Green
+            data[pixelIndex + 2] = b; // Blue
+            data[pixelIndex + 3] = 255; // Alpha
+          }
+        }
+      }
+    }
+
+    // Put the ImageData back to canvas (single batch operation)
+    this.context.putImageData(imageData, 0, 0);
+  }
+
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+      parseInt(result[1], 16),
+      parseInt(result[2], 16),
+      parseInt(result[3], 16)
+    ] : [0, 0, 0];
+  }
+
+  _drawLandmarks() {
+    const landmarkSystem = this.engine.systems.landmarks;
+    if (!landmarkSystem || !landmarkSystem.landmarks) return;
+
+    landmarkSystem.landmarks.forEach(landmark => {
+      const { mapX, mapY } = this._worldToMap(landmark.position.x, landmark.position.z);
+      
+      // Draw landmark as yellow circle
+      this.context.beginPath();
+      this.context.arc(mapX, mapY, 3, 0, 2 * Math.PI);
+      this.context.fillStyle = this.colors.landmark;
+      this.context.fill();
+      
+      // Add glow effect
+      this.context.shadowColor = this.colors.landmark;
+      this.context.shadowBlur = 4;
+      this.context.fill();
+      this.context.shadowBlur = 0;
+    });
+  }
+
+  _drawMana() {
+    const worldSystem = this.engine.systems.world;
+    if (!worldSystem || !worldSystem.manaNodes) return;
+
+    worldSystem.manaNodes.forEach(manaNode => {
+      if (manaNode.collected) return; // Skip collected mana
+
+      const { mapX, mapY } = this._worldToMap(manaNode.position.x, manaNode.position.z);
+      
+      // Draw mana orb as green circle
+      this.context.beginPath();
+      this.context.arc(mapX, mapY, 2, 0, 2 * Math.PI);
+      this.context.fillStyle = this.colors.mana;
+      this.context.fill();
+      
+      // Add pulsing glow
+      this.context.shadowColor = this.colors.mana;
+      this.context.shadowBlur = 3;
+      this.context.fill();
+      this.context.shadowBlur = 0;
+    });
+  }
+
+  _drawPlayerOffMap() {
+    // Draw off-map indicator in corner
+    this.context.fillStyle = this.colors.player;
+    this.context.beginPath();
+    this.context.arc(5, 5, 3, 0, 2 * Math.PI);
+    this.context.fill();
+  }
+
+  _drawPlayers() {
+    const playerSystem = this.engine.systems.player;
+    if (!playerSystem || !playerSystem.players) return;
+
+    const localPlayer = playerSystem.localPlayer;
+
+    // Draw other players
+    Object.values(playerSystem.players).forEach(player => {
+      if (player.id === localPlayer?.id) return; // Skip local player
+
+      const { mapX, mapY } = this._worldToMap(player.position.x, player.position.z);
+      
+      // Draw player dot (red for others)
+      this.context.beginPath();
+      this.context.arc(mapX, mapY, 2, 0, 2 * Math.PI);
+      this.context.fillStyle = this.colors.otherPlayer;
+      this.context.fill();
+
+      // Draw player name if close enough
+      if (mapX > 10 && mapX < this.size - 10 && mapY > 10 && mapY < this.size - 10) {
+        this.context.fillStyle = this.colors.otherPlayer;
+        this.context.font = '8px Arial';
+        this.context.textAlign = 'center';
+        this.context.fillText(player.name || 'Player', mapX, mapY - 5);
+      }
+    });
+
+    // Draw local player (white dot with direction indicator)
+    if (localPlayer) {
+      const { mapX, mapY } = this._worldToMap(localPlayer.position.x, localPlayer.position.z);
+      
+      // Draw local player dot (white)
+      this.context.beginPath();
+      this.context.arc(mapX, mapY, 3, 0, 2 * Math.PI);
+      this.context.fillStyle = this.colors.player;
+      this.context.fill();
+
+      // Draw direction indicator (triangle pointing forward)
+      const directionAngle = localPlayer.rotation.y || 0;
+      const dirLength = 4;
+      const dirX = mapX + Math.sin(directionAngle) * dirLength;
+      const dirY = mapY - Math.cos(directionAngle) * dirLength;
+
+      this.context.beginPath();
+      this.context.moveTo(mapX, mapY);
+      this.context.lineTo(dirX, dirY);
+      this.context.lineTo(dirX - Math.cos(directionAngle) * 2, dirY + Math.sin(directionAngle) * 2);
+      this.context.closePath();
+      this.context.fillStyle = this.colors.player;
+      this.context.fill();
+
+      // Draw FOV cone (optional, for debugging)
+      // Implementation would draw a sector from player position
+    }
+  }
+
+  _drawCompassRose() {
+    const centerX = this.size / 2;
+    const centerY = this.size / 2;
+
+    const player = this.engine.systems.player?.localPlayer;
+    const playerRotation = player?.rotation.y || 0;
+
+    // Save current transformation
+    this.context.save();
+
+    // Translate to center and rotate opposite to player rotation
+    this.context.translate(centerX, centerY);
+    this.context.rotate(-playerRotation);
+
+    // Draw compass labels
+    const labels = [
+      { text: 'N', angle: 0, color: this.colors.compassN },
+      { text: 'E', angle: Math.PI / 2, color: this.colors.compassE },
+      { text: 'S', angle: Math.PI, color: this.colors.compassS },
+      { text: 'W', angle: 3 * Math.PI / 2, color: this.colors.compassW }
+    ];
+
+    labels.forEach(label => {
+      const rad = label.angle;
+      const x = Math.cos(rad) * (this.size / 2 - 15);
+      const y = Math.sin(rad) * (this.size / 2 - 15);
+
+      this.context.fillStyle = label.color;
+      this.context.font = 'bold 12px Arial';
+      this.context.textAlign = 'center';
+      this.context.textBaseline = 'middle';
+      this.context.fillText(label.text, x, y);
+    });
+
+    // Restore transformation
+    this.context.restore();
+
+    // Draw center dot
+    this.context.beginPath();
+    this.context.arc(centerX, centerY, 2, 0, 2 * Math.PI);
+    this.context.fillStyle = this.colors.player;
+    this.context.fill();
   }
   
   selectSpell(index) {
@@ -259,12 +583,6 @@ export class UISystem {
     }
   }
   
-  updateMinimap() {
-    // Minimap functionality is now handled by MinimapSystem
-    // This method is kept for backwards compatibility
-    return;
-  }
-  
   update(delta) {
     // Update UI elements that need continuous updates
     
@@ -277,7 +595,21 @@ export class UISystem {
     // Update time display if atmosphere system exists
     this.updateTimeDisplay();
     
-    // Minimap is now updated by MinimapSystem
+    // Update minimap if initialized and game is playing
+    if (this.minimapInitialized && this.engine.gameState === GameStates.PLAYING) {
+      this.lastUpdate += delta;
+      if (this.lastUpdate >= this.updateInterval) {
+        this.lastUpdate = 0;
+        this._clear();
+        this._drawTerrain();
+        this._drawLandmarks();
+        this._drawMana();
+        this._drawPlayers();
+        this._drawCompassRose();
+      }
+    }
+    
+    // Deprecated: updateMinimap() - minimap now handled internally
   }
   
   /**
@@ -705,7 +1037,22 @@ export class UISystem {
     // TODO: Implement pause menu UI
     console.log('Pause menu would show here');
   }
-  
+
+  showQuestLog() {
+    // Minimal implementation: log active quests to console or show simple alert
+    // In full implementation, this would open a quest log UI panel
+    const questManager = this.engine.systems.questManager;
+    if (questManager) {
+      const activeQuests = questManager.getActiveQuests();
+      console.log('Quest Log:', activeQuests);
+      // For now, show a simple alert with quest status
+      const status = activeQuests.map(q => `${q.name}: ${q.status}`).join('\n');
+      alert(`Quest Log:\n${status}`);
+    } else {
+      console.log('No quest manager found');
+    }
+  }
+
   /**
    * Clean up resources when component is destroyed
    */
@@ -715,6 +1062,16 @@ export class UISystem {
       this.unsubscribeState();
       this.unsubscribeState = null;
     }
+
+    // Clean up minimap container
+    if (this.minimapContainer) {
+      this.minimapContainer.remove();
+      this.minimapContainer = null;
+    }
+
+    // Clean up canvas context references
+    this.canvas = null;
+    this.context = null;
   }
   
   /**
@@ -725,5 +1082,5 @@ export class UISystem {
       this.elements.timeToggleButton.style.display = 'flex';
     }
   }
-}
 
+}

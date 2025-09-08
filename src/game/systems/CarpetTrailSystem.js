@@ -1,8 +1,9 @@
 import * as THREE from 'three';
+import { System } from '../core/System.js';
 
-export class CarpetTrailSystem {
+export class CarpetTrailSystem extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'carpetTrail');
     this.scene = engine.scene;
     
     // Contrail system
@@ -25,6 +26,24 @@ export class CarpetTrailSystem {
     // Carpet dimensions for contrail positioning
     this.carpetWidth = 5;  // Based on the BoxGeometry in PlayerModels.js
     this.carpetLength = 8; // Based on the BoxGeometry in PlayerModels.js
+  }
+
+  async _initialize() {
+    console.log('CarpetTrailSystem._initialize: Initializing contrail system');
+    // No initialization needed beyond constructor setup
+    // Contrail materials and geometries will be created on first update
+  }
+
+  _update(delta, elapsed) {
+    // Implement trail logic directly to avoid recursion
+    if (this.engine.systemManager.get('playerState') && this.engine.systemManager.get('playerState').localPlayer) {
+      const player = this.engine.systemManager.get('playerState').localPlayer;
+      const speed = player.velocity.length();
+      if (speed > this.minSpeedForEmission) {
+        this.addContrailPoints(player.position, player.rotation, player.velocity, speed);
+      }
+      this.cleanupExpiredPoints();
+    }
   }
   
   /**
@@ -84,20 +103,6 @@ export class CarpetTrailSystem {
     }
   }
   
-  initialize() {
-    console.log("Initializing CarpetTrailSystem");
-    
-    // Create contrail material
-    this.contrailMaterial = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.8,
-      linewidth: 10
-    });
-    
-    // Ensure contrails start emitting immediately
-    this.timeSinceLastEmission = 999; // Force immediate emission on first update
-  }
   
   /**
    * Add a new point to the contrail system
@@ -328,43 +333,6 @@ export class CarpetTrailSystem {
     }
   }
   
-  update(delta) {
-    const player = this.engine.systems.player?.localPlayer;
-    if (!player) return;
-    
-    // Get player position, rotation, and velocity
-    const position = player.position.clone();
-    const rotation = player.rotation.clone();
-    const velocity = player.velocity.clone();
-    const speed = velocity.length();
-    
-    // Update emission timer
-    this.timeSinceLastEmission += delta;
-    
-    // Only emit contrail points when space bar is pressed AND moving fast enough
-    if (this.spaceBarPressed && speed > this.minSpeedForEmission) {
-      // Ensure continuous emission with reasonable frequency
-      // Minimum emission rate regardless of speed to prevent gaps
-      const baseRate = this.emissionRate;
-      const speedFactor = 0.5 + speed / 100;
-      const emissionInterval = 1.0 / (baseRate * speedFactor);
-      // Cap the interval to prevent too sparse emissions at low speeds
-      const maxInterval = 1.0 / 10; // At least 10 points per second
-      const finalInterval = Math.min(emissionInterval, maxInterval);
-      
-      if (this.timeSinceLastEmission > finalInterval) {
-        this.addContrailPoints(position, rotation, velocity, speed);
-        this.timeSinceLastEmission = 0;
-      }
-    }
-    
-    // Clean up expired contrail points
-    this.cleanupExpiredPoints();
-    
-    // Always update the visual representation of the contrails
-    // This ensures fading works even when not emitting new points
-    this.updateContrailLines(speed);
-  }
   
   cleanupExpiredPoints() {
     // Current time

@@ -1,9 +1,11 @@
 import * as THREE from "three";
 import { createNoise2D } from "simplex-noise";
+import { System } from "../core/System.js";
 
-export class WorldSystem {
+export class WorldSystem extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'world');
+    this.requireDependencies([]);
     this.scene = engine.scene;
 
     // Renderer settings moved to Engine.js or AtmosphereSystem where appropriate
@@ -147,7 +149,7 @@ export class WorldSystem {
     return result;
   }
 
-  async initialize() {
+  async _initialize() {
       console.log("Initializing WorldSystem...");
   
       // Log camera position
@@ -546,20 +548,69 @@ export class WorldSystem {
 
   // --- createManaNodes method remains unchanged ---
   createManaNodes() {
+    // Clear existing nodes
     this.manaNodes.forEach(node => { if (node.parent) { this.scene.remove(node); } });
     this.manaNodes = [];
     const player = this.engine.systems.player?.localPlayer; if (!player) return;
-    const nodeCount = 30; const spawnRadius = this.chunkSize * 5;
+
+    // Procedural generation using noise for density
+    const spawnRadius = this.chunkSize * 5; // 5120
+    const gridStep = 200; // Sample every 200 units for efficiency
+    const potentialNodes = [];
+    const gridRadius = spawnRadius / gridStep;
+
+    // Generate potential positions in a grid around player
+    for (let gx = -gridRadius; gx <= gridRadius; gx++) {
+      for (let gz = -gridRadius; gz <= gridRadius; gz++) {
+        const x = player.position.x + gx * gridStep + (Math.random() - 0.5) * gridStep * 0.5; // Add jitter
+        const z = player.position.z + gz * gridStep + (Math.random() - 0.5) * gridStep * 0.5;
+        const distance = Math.sqrt((x - player.position.x)**2 + (z - player.position.z)**2);
+        if (distance > spawnRadius) continue;
+
+        // Use fractal noise for density: higher noise = higher spawn probability
+        const noiseDensity = this.fractalNoise(x * 0.001, z * 0.001, 0.01, 4, 0.5, 2.0); // Low frequency for natural clusters
+        const spawnProb = (noiseDensity + 1) / 2; // Normalize to 0-1
+
+        if (Math.random() < spawnProb && potentialNodes.length < 50) { // Cap potentials to avoid too many
+          const terrainHeight = this.getTerrainHeight(x, z);
+          const y = terrainHeight + 30;
+          potentialNodes.push({
+            position: new THREE.Vector3(x, y, z),
+            value: Math.floor(10 + (spawnProb * 20)) // Value scaled by density
+          });
+        }
+      }
+    }
+
+    // Select top ~30 nodes (or all if fewer) for spawning
+    potentialNodes.sort((a, b) => b.value - a.value); // Prioritize higher value
+    const nodeCount = Math.min(30, potentialNodes.length);
     for (let i = 0; i < nodeCount; i++) {
-      const angle = Math.random() * Math.PI * 2; const distance = Math.random() * spawnRadius;
-      const x = player.position.x + Math.cos(angle) * distance; const z = player.position.z + Math.sin(angle) * distance;
-      const terrainHeight = this.getTerrainHeight(x, z); const y = terrainHeight + 30; // Further increased height for better accessibility
-      const nodeMesh = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 16), new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.7, transparent: true, opacity: 0.8 })); // Increased size
-      const glowMesh = new THREE.Mesh(new THREE.SphereGeometry(4, 16, 16), new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.3, side: THREE.BackSide })); // Increased size
+      const posData = potentialNodes[i];
+      const nodeMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(3, 16, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0x00ffff,
+          emissive: 0x00ffff,
+          emissiveIntensity: 0.7,
+          transparent: true,
+          opacity: 0.8
+        })
+      );
+      const glowMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(4, 16, 16),
+        new THREE.MeshBasicMaterial({
+          color: 0x00ffff,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.BackSide
+        })
+      );
       nodeMesh.add(glowMesh);
-      nodeMesh.position.set(x, y, z);
-      nodeMesh.userData = { type: 'mana', value: 10 + Math.floor(Math.random() * 20), collected: false };
-      this.manaNodes.push(nodeMesh); this.scene.add(nodeMesh);
+      nodeMesh.position.copy(posData.position);
+      nodeMesh.userData = { type: 'mana', value: posData.value, collected: false };
+      this.manaNodes.push(nodeMesh);
+      this.scene.add(nodeMesh);
     }
   }
 
@@ -1843,7 +1894,10 @@ updateLandmarks(delta, elapsed) {
 
   update(delta, elapsed) {
     const player = this.engine.systems.player?.localPlayer;
-    if (!player) return;
+    if (!player) {
+      // console.warn("WorldSystem.update: No player available");
+      return;
+    }
 
     // Check if we need more mana nodes
     if (this.manaNodes.filter(node => node.userData && !node.userData.collected).length < 10) {
@@ -1863,6 +1917,35 @@ updateLandmarks(delta, elapsed) {
         node.rotation.y += delta * 0.5;
       }
     });
+
+    // Proximity-based glow effect for mana nodes
+    const collectionRadius = 50; // Glow starts at 50 units
+    this.manaNodes.forEach((node) => {
+      if (node.userData && !node.userData.collected) {
+        const distance = player.position.distanceTo(node.position);
+        const glowFactor = Math.max(0, 1 - (distance / collectionRadius)); // 1 close, 0 far
+
+        // Adjust glow based on proximity
+        const glowMeshes = node.children.filter(child => child.material && child.material.opacity !== undefined);
+        glowMeshes.forEach(glowMesh => {
+          glowMesh.material.opacity = 0.3 + glowFactor * 0.7; // Brighter closer
+          if (glowMesh.material.emissiveIntensity !== undefined) {
+            glowMesh.material.emissiveIntensity = glowFactor; // Intensify emissive
+          }
+          glowMesh.scale.setScalar(1 + glowFactor * 0.5); // Slightly larger when close
+        });
+
+        // Query player.mana for additional effects: brighter if mana low (encourages collection)
+        const playerMana = player.mana || 0;
+        const maxMana = 100; // Assume max mana, can be dynamic if needed
+        const manaLowFactor = Math.max(0, 1 - (playerMana / maxMana)); // 1 if low, 0 if full
+        glowMeshes.forEach(glowMesh => {
+          if (glowMesh.material.emissiveIntensity !== undefined) {
+            glowMesh.material.emissiveIntensity += manaLowFactor * 0.5; // Extra glow if mana low
+          }
+        });
+      }
+    });
   }
 
   // --- checkManaCollection method remains unchanged ---
@@ -1877,6 +1960,13 @@ updateLandmarks(delta, elapsed) {
         }
       }
     });
+
+    // Emit event with total amount collected for QuestManager/PlayerSpells
+    if (collectedNodes.length > 0) {
+      const totalAmount = collectedNodes.reduce((sum, node) => sum + node.value, 0);
+      this.engine.eventBus.emit('manaCollected', { amount: totalAmount });
+    }
+
     return collectedNodes;
   }
 }

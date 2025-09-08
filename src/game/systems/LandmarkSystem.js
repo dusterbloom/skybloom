@@ -1,8 +1,9 @@
 import * as THREE from "three";
+import { System } from '../core/System.js';
 
-export class LandmarkSystem {
+export class LandmarkSystem extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'landmarks');
     this.scene = engine.scene;
     this.worldSystem = engine.systems.world;
     
@@ -71,14 +72,19 @@ export class LandmarkSystem {
       })
     };
   }
-  
-  initialize() {
-    console.log("Initializing LandmarkSystem...");
-    
-    // Create more materials here if needed
-    
-    console.log("LandmarkSystem initialized");
+
+  async _initialize() {
+    console.log('LandmarkSystem._initialize: Initializing landmark materials and configuration');
+    // Materials already created in constructor, no additional initialization needed
+    // Will start generating landmarks in update loop
   }
+
+  _update(delta, elapsed) {
+    // Direct implementation to avoid recursion
+    this.checkForLandmarkLocations();
+    this.cleanupInvalidLandmarks();
+  }
+  
   
   /**
    * Check if a position is suitable for a landmark
