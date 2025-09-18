@@ -108,36 +108,36 @@ export class Engine {
     // Initialize all core systems
     await this.assets.initialize();
 
-    Logger.debug('Engine initialize: systemManager exists?', !!this.systemManager);
+    // Logger.debug('Engine initialize: systemManager exists?', !!this.systemManager);
 
     // Register systems to SystemManager
     let sm = this.systemManager;
     sm = sm.register(new NetworkManager(this));
-    Logger.debug('After NetworkManager register, systems keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After NetworkManager register, systems keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new MobileLODManager(this));
-    Logger.debug('After MobileLODManager register, systems keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After MobileLODManager register, systems keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new WorldSystem(this));
-    Logger.debug('After WorldSystem register, has world?:', this.systemManager.systems.has('world'), 'keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After WorldSystem register, has world?:', this.systemManager.systems.has('world'), 'keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new WaterSystem(this));
-    Logger.debug('After WaterSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After WaterSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new SkyboxSystem(this));
-    Logger.debug('After SkyboxSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After SkyboxSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new SeaFloorSystem(this));
-    Logger.debug('After SeaFloorSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After SeaFloorSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new UnderwaterEffectsSystem(this));
-    Logger.debug('After UnderwaterEffectsSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After UnderwaterEffectsSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new PerformanceBenchmarkSystem(this));
-    Logger.debug('After PerformanceBenchmarkSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After PerformanceBenchmarkSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new VegetationSystem(this));
-    Logger.debug('After VegetationSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('After VegetationSystem register, systems keys:', Array.from(this.systemManager.systems.keys()));
 
     sm = sm.register(new PlayerStateManager(this))
       .register(new PlayerPhysics(this))
@@ -156,7 +156,7 @@ export class Engine {
   
       sm = sm.register(new QuestManager(this));
 
-    Logger.debug('All systems registered, keys:', Array.from(this.systemManager.systems.keys()));
+    // Logger.debug('All systems registered, keys:', Array.from(this.systemManager.systems.keys()));
 
     // Define initialization order (some systems depend on others)
     const initOrder = [
@@ -215,13 +215,13 @@ export class Engine {
     
     // Set callback for when play button is clicked
     this.introScreen.onPlay(async () => {
-      Logger.info("Game started from intro screen");
+      // Logger.info("Game started from intro screen");
       this.gameStarted = true;
       
        // Start any required gameplay systems here
        const player = this.systemManager.get('player');
        if (player) {
-         Logger.debug("Starting player systems");
+          // Logger.debug("Starting player systems");
          if (typeof player.enable === 'function') {
            player.enable();
          }
@@ -234,13 +234,13 @@ export class Engine {
 
        // Request pointer lock for desktop gameplay
        if (!this.input.isTouchDevice) {
-         Logger.debug("Requesting pointer lock for gameplay");
+          // Logger.debug("Requesting pointer lock for gameplay");
          this.input.requestPointerLock();
        }
       
       const network = this.systemManager.get('network');
       if (network) {
-        Logger.debug("Starting network systems");
+         // Logger.debug("Starting network systems");
         network.connect();
       }
 
@@ -258,9 +258,9 @@ export class Engine {
       
       // Expose test runner to console
       window.runSystemTests = async () => {
-        Logger.info('Running system tests...');
+         // Logger.info('Running system tests...');
         const results = await this._testRunner.runTests();
-        Logger.info('Tests complete!');
+         // Logger.info('Tests complete!');
         return results;
       };
     }
@@ -269,13 +269,13 @@ export class Engine {
     this.canvas.addEventListener('click', () => {
       // Only request lock if the game is playing and lock isn't already active
       if (useGameState.getState().currentState === GameStates.PLAYING && !this.input.pointerLocked) {
-          Logger.debug("Requesting pointer lock via canvas click...");
+           // Logger.debug("Requesting pointer lock via canvas click...");
           this.input.requestPointerLock();
       }
     });
 
-    Logger.info("Engine initialized successfully");
-    Logger.debug('Device Info:', {
+    // Logger.info("Engine initialized successfully");
+    // Logger.debug('Device Info:', {
       userAgent: navigator.userAgent,
       deviceMemory: navigator.deviceMemory,
       hardwareConcurrency: navigator.hardwareConcurrency,
@@ -313,7 +313,7 @@ export class Engine {
     if (this.isMobile && this._frameCounter % 120 === 0) {
       const report = this.performanceMonitor.generateReport();
       if (this.qualityManager.updateFromPerformance(report)) {
-        Logger.info('Performance-based quality adjustments applied');
+        // Logger.info('Performance-based quality adjustments applied');
       }
     }
     
@@ -331,7 +331,7 @@ export class Engine {
 
   onVisibilityChange() {
     this.isVisible = document.visibilityState === 'visible';
-    Logger.debug(`Visibility changed: ${this.isVisible ? 'visible' : 'hidden'}`);
+    // Logger.debug(`Visibility changed: ${this.isVisible ? 'visible' : 'hidden'}`);
     this.systemManager.handleVisibilityChange(this.isVisible);
     this.rendererManager.handleVisibilityChange(this.isVisible);
     this.qualityManager.handleVisibilityChange(this.isVisible);
