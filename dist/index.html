@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=device-height">
+  <title>Vibe Carpet</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      background: #0e3857;
+      font-family: "Helvetica Neue", Helvetica, sans-serif;
+    }
+    #loading {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #FFFFFF;
+      background: url("/assets/bg.png") no-repeat center center;
+      background-size: cover;
+      z-index: 1000;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-C6OLhsDE.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/three-CMuIX5RV.js">
+  <link rel="modulepreload" crossorigin href="/assets/game-BrrVKPXi.js">
+</head>
+<body>
+  <div id="loading">
+    <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+      <img src="/assets/crescent.png" style="width: 140px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));">
+      <h1 style="font-size: 42px; font-weight: bold; color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); margin-bottom: 20px;">Vibe Carpet</h1>
+      <div id="progress-bar" style="width: 300px; height: 20px; background: rgba(0, 80, 150, 0.5); border-radius: 10px; overflow: hidden; margin-bottom: 20px;">
+        <div id="progress" style="width: 0%; height: 100%; background: #C87137; transition: width 0.3s;"></div>
+      </div>
+      <p id="loading-text" style="color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);">Preparing your carpet ride...</p>
+    </div>
+  </div>
+  <div id="ui-container"></div>
+  <canvas id="game-canvas"></canvas>
+ 
+</body>
+</html>

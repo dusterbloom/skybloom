@@ -1,3 +1,5 @@
+import { Logger } from '../../utils/Logger.js';
+
 export class System {
   constructor(engine, name) {
     this.engine = engine;
@@ -28,7 +30,7 @@ export class System {
       await this._initialize();
       this.initialized = true;
     } catch (error) {
-      console.error(`Failed to initialize system '${this.name}':`, error);
+      Logger.error(`Failed to initialize system '${this.name}':`, error);
       this.initialized = false;
       // Optionally emit event or handle further
       throw error; // Re-throw to allow engine handling
@@ -39,7 +41,7 @@ export class System {
     try {
       this._update(delta, elapsed);
     } catch (error) {
-      console.error(`Error updating system '${this.name}':`, error);
+      Logger.error(`Error updating system '${this.name}':`, error);
       // Continue without stopping other systems
     }
   }

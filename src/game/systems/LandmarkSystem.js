@@ -1,11 +1,12 @@
 import * as THREE from "three";
+import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System.js';
 
 export class LandmarkSystem extends System {
   constructor(engine) {
     super(engine, 'landmarks');
     this.scene = engine.scene;
-    this.worldSystem = engine.systems.world;
+    this.worldSystem = null; // Will be set later when available
     
     // Landmarks configuration
     this.landmarks = new Map();
@@ -74,7 +75,8 @@ export class LandmarkSystem extends System {
   }
 
   async _initialize() {
-    console.log('LandmarkSystem._initialize: Initializing landmark materials and configuration');
+    Logger.info('LandmarkSystem._initialize: Initializing landmark materials and configuration');
+    Logger.info('LandmarkSystem: Landmark types configured:', this.landmarkTypes.map(t => t.name));
     // Materials already created in constructor, no additional initialization needed
     // Will start generating landmarks in update loop
   }
@@ -83,6 +85,7 @@ export class LandmarkSystem extends System {
     // Direct implementation to avoid recursion
     this.checkForLandmarkLocations();
     this.cleanupInvalidLandmarks();
+    this.animateLandmarks(elapsed);
   }
   
   
@@ -94,6 +97,12 @@ export class LandmarkSystem extends System {
    * @returns {boolean} True if position is suitable
    */
   isPositionSuitableForLandmark(x, z, landmarkType) {
+    // Ensure worldSystem is available
+    if (!this.worldSystem) {
+      this.worldSystem = this.engine.systems.world || this.engine.systemManager.get('world');
+      if (!this.worldSystem) return false;
+    }
+    
     // Check terrain height constraints
     const height = this.worldSystem.getTerrainHeight(x, z);
     if (height < landmarkType.minHeight || height > landmarkType.maxHeight) {
@@ -158,8 +167,14 @@ export class LandmarkSystem extends System {
     try {
       // Validate coordinates
       if (x === undefined || isNaN(x) || z === undefined || isNaN(z)) {
-        console.warn('Invalid coordinates for landmark:', x, z);
+        Logger.warn('Invalid coordinates for landmark:', x, z);
         return null;
+      }
+      
+      // Ensure worldSystem is available
+      if (!this.worldSystem) {
+        this.worldSystem = this.engine.systems.world || this.engine.systemManager.get('world');
+        if (!this.worldSystem) return null;
       }
       
       // Validate terrain height
@@ -167,11 +182,11 @@ export class LandmarkSystem extends System {
       try {
         height = this.worldSystem.getTerrainHeight(x, z);
         if (isNaN(height)) {
-          console.warn('Invalid terrain height for landmark at', x, z);
+          Logger.warn('Invalid terrain height for landmark at', x, z);
           return null;
         }
       } catch (error) {
-        console.warn('Error getting terrain height:', error);
+        Logger.warn('Error getting terrain height:', error);
         return null;
       }
       
@@ -197,7 +212,7 @@ export class LandmarkSystem extends System {
           this.createCrystalFormation(landmarkGroup, size);
           break;
         default:
-          console.warn('Unknown landmark type:', landmarkType.name);
+          Logger.warn('Unknown landmark type:', landmarkType.name);
           return null;
       }
       
@@ -216,7 +231,7 @@ export class LandmarkSystem extends System {
       
       return landmarkGroup;
     } catch (error) {
-      console.error('Error creating landmark:', error);
+      Logger.error('Error creating landmark:', error);
       return null;
     }
   }
@@ -516,9 +531,15 @@ export class LandmarkSystem extends System {
    */
   checkForLandmarkLocations() {
     try {
-      const player = this.engine.systems.player?.localPlayer;
+      // Try to get player from PlayerSystem first, then playerState
+      let player = this.engine.systems.player?.localPlayer;
       if (!player) {
-        // console.log("[LandmarkSystem] No player found");
+        const playerState = this.engine.systemManager.get('playerState');
+        player = playerState?.localPlayer;
+      }
+      
+      if (!player) {
+        Logger.warn("[LandmarkSystem] No player found in either PlayerSystem or playerState");
         return;
       }
       
@@ -528,16 +549,21 @@ export class LandmarkSystem extends System {
         return; // Skip this update if player position is invalid
       }
       
+      // Get worldSystem dynamically
+      if (!this.worldSystem) {
+        this.worldSystem = this.engine.systems.world || this.engine.systemManager.get('world');
+      }
+      
       // Check if worldSystem is ready
       if (!this.worldSystem || !this.worldSystem.chunkSize || !this.worldSystem.viewDistance) {
-        console.log("[LandmarkSystem] WorldSystem not ready");
+        Logger.warn("[LandmarkSystem] WorldSystem not ready:", !!this.worldSystem, this.worldSystem?.chunkSize, this.worldSystem?.viewDistance);
         return; // Skip if worldSystem is not properly initialized
       }
       
       // Check more frequently for landmarks
       if (Math.random() > 0.05) return; // 5% chance per call (increased from 1%)
       
-      // console.log(`[LandmarkSystem] Checking for landmark locations. Player at: ${player.position.x.toFixed(2)}, ${player.position.z.toFixed(2)}. Current landmarks: ${this.landmarks.size}`)
+      Logger.debug(`[LandmarkSystem] Checking for landmark locations. Player at: ${player.position.x.toFixed(2)}, ${player.position.z.toFixed(2)}. Current landmarks: ${this.landmarks.size}`)
       
       // Get player chunk
       const playerChunkX = Math.floor(player.position.x / this.worldSystem.chunkSize);
@@ -576,22 +602,50 @@ export class LandmarkSystem extends System {
           
           // Check if location is suitable
           if (this.isPositionSuitableForLandmark(worldX, worldZ, landmarkType)) {
-            // console.log(`[LandmarkSystem] Creating ${landmarkType.name} landmark at ${worldX.toFixed(2)}, ${worldZ.toFixed(2)}`);
+            Logger.info(`[LandmarkSystem] Creating ${landmarkType.name} landmark at ${worldX.toFixed(2)}, ${worldZ.toFixed(2)}`);
             const landmark = this.createLandmark(worldX, worldZ, landmarkType);
             if (landmark) {
-              // console.log(`[LandmarkSystem] Successfully created landmark, total count: ${this.landmarks.size}`);
+              Logger.info(`[LandmarkSystem] Successfully created landmark, total count: ${this.landmarks.size}`);
             } else {
-              // console.log(`[LandmarkSystem] Failed to create landmark`);
+              Logger.warn(`[LandmarkSystem] Failed to create landmark`);
             }
             return; // Only create one landmark at a time
           }
         }
       }
     } catch (error) {
-      console.error('Error checking for landmark locations:', error);
+      Logger.error('Error checking for landmark locations:', error);
     }
   }
   
+  /**
+   * Animate landmark elements
+   * @param {number} elapsed - Total elapsed time
+   */
+  animateLandmarks(elapsed) {
+    // Apply animations to landmark elements
+    for (const [id, landmark] of this.landmarks.entries()) {
+      const landmarkMesh = landmark.mesh;
+      
+      // Skip if not in scene or invalid
+      if (!landmarkMesh || !landmarkMesh.parent) continue;
+      
+      // Animate any glowing objects
+      landmarkMesh.traverse(object => {
+        if (object.userData && object.userData.isGlowing) {
+          // Pulsing glow effect
+          const pulseRate = object.userData.pulseRate || 1.0;
+          const intensity = object.userData.originalIntensity || 0.5;
+          
+          const newIntensity = intensity * (0.7 + Math.sin(elapsed * pulseRate) * 0.3);
+          if (object.material && object.material.emissiveIntensity !== undefined) {
+            object.material.emissiveIntensity = newIntensity;
+          }
+        }
+      });
+    }
+  }
+
   /**
    * Update landmarks animations and manage lifecycle
    * @param {number} delta - Time since last frame in seconds
@@ -602,27 +656,8 @@ export class LandmarkSystem extends System {
       // Check for new landmark locations
       this.checkForLandmarkLocations();
       
-      // Apply animations to landmark elements
-      for (const [id, landmark] of this.landmarks.entries()) {
-        const landmarkMesh = landmark.mesh;
-        
-        // Skip if not in scene or invalid
-        if (!landmarkMesh || !landmarkMesh.parent) continue;
-        
-        // Animate any glowing objects
-        landmarkMesh.traverse(object => {
-          if (object.userData && object.userData.isGlowing) {
-            // Pulsing glow effect
-            const pulseRate = object.userData.pulseRate || 1.0;
-            const intensity = object.userData.originalIntensity || 0.5;
-            
-            const newIntensity = intensity * (0.7 + Math.sin(elapsed * pulseRate) * 0.3);
-            if (object.material && object.material.emissiveIntensity !== undefined) {
-              object.material.emissiveIntensity = newIntensity;
-            }
-          }
-        });
-      }
+      // Animate landmarks
+      this.animateLandmarks(elapsed);
       
       // Remove landmarks that are too far from player
       const player = this.engine.systems.player?.localPlayer;
@@ -655,7 +690,7 @@ export class LandmarkSystem extends System {
         }
       }
     } catch (error) {
-      console.error('Error updating landmarks:', error);
+      Logger.error('Error updating landmarks:', error);
     }
   }
   
@@ -678,7 +713,7 @@ export class LandmarkSystem extends System {
       // Check if position is valid
       const position = landmark.position;
       if (!position || isNaN(position.x) || isNaN(position.y) || isNaN(position.z)) {
-        console.log(`Removing invalid landmark: ${id}`);
+        Logger.debug(`Removing invalid landmark: ${id}`);
         
         // Remove from scene
         if (landmark.mesh) {

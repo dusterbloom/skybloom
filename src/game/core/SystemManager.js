@@ -1,3 +1,5 @@
+import { Logger } from '../../utils/Logger';
+
 export class SystemManager {
   constructor(engine) {
     this.engine = engine;
@@ -6,7 +8,7 @@ export class SystemManager {
   }
 
   register(system) {
-      console.log('Attempting to register system:', system.constructor.name, 'has name property:', !!system.name, 'properties:', Object.keys(system));
+      //       // Logger.debug('Attempting to register system:', system.constructor.name, 'has name property:', !!system.name, 'properties:', Object.keys(system));
       if (!system.name) {
         throw new Error(`System must have a name property: ${system.constructor.name}`);
       }
@@ -28,26 +30,33 @@ export class SystemManager {
       const system = this.get(systemName);
       if (system) {
         await system.initialize();
-        console.log(`System initialized: ${systemName}`);
+        //         // Logger.info(`System initialized: ${systemName}`);
       }
     }
   }
 
   update(delta, elapsed) {
-    // console.log('SystemManager.update: Starting update cycle at', Date.now(), 'with delta', delta, 'systems:', this.updateOrder);
+    // Logger.debug(`SystemManager.update: Starting update cycle with delta=${delta}, elapsed=${elapsed}, systems: ${this.updateOrder.join(', ')}`);
     for (let i = 0; i < this.updateOrder.length; i++) {
       const systemName = this.updateOrder[i];
       const system = this.get(systemName);
-      // console.log(`SystemManager.update: Updating system ${i+1}/${this.updateOrder.length}:`, systemName, 'system exists:', !!system);
+      // Logger.debug(`SystemManager.update: Updating system ${i+1}/${this.updateOrder.length}: ${systemName}, exists: ${!!system}`);
       if (system && typeof system.update === 'function') {
         try {
+          // Logger.debug(`SystemManager.update: Calling ${systemName}.update(${delta}, ${elapsed})`);
           system.update(delta, elapsed);
+          // Logger.debug(`SystemManager.update: ${systemName} updated successfully`);
         } catch (error) {
-          console.error(`Error updating system '${systemName}':`, error);
+          Logger.error(`SystemManager.update: Error updating ${systemName}:`, error);
+          throw error;
         }
+      } else if (!system) {
+        Logger.warn(`SystemManager.update: System ${systemName} not found`);
+      } else {
+        Logger.warn(`SystemManager.update: System ${systemName} has no update method`);
       }
     }
-    // console.log('SystemManager.update: Finished update cycle');
+    //     // Logger.debug('SystemManager.update: Finished update cycle');
   }
 
   handleVisibilityChange(visible) {

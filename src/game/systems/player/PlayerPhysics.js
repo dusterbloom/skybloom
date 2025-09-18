@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Logger } from '../../../utils/Logger.js';
 import { System } from "../../core/System.js";
 
 export class PlayerPhysics extends System {
@@ -103,7 +104,7 @@ export class PlayerPhysics extends System {
     // Enforce minimum altitude (above terrain)
     const worldSystem = this.engine.systemManager.get('world');
     if (!worldSystem) {
-      console.warn('PlayerPhysics: world system not available');
+      Logger.warn('PlayerPhysics: world system not available');
       return;
     }
     const terrainHeight = worldSystem.getTerrainHeight(

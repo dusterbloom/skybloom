@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Logger } from '../../../utils/Logger.js';
 
 /**
  * MoonSystem - Manages the moon appearance and night lighting
@@ -33,7 +34,7 @@ export class MoonSystem {
         (texture) => resolve(texture),
         undefined,
         () => {
-          console.warn("Failed to load moon texture, using fallback");
+          Logger.warn("Failed to load moon texture, using fallback");
           // Create a fallback texture if the moon texture fails to load
           const canvas = document.createElement('canvas');
           canvas.width = 256;
@@ -84,9 +85,10 @@ export class MoonSystem {
   
   /**
    * Update the moon system
-   * @param {number} delta - Time delta in minutes
+   * @param {number} delta - Time delta in seconds
+   * @param {number} elapsed - Total elapsed time
    */
-  update(delta) {
+  update(delta, elapsed) {
     const timeOfDay = this.atmosphereSystem.getTimeOfDay();
     const nightFactor = this.atmosphereSystem.getNightFactor();
     const moonPhase = this.atmosphereSystem.getMoonPhase();
@@ -213,4 +215,6 @@ export class MoonSystem {
   getMoonPosition() {
     return this.moonPosition.clone();
   }
+
+
 }

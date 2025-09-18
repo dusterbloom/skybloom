@@ -195,9 +195,10 @@ export class StarSystem {
   
   /**
    * Update the star system
-   * @param {number} delta - Time delta in minutes
+   * @param {number} delta - Time delta in seconds
+   * @param {number} elapsed - Total elapsed time
    */
-  update(delta) {
+  update(delta, elapsed) {
     const nightFactor = this.atmosphereSystem.getNightFactor();
     
     // Update stars visibility based on night factor

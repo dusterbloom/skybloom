@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Logger } from '../../../utils/Logger.js';
 
 export class PlayerSpells {
   constructor(playerSystem) {
@@ -35,14 +36,14 @@ export class PlayerSpells {
     try {
       const response = await fetch('/assets/spells.json');
       this.spells = await response.json();
-      console.log('Spells loaded:', this.spells);
+      Logger.info('Spells loaded:', this.spells);
       
       // Initialize cooldowns
       this.spells.forEach(spell => {
         this.cooldowns[spell.name] = 0;
       });
     } catch (error) {
-      console.error('Failed to load spells:', error);
+      Logger.error('Failed to load spells:', error);
       // Fallback to empty
     }
     
@@ -169,7 +170,7 @@ export class PlayerSpells {
         effectData.reset = () => { player.manaMultiplier = player.manaMultiplier / effect.value || 1; };
         break;
       default:
-        console.warn('Unknown effect type:', effect.type);
+        Logger.warn('Unknown effect type:', effect.type);
         return;
     }
     
@@ -262,7 +263,7 @@ export class PlayerSpells {
     const playerState = this.playerSystem.engine.systemManager.get('playerState');
     const player = playerState?.localPlayer;
     if (!player) {
-      console.warn('PlayerSpells.unlockNextSpell: No localPlayer available');
+      Logger.warn('PlayerSpells.unlockNextSpell: No localPlayer available');
       return;
     }
     
@@ -273,7 +274,7 @@ export class PlayerSpells {
           this.engine.systemManager.get('ui').showMessage(`Unlocked spell: ${this.spells[i].name}`);
         }
         player.currentSpell = i;
-        console.log('PlayerSpells.unlockNextSpell: Unlocked spell', i, this.spells[i].name);
+        Logger.info('PlayerSpells.unlockNextSpell: Unlocked spell', i, this.spells[i].name);
         return;
       }
     }

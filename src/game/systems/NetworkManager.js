@@ -3,6 +3,7 @@ import { EventEmitter } from '../../utils/EventEmitter';
 import { IntroScreen } from '../ui/screens/IntroScreen';
 import { PlayerList } from '../ui/components/PlayerList';
 import { System } from '../core/System';
+import { Logger } from '../../utils/Logger.js';
 
 export class NetworkManager extends System {
   constructor(engine) {
@@ -52,7 +53,7 @@ export class NetworkManager extends System {
       this.serverUrl = 'http://localhost:4000';
     }
     
-    console.log("Connecting to server URL:", this.serverUrl);
+    Logger.info("Connecting to server URL:", this.serverUrl);
     
     // Create socket but don't connect yet
     this.socket = io(this.serverUrl, {
@@ -71,18 +72,18 @@ export class NetworkManager extends System {
     
     // If in simulation mode, connect automatically after a short delay
     if (this.useSimulation) {
-      console.log("Using network simulation mode");
+      Logger.info("Using network simulation mode");
       setTimeout(() => {
         this.simulateConnection();
       }, 500);
     }
     
-    console.log("Network manager initialized");
+    Logger.info("Network manager initialized");
   }
   
   setupEventListeners() {
     this.socket.on('connect', () => {
-      console.log('Connected to server');
+      Logger.info('Connected to server');
       this.isConnected = true;
       this.introScreen.updateServerStatus('Connected to server', 'success');
       this.eventEmitter.emit('connected');
@@ -92,20 +93,20 @@ export class NetworkManager extends System {
     });
     
     this.socket.on('disconnect', () => {
-      console.log('Disconnected from server');
+      Logger.warn('Disconnected from server');
       this.isConnected = false;
       this.introScreen.updateServerStatus('Disconnected from server. Reconnecting...', 'error');
       this.eventEmitter.emit('disconnected');
     });
     
     this.socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
+      Logger.error('Connection error:', error);
       this.introScreen.updateServerStatus('Server connection error. Please try again.', 'error');
     });
     
     this.socket.on('player_id', (data) => {
       this.localPlayerId = data.id;
-      console.log('Received player ID:', this.localPlayerId);
+      Logger.debug('Received player ID:', this.localPlayerId);
       this.eventEmitter.emit('connected', { id: this.localPlayerId });
       
       // Hide intro screen after successful connection
@@ -162,13 +163,13 @@ export class NetworkManager extends System {
   }
   
   simulateConnection() {
-    console.log("Simulating network connection");
+    Logger.info("Simulating network connection");
     this.introScreen.updateServerStatus('Connected to simulation server', 'success');
     
     setTimeout(() => {
       // Simulate receiving player ID
       this.localPlayerId = 'player_' + Math.floor(Math.random() * 10000);
-      console.log('Simulated player ID:', this.localPlayerId);
+      Logger.debug('Simulated player ID:', this.localPlayerId);
       
       // Emit connected event
       this.isConnected = true;
@@ -194,7 +195,7 @@ export class NetworkManager extends System {
       this.handlePlayerJoin({ id: 'player_ai_1', name: 'Magic Bot 1', x: 10, y: 5, z: 20 });
       this.handlePlayerJoin({ id: 'player_ai_2', name: 'Magic Bot 2', x: -15, y: 7, z: -5 });
       
-      console.log("Network simulation initialized");
+      Logger.info("Network simulation initialized");
     }, 500);
   }
   

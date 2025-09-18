@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System';
 
 export class MinimapSystem extends System {
@@ -38,7 +39,7 @@ export class MinimapSystem extends System {
   }
 
   async initialize() {
-    console.log("MinimapSystem disabled - using UISystem for minimap rendering");
+    Logger.info("MinimapSystem disabled - using UISystem for minimap rendering");
     this.enabled = false;
     this.initialized = true;
   }

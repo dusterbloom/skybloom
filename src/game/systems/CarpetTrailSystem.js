@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System.js';
 
 export class CarpetTrailSystem extends System {
@@ -29,7 +30,7 @@ export class CarpetTrailSystem extends System {
   }
 
   async _initialize() {
-    console.log('CarpetTrailSystem._initialize: Initializing contrail system');
+    Logger.info('CarpetTrailSystem._initialize: Initializing contrail system');
     // No initialization needed beyond constructor setup
     // Contrail materials and geometries will be created on first update
   }
@@ -70,7 +71,7 @@ export class CarpetTrailSystem extends System {
    * Reset trail when tab regains focus or on error
    */
   resetTrail() {
-    console.log('Resetting carpet contrail system');
+    Logger.info('Resetting carpet contrail system');
     
     // Clear contrail points
     this.leftContrailPoints = [];
@@ -111,7 +112,7 @@ export class CarpetTrailSystem extends System {
     try {
       // Validate position and rotation
       if (!playerPosition || !playerRotation || isNaN(playerPosition.x)) {
-        console.warn('Invalid position for contrail:', playerPosition);
+        Logger.warn('Invalid position for contrail:', playerPosition);
         return;
       }
       
@@ -169,7 +170,7 @@ export class CarpetTrailSystem extends System {
       // Update contrail visuals
       this.updateContrailLines(speed);
     } catch (error) {
-      console.error('Error adding contrail points:', error);
+      Logger.error('Error adding contrail points:', error);
     }
   }
   
@@ -329,7 +330,7 @@ export class CarpetTrailSystem extends System {
         this.scene.add(this.rightContrailLine);
       }
     } catch (error) {
-      console.error('Error updating contrail lines:', error);
+      Logger.error('Error updating contrail lines:', error);
     }
   }
   

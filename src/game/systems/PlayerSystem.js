@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { System } from '../core/System.js';
+import { Logger } from '../../utils/Logger.js';
+import { Howl } from 'howler';
 import { PlayerPhysics } from './player/PlayerPhysics';
 import { PlayerSpells } from './player/PlayerSpells';
 import { PlayerInput } from './player/PlayerInput';
 import { PlayerModels } from './player/PlayerModels';
-import { Howl } from 'howler'; // Add this at the top if using Howler.js
 
 export class PlayerSystem extends System {
   constructor(engine) {
@@ -29,7 +30,7 @@ export class PlayerSystem extends System {
     const playerState = this.engine.systemManager.get('playerState');
     if (playerState.localPlayer) {
       this.localPlayer = playerState.localPlayer;
-      console.log('PlayerSystem: Local player ready, creating model');
+      Logger.info('PlayerSystem: Local player ready, creating model');
       
       // Initialize models before creating
       await this.models.initialize();
@@ -37,9 +38,9 @@ export class PlayerSystem extends System {
       // Create model for local player
       this.localPlayer.model = this.models.createCarpetModel(this.localPlayer.id);
       this.scene.add(this.localPlayer.model);
-      console.log('PlayerSystem: Carpet model created and added to scene');
+      Logger.info('PlayerSystem: Carpet model created and added to scene');
     } else {
-      console.warn('PlayerSystem: No local player available during initialization');
+      Logger.warn('PlayerSystem: No local player available during initialization');
     }
     
     // Initialize internal subsystems
@@ -47,7 +48,8 @@ export class PlayerSystem extends System {
 
     // Spell input handling
     this.engine.input.on('keydown', (event) => {
-      if (!this.engine.systems.get('playerState').localPlayer) return;
+  if (!this.engine.systems.playerState?.localPlayer) return;
+      if (!this.engine.systems.playerState?.localPlayer) return;
 
       switch (event.code) {
         case 'Digit1':
@@ -64,19 +66,19 @@ export class PlayerSystem extends System {
           break;
         case 'KeyE':
           this.spells.castSpell();
-          this.eventBus.emit('spellCast', { spellIndex: this.engine.systems.get('playerState').localPlayer.currentSpell });
+          this.eventBus.emit('spellCast', { spellIndex: this.engine.systems.playerState?.localPlayer.currentSpell });
           break;
       }
     });
 
-    console.log("Player system initialized");
+    Logger.info("Player system initialized");
   }
   
   /**
    * Enable the player system (called when the game starts)
    */
   enable() {
-    console.log('Player system enabled');
+    Logger.info('Player system enabled');
   }
   
 
@@ -148,12 +150,12 @@ export class PlayerSystem extends System {
     // Set callback for when transition reaches midpoint (full black)
     this.worldTransitionComplete = () => {
       // Generate a new random seed for the world
-      this.engine.systems.get('world').seed = Math.random() * 1000;
+      this.engine.systems.world.seed = Math.random() * 1000;
       
       // Regenerate world
-      this.engine.systems.get('world').createTerrain();
-      this.engine.systems.get('world').createTerrainCollision();
-      this.engine.systems.get('world').createManaNodes();
+      this.engine.systems.world.createTerrain();
+      this.engine.systems.world.createTerrainCollision();
+      this.engine.systems.world.createManaNodes();
       
       // Move player to center of new world at appropriate height
       this.localPlayer.position.set(0, 150, 0);
@@ -194,13 +196,15 @@ export class PlayerSystem extends System {
     this.checkManaCollection();
     this.checkLandmarkVisits();
     this.checkWorldBoundaries();
-    console.log('PlayerSystem._update: Finished');
+    // console.log('PlayerSystem._update: Finished');
   }
 
   
   
   checkManaCollection() {
     const playerState = this.engine.systems.get('playerState');
+    if (!playerState || !playerState.localPlayer) return;
+
     const localPlayer = playerState.localPlayer;
     if (!localPlayer) return;
 
@@ -214,7 +218,13 @@ export class PlayerSystem extends System {
     });
 
     // Check for mana node collection
-    const collectedNodes = this.engine.systems.get('world').checkManaCollection(
+    const worldSystem = this.engine.systems.get('world');
+    if (!worldSystem) {
+      Logger.warn('PlayerSystem: World system not available for mana collection');
+      return;
+    }
+
+    const collectedNodes = worldSystem.checkManaCollection(
       localPlayer.position,
       radius
     );
@@ -236,16 +246,19 @@ export class PlayerSystem extends System {
       this.models.createManaCollectionEffect(node.position);
       
       // Play mana collection sound
-      manaSound.play();
+      // // manaSound.play(); // Audio disabled // Audio disabled
     });
   }
 
   checkLandmarkVisits() {
     const playerState = this.engine.systems.get('playerState');
-    const localPlayer = playerState.localPlayer;
-    if (!localPlayer || !this.engine.systems.get('landmarks')) return;
+    if (!playerState || !playerState.localPlayer) return;
 
-    const landmarks = this.engine.systems.get('landmarks').landmarks;
+    const localPlayer = playerState.localPlayer;
+    const landmarkSystem = this.engine.systems.get('landmarks');
+    if (!landmarkSystem || !landmarkSystem.landmarks) return;
+
+    const landmarks = landmarkSystem.landmarks;
     if (!landmarks) return;
 
     const visitDistance = 50;

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { createNoise2D } from "simplex-noise";
 import { System } from "../core/System.js";
+import { Logger } from "../../utils/Logger.js";
 
 export class WorldSystem extends System {
   constructor(engine) {
@@ -149,30 +150,41 @@ export class WorldSystem extends System {
     return result;
   }
 
-  async _initialize() {
-      console.log("Initializing WorldSystem...");
-  
-      // Log camera position
-      console.log("Initial Camera Position:", this.engine.camera.position);
+   async _initialize() {
+        // Logger.info("Initializing WorldSystem...");
 
-    // --- REMOVED Atmosphere elements ---
-    await this.createMaterials(); // Only terrain materials now
-    // this.createLights(); // Removed
-    // this.createSky(); // Removed
-    // --- END REMOVED Atmosphere elements ---
+       // Log camera position
+        // Logger.debug("Initial Camera Position:", this.engine.camera.position);
 
-    // Set initial camera position (can remain here or move to Engine)
-    this.engine.camera.position.set(0, 500, 500);
-    this.engine.camera.lookAt(0, 0, 0);
+       try {
+         // --- REMOVED Atmosphere elements ---
+          // Logger.debug("WorldSystem: Creating materials...");
+         await this.createMaterials(); // Only terrain materials now
+          // Logger.debug("WorldSystem: Materials created successfully");
 
-    // Generate initial world geometry
-    this.createInitialTerrain();
-    this.createManaNodes();
+         // this.createLights(); // Removed
+         // this.createSky(); // Removed
+         // --- END REMOVED Atmosphere elements ---
 
-    // Camera far plane adjustment removed - handled by Engine.js
+         // Set initial camera position (can remain here or move to Engine)
+         this.engine.camera.position.set(0, 500, 500);
+         this.engine.camera.lookAt(0, 0, 0);
 
-    console.log("WorldSystem initialized");
-  }
+         // Generate initial world geometry
+          // Logger.debug("WorldSystem: Creating initial terrain...");
+         this.createInitialTerrain();
+          // Logger.debug("WorldSystem: Initial terrain created");
+
+         // Don't create mana nodes here - wait for player to be initialized
+
+         // Camera far plane adjustment removed - handled by Engine.js
+
+          // Logger.info("WorldSystem initialized successfully");
+       } catch (error) {
+          // Logger.error("WorldSystem initialization failed:", error);
+         throw error; // Re-throw to prevent silent failures
+       }
+   }
 
   createMaterials() {
     // Create main terrain material
@@ -185,6 +197,14 @@ export class WorldSystem extends System {
       normalScale: new THREE.Vector2(0.05, 0.05),
     });
 
+    // Set proper depth settings to prevent z-fighting with water
+    this.materials.terrain.depthTest = true;
+    this.materials.terrain.depthWrite = true;
+    // Unified polygon offset for terrain to match water (anti-z-fighting)
+        this.materials.terrain.polygonOffset = true;
+        this.materials.terrain.polygonOffsetFactor = -2;
+        this.materials.terrain.polygonOffsetUnits = -2;
+
     // Lower detail terrain material (for distant chunks)
     this.materials.terrainLOD = new THREE.MeshStandardMaterial({
       vertexColors: true,
@@ -193,6 +213,14 @@ export class WorldSystem extends System {
       metalness: 0.01,
       envMapIntensity: 0.3,
     });
+
+    // Set proper depth settings for LOD material too
+    this.materials.terrainLOD.depthTest = true;
+    this.materials.terrainLOD.depthWrite = true;
+    // Unified polygon offset for LOD terrain to match water (anti-z-fighting)
+        this.materials.terrainLOD.polygonOffset = true;
+        this.materials.terrainLOD.polygonOffsetFactor = -2;
+        this.materials.terrainLOD.polygonOffsetUnits = -2;
   }
 
 
@@ -295,7 +323,7 @@ export class WorldSystem extends System {
       this._addToHeightCache(cacheKey, height);
       return height;
     } catch (error) {
-      console.warn("Error in getTerrainHeight:", error);
+       // Logger.warn("Error in getTerrainHeight:", error);
       this._addToHeightCache(cacheKey, 0);
       return 0;
     }
@@ -315,8 +343,33 @@ export class WorldSystem extends System {
     return slope;
   }
 
-  // --- getBiomeColor method remains unchanged ---
+  // --- getBiomeColor method - MAXIMUM BEACH LEVEL TO COMPLETELY ELIMINATE Z-FIGHTING ---
   getBiomeColor(height, x, z) {
+    // MAXIMUM BEACH LEVEL: Beaches now from -15 to +35 (massive elevation increase)
+    if (height < this.minHeight + 85) {
+      // Beach/shoreline area - ensure pure yellow color
+      if (height >= this.minHeight + 35) {
+        return new THREE.Color(0xdddd77); // Pure yellow beach sand
+      } else {
+        // Underwater areas - use proper ocean blue color
+        return new THREE.Color(0x0066aa); // Ocean blue
+      }
+    }
+
+    // Simplified biome logic for areas above beach level
+    if (height < 120) {
+      // Grassland/plains
+      return new THREE.Color(0x44aa44);
+    } else if (height < 200) {
+      // Forest/hills
+      return new THREE.Color(0x227722);
+    } else if (height < 300) {
+      // Mountains
+      return new THREE.Color(0x666666);
+    } else {
+      // Snow peaks
+      return new THREE.Color(0xffffff);
+    }
     const rawTemperature = this.fractalNoise(x, z, 0.0005, 2, 0.5, 2.0);
     const rawMoisture = this.fractalNoise(x, z, 0.0004, 2, 0.5, 2.0);
     const latitudeEffect = Math.cos((z / 10000) * Math.PI) * 0.2;
@@ -499,7 +552,7 @@ export class WorldSystem extends System {
   }
 
   createInitialTerrain() {
-    console.log("Creating initial terrain...");
+     // Logger.info("Creating initial terrain...");
     // Expanded initial terrain area for larger starting world
     for (let x = -8; x <= 8; x++) {
       for (let z = -8; z <= 8; z++) {
@@ -518,7 +571,7 @@ export class WorldSystem extends System {
             this.scene.add(mesh);
             this.currentChunks.set(key, mesh);
           } catch (error) {
-            console.error("Error creating chunk:", error);
+             // Logger.error("Error creating chunk:", error);
           }
         }
       }
@@ -551,7 +604,23 @@ export class WorldSystem extends System {
     // Clear existing nodes
     this.manaNodes.forEach(node => { if (node.parent) { this.scene.remove(node); } });
     this.manaNodes = [];
-    const player = this.engine.systemManager.get('playerState')?.localPlayer; if (!player) return;
+    
+    // Try to get player from PlayerSystem first, then playerState
+    let player = this.engine.systems.player?.localPlayer;
+     // Logger.debug('[WorldSystem] Checking PlayerSystem for player:', !!player);
+    
+    if (!player || !player.position) {
+      const playerState = this.engine.systemManager.get('playerState');
+      player = playerState?.localPlayer;
+       // Logger.debug('[WorldSystem] Checking playerState for player:', !!player, 'has position:', !!(player?.position));
+    }
+    
+    if (!player || !player.position) {
+       // Logger.warn('[WorldSystem] Cannot create mana nodes - player not ready. Player:', !!player, 'Position:', !!(player?.position));
+      return;
+    }
+    
+     // Logger.debug('[WorldSystem] Creating mana nodes at player position:', player.position.x, player.position.y, player.position.z);
 
     // Procedural generation using noise for density
     const spawnRadius = this.chunkSize * 5; // 5120
@@ -573,7 +642,7 @@ export class WorldSystem extends System {
 
         if (Math.random() < spawnProb && potentialNodes.length < 50) { // Cap potentials to avoid too many
           const terrainHeight = this.getTerrainHeight(x, z);
-          const y = terrainHeight + 30;
+          const y = terrainHeight + 60; // Increased height for better visibility
           potentialNodes.push({
             position: new THREE.Vector3(x, y, z),
             value: Math.floor(10 + (spawnProb * 20)) // Value scaled by density
@@ -612,6 +681,8 @@ export class WorldSystem extends System {
       this.manaNodes.push(nodeMesh);
       this.scene.add(nodeMesh);
     }
+    
+     // Logger.info(`[WorldSystem] Created ${nodeCount} mana nodes. Total in array: ${this.manaNodes.length}`);
   }
 
   // --- isPositionSuitableForLandmark method remains unchanged ---
@@ -650,7 +721,7 @@ export class WorldSystem extends System {
   // --- clearHeightCache method remains unchanged ---
   clearHeightCache() {
     this.heightCache.clear(); this.cacheHits = 0; this.cacheMisses = 0;
-    console.log("Terrain height cache cleared");
+     // Logger.info("Terrain height cache cleared");
   }
 
   // --- computeSmoothedNormals method remains unchanged ---
@@ -1870,7 +1941,7 @@ updateLandmarks(delta, elapsed) {
               // LOG: InfiniteWorldDebug - Chunk created
               // console.info(`[InfiniteWorldDebug] Created chunk at (${chunkX}, ${chunkZ}) [key=${key}]`);
             } catch (error) {
-              console.error(`Error creating terrain chunk at ${startX},${startZ}:`, error);
+               // Logger.error(`Error creating terrain chunk at ${startX},${startZ}:`, error);
             }
           }
         }
@@ -1893,13 +1964,26 @@ updateLandmarks(delta, elapsed) {
   updateVisibility(camera) { /* ... */ }
 
   _update(delta, elapsed) {
-    const player = this.engine.systemManager.get('playerState')?.localPlayer;
+    // Try to get player from PlayerSystem first, then playerState
+    let player = this.engine.systems.player?.localPlayer;
+    if (!player) {
+      const playerState = this.engine.systemManager.get('playerState');
+      player = playerState?.localPlayer;
+    }
     if (!player) {
       return;
     }
 
     // Check if we need more mana nodes
-    if (this.manaNodes.filter(node => node.userData && !node.userData.collected).length < 10) {
+    const uncollectedNodes = this.manaNodes.filter(node => node.userData && !node.userData.collected).length;
+    if (uncollectedNodes < 10) {
+       // Logger.debug(`[WorldSystem] Need more mana nodes. Uncollected: ${uncollectedNodes}, Total: ${this.manaNodes.length}`);
+      this.createManaNodes();
+    }
+    
+    // Create initial mana nodes if none exist and player is ready
+    if (this.manaNodes.length === 0 && player && player.position) {
+       // Logger.info('[WorldSystem] No mana nodes exist, creating initial set');
       this.createManaNodes();
     }
 

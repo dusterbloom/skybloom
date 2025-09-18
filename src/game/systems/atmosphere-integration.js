@@ -4,7 +4,7 @@
  */
 
 // Import the new AtmosphereSystem from the new modular architecture
-import { AtmosphereSystem as NewAtmosphereSystem } from "./atmosphere";
+import { AtmosphereSystem as NewAtmosphereSystem } from "./atmosphere/AtmosphereSystem.js";
 import { System } from "../core/System.js";
 
 // Export the new system as a replacement for the old one
@@ -19,7 +19,7 @@ export class AtmosphereSystem extends System {
   }
 
   _update(delta, elapsed) {
-    this._newSystem.update(delta, elapsed);
+    this._newSystem._update(delta, elapsed);
   }
 
   // Forward other methods to the new system

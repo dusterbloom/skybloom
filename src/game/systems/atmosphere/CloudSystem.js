@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Logger } from '../../../utils/Logger.js';
 
 /**
  * CloudSystem - Manages cloud formations and movement
@@ -53,7 +54,7 @@ export class CloudSystem {
         },
         undefined, 
         () => {
-          console.log('Error loading cloud texture, using fallback');
+          Logger.warn('Error loading cloud texture, using fallback');
           // Create a simple cloud texture as fallback
           const canvas = document.createElement('canvas');
           canvas.width = 128;
@@ -87,7 +88,7 @@ export class CloudSystem {
    * Create volumetric clouds
    */
   async createVolumetricClouds() {
-    console.log('Creating volumetric clouds...');
+    Logger.info('Creating volumetric clouds...');
     this.clouds = [];
     
     const cloudMaterial = await this.createCloudSpriteMaterial();
@@ -96,7 +97,7 @@ export class CloudSystem {
     const player = this.engine.systems.player?.localPlayer;
     const playerPos = player ? player.position : new THREE.Vector3(0, 0, 0);
     
-    console.log('Player available for cloud positioning:', player ? 'Yes' : 'No');
+    Logger.debug('Player available for cloud positioning:', player ? 'Yes' : 'No');
     
     for (let i = 0; i < this.cloudCount; i++) {
       const cloud = new THREE.Sprite(cloudMaterial.clone());
@@ -130,7 +131,7 @@ export class CloudSystem {
       this.clouds.push(cloud);
     }
     
-    console.log(`Created ${this.cloudCount} clouds`);
+    Logger.info(`Created ${this.cloudCount} clouds`);
   }
   
   /**

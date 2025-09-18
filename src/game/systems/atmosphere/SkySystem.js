@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Logger } from '../../../utils/Logger.js';
 import { Sky } from "three/examples/jsm/objects/Sky.js";
 import { deviceCapabilities } from "../../core/utils/DeviceCapabilities.js"; // Import device caps
 
@@ -15,7 +16,6 @@ export class SkySystem {
     this.scene = atmosphereSystem.scene;
     this.engine = atmosphereSystem.engine;
     this.sky = null;
-    this.sky = null;
     this.isFallbackSky = false; // Flag for fallback
     this.fallbackSkyMaterial = null; // Material for fallback
   }
@@ -24,35 +24,29 @@ export class SkySystem {
    * Initialize the sky system
    */
   async initialize() {
-    console.log("Initializing SkySystem...");
+    Logger.info("Initializing SkySystem...");
 
-    // Use device capabilities to determine skybox approach
-    if (deviceCapabilities.gpuTier === 'low' || deviceCapabilities.isMobile) {
-      console.log("Using Fallback Sky for low-end/mobile device");
-      this.isFallbackSky = true;
-      this.createFallbackSky();
-    } else {
-      console.log("Using standard THREE.Sky");
-      this.isFallbackSky = false;
-      this.createStandardSky();
-    }
+    // Use fallback sky for now to avoid rendering issues
+    Logger.info("Using Fallback Sky");
+    this.isFallbackSky = true;
+    this.createFallbackSky();
 
     // Store original background color
     this.originalBackgroundColor = new THREE.Color(0x88ccff);
 
     // Set renderer tone mapping exposure
-    console.log('SkySystem: engine.rendererManager:', this.engine.rendererManager);
+    Logger.debug('SkySystem: engine.rendererManager:', this.engine.rendererManager);
     const renderer = this.engine.rendererManager ? this.engine.rendererManager.renderer : this.engine.renderer;
     if (renderer) {
       renderer.toneMappingExposure = 0.6;
     } else {
-      console.log('SkySystem: no renderer found');
+      Logger.warn('SkySystem: no renderer found');
     }
 
     // Initialize scene fog
     this.scene.fog = new THREE.FogExp2(0x88ccff, 0.00003);
 
-    console.log("SkySystem initialization complete");
+    Logger.info("SkySystem initialization complete");
   }
 
 
@@ -109,34 +103,7 @@ export class SkySystem {
     this.scene.add(this.sky);
   }
 
-  update(delta) {
-    // Update sky colors based on time of day
-    this.updateSkyColors(); // This method handles both sky types
 
-    // Make sure sky precisely follows camera to avoid black areas
-    // This is crucial for mobile where the skybox might be closer to the far plane
-    if (this.sky && this.engine.camera) {
-      this.sky.position.copy(this.engine.camera.position);
-      
-      // For mobile devices, we make an extra check to ensure the sky stays visible
-      if (deviceCapabilities.isMobile && this.engine.systems.player && this.engine.systems.player.localPlayer) {
-        // On mobile, also update rotation if needed to match camera's forward direction
-        // This helps prevent black spots when turning quickly
-        const camera = this.engine.camera;
-        const lookDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-        
-        // Only apply subtle rotation corrections to avoid jarring changes
-        if (this.sky.userData.lastLookDir) {
-          const angle = this.sky.userData.lastLookDir.angleTo(lookDir);
-          if (angle > 0.2) { // Only update when significant rotation occurs
-            this.sky.userData.lastLookDir = lookDir.clone();
-          }
-        } else {
-          this.sky.userData.lastLookDir = lookDir.clone();
-        }
-      }
-    }
-  }
 
   updateSkyColors() {
     const timeOfDay = this.atmosphereSystem.getTimeOfDay();
@@ -188,7 +155,7 @@ export class SkySystem {
     } else {
       // Update the standard THREE.Sky uniforms
       const uniforms = this.sky.material.uniforms;
-      const sunPosition = this.atmosphereSystem.getSunPosition();
+      const sunPosition = this.engine.systems.sun.getSunPosition();
       uniforms['sunPosition'].value.copy(sunPosition.normalize());
 
       // Adjust sky parameters based on time (existing logic)
@@ -201,7 +168,7 @@ export class SkySystem {
         if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
           this.engine.rendererManager.renderer.toneMappingExposure = 0.1 + t * 0.4;
         } else {
-          console.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
+          Logger.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
         }
         uniforms['turbidity'].value = 0.5 + t * 7.5;
         uniforms['rayleigh'].value = 0.05 + t * 0.95;
@@ -212,7 +179,7 @@ export class SkySystem {
         if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
           this.engine.rendererManager.renderer.toneMappingExposure = 0.6;
         } else {
-          console.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
+          Logger.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
         }
         uniforms['turbidity'].value = 8;
         uniforms['rayleigh'].value = 1 + t * 0.5;
@@ -223,7 +190,7 @@ export class SkySystem {
         if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
           this.engine.rendererManager.renderer.toneMappingExposure = 0.6;
         } else {
-          console.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
+          Logger.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
         }
         uniforms['turbidity'].value = 8 + t * 2;
         uniforms['rayleigh'].value = 1.5 - t * 0.5;
@@ -234,12 +201,39 @@ export class SkySystem {
         if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
           this.engine.rendererManager.renderer.toneMappingExposure = 0.6 - t * 0.5;
         } else {
-          console.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
+          Logger.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
         }
         uniforms['turbidity'].value = 10 - t * 9.5;
         uniforms['rayleigh'].value = 1 - t * 0.95;
         uniforms['mieCoefficient'].value = 0.025 - t * 0.024;
       }
+    }
+  }
+
+  /**
+   * Update the sky system
+   * @param {number} delta - Time delta
+   * @param {number} elapsed - Total elapsed time
+   */
+  update(delta, elapsed) {
+    try {
+      // Update sky colors based on time of day
+      this.updateSkyColors();
+
+      // Update sky position to follow camera
+      this.updateSkyPosition();
+    } catch (error) {
+      Logger.error('SkySystem update failed:', error);
+    }
+  }
+
+  /**
+   * Update sky position to follow camera
+   */
+  updateSkyPosition() {
+    // Make sure sky follows camera to avoid black areas
+    if (this.sky && this.engine.camera) {
+      this.sky.position.copy(this.engine.camera.position);
     }
   }
 }

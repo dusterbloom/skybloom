@@ -9,6 +9,8 @@
  * 
  * Provides methods to generate reports for optimization purposes.
  */
+import { Logger } from '../../utils/Logger.js';
+
 export class PerformanceMonitor {
   constructor() {
     this.metrics = {
@@ -104,7 +106,7 @@ export class PerformanceMonitor {
    */
   addSystemTime(system, time) {
     if (!this.metrics.systemTimes[system]) {
-      // console.warn(`System "${system}" not found in metrics tracking`);
+      // Logger.warn(`System "${system}" not found in metrics tracking`);
       return;
     }
     

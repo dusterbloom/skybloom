@@ -88,11 +88,7 @@ export class InputManager {
       if (this.deviceMotionAvailable) {
         console.log('Device orientation available, setting up orientation event handler');
         window.addEventListener('deviceorientation', this.onDeviceOrientation.bind(this));
-        console.debug('Device Motion:', {
-          interval: event.interval,
-          acceleration: event.acceleration,
-          rotationRate: event.rotationRate
-        });
+
         // Add device motion event listener
         if (typeof DeviceMotionEvent !== 'undefined') {
           console.log('Device motion available, setting up motion event handler');

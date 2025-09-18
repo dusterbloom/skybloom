@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Logger } from '../../../utils/Logger.js';
 import { System } from '../../core/System.js';
 import { useGameState, GameStates } from '../../state/gameState.js';
 
@@ -38,7 +39,7 @@ export class PlayerInputSystem extends System {
       this.setupTouchControls();
     }
 
-    console.log("PlayerInputSystem initialized");
+    Logger.info("PlayerInputSystem initialized");
   }
 
   setupInput() {
@@ -197,7 +198,7 @@ export class PlayerInputSystem extends System {
   }
 
   setupTouchControls() {
-    console.log('Setting up touch controls UI elements');
+    Logger.debug('Setting up touch controls UI elements');
 
     // Create virtual joystick container
     const joystickContainer = document.createElement('div');
@@ -360,7 +361,7 @@ export class PlayerInputSystem extends System {
   }
 
   showMobileControls() {
-    console.log('Showing mobile controls');
+    Logger.info('Showing mobile controls');
     this.mobileControlElements.forEach(element => {
       element.style.display = 'block';
     });
@@ -368,7 +369,7 @@ export class PlayerInputSystem extends System {
   }
 
   hideMobileControls() {
-    console.log('Hiding mobile controls');
+    Logger.info('Hiding mobile controls');
     this.mobileControlElements.forEach(element => {
       element.style.display = 'none';
     });

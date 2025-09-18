@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Logger } from '../../../utils/Logger.js';
 import { System } from '../../core/System.js';
 
 export class PlayerStateManager extends System {
@@ -18,7 +19,7 @@ export class PlayerStateManager extends System {
         const eventEmitter = network.eventEmitter;
         eventEmitter.on('connected', (data) => {
           if (data && data.id) {
-            console.log('PlayerStateManager: Network connected, updating local player ID');
+            Logger.info('PlayerStateManager: Network connected, updating local player ID');
             this.updatePlayer(this.localPlayer.id, { id: data.id });
             this.localPlayer.id = data.id;
           }
@@ -36,10 +37,10 @@ export class PlayerStateManager extends System {
           this.updateNetworkPlayer(data);
         });
       } else {
-        console.warn('PlayerStateManager: No network system available, running in offline mode');
+        Logger.warn('PlayerStateManager: No network system available, running in offline mode');
       }
   
-      console.log("PlayerStateManager initialized with local player:", !!this.localPlayer);
+      Logger.info("PlayerStateManager initialized with local player:", !!this.localPlayer);
     }
 
   createLocalPlayer(id) {
@@ -70,7 +71,7 @@ export class PlayerStateManager extends System {
     this.players.set(id, player);
     this.localPlayer = player;
 
-    console.log(`Local player created with ID: ${id}`);
+    Logger.info(`Local player created with ID: ${id}`);
   }
 
   createNetworkPlayer(data) {
@@ -92,7 +93,7 @@ export class PlayerStateManager extends System {
 
     this.players.set(data.id, player);
 
-    console.log(`Network player created with ID: ${data.id}`);
+    Logger.info(`Network player created with ID: ${data.id}`);
   }
 
   removePlayer(id) {
@@ -100,7 +101,7 @@ export class PlayerStateManager extends System {
     if (player) {
       this.players.delete(id);
       if (this.localPlayer && this.localPlayer.id === id) this.localPlayer = null;
-      console.log(`Player removed with ID: ${id}`);
+      Logger.info(`Player removed with ID: ${id}`);
     }
   }
 

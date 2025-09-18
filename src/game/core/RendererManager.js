@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Logger } from '../../utils/Logger.js';
 
 export class RendererManager {
   constructor(engine, canvas) {
@@ -11,26 +12,57 @@ export class RendererManager {
     this.camera = engine.camera;
     this._shadowUpdateCounter = 0;
     this._frameSkipAccumulator = 0;
+
+    // Safety check: warn if camera is not available during construction
+    if (!this.camera) {
+      console.warn('RendererManager: Camera not available during construction. This may cause issues.');
+    }
   }
 
   setup() {
-    // Common renderer settings
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: !this.isMobile,
-      powerPreference: "high-performance",
-      precision: this.isMobile ? "highp" : "highp",
-      depth: true,
-      stencil: false,
-      alpha: false,
-      premultipliedAlpha: true,
-      preserveDrawingBuffer: false,
-      logarithmicDepthBuffer: true
-    });
+    try {
+      // Common renderer settings
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        antialias: !this.isMobile,
+        powerPreference: "high-performance",
+        precision: this.isMobile ? "highp" : "highp",
+        depth: true,
+        stencil: false,
+        alpha: false,
+        premultipliedAlpha: true,
+        preserveDrawingBuffer: false,
+        logarithmicDepthBuffer: false
+      });
+
+      Logger.info("WebGL Renderer created successfully");
+    } catch (error) {
+      Logger.error("Failed to create WebGL Renderer:", error);
+      // Fallback to basic renderer
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        antialias: false,
+        precision: "lowp"
+      });
+      Logger.warn("Using fallback WebGL renderer");
+    }
 
     this.renderer.setClearColor(0x88ccff);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     THREE.ColorManagement.enabled = true;
+
+    // Check for WebGL errors
+    const gl = this.renderer.getContext();
+    if (gl) {
+      const error = gl.getError();
+      if (error !== gl.NO_ERROR) {
+        Logger.error("WebGL Error during setup:", error);
+      } else {
+        Logger.info("WebGL context initialized successfully");
+      }
+    } else {
+      Logger.error("Failed to get WebGL context");
+    }
 
     // Platform-specific configuration
     if (this.isMobile) {
@@ -57,11 +89,17 @@ export class RendererManager {
   }
 
   updateResolution() {
+    // Safety check: ensure camera exists before updating
+    if (!this.camera) {
+      console.warn('RendererManager.updateResolution: Camera not available, skipping update');
+      return;
+    }
+
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     // Force frustum culling update if world system exists
-    if (this.engine.systemManager && this.engine.systemManager.get('world') && 
+    if (this.engine.systemManager && this.engine.systemManager.get('world') &&
         this.engine.systemManager.get('world').updateVisibility) {
       this.engine.systemManager.get('world').updateVisibility(this.camera);
     }
@@ -70,7 +108,7 @@ export class RendererManager {
   applyQualitySettings(level) {
     // Apply material optimizations based on quality level
     if (!this.scene) {
-      console.warn('Cannot apply quality settings: scene not initialized');
+      Logger.warn('Cannot apply quality settings: scene not initialized');
       return;
     }
 
@@ -123,7 +161,7 @@ export class RendererManager {
       }
     }
 
-    console.log(`Applied quality settings level ${level} to ${materials.length} materials`);
+    Logger.info(`Applied quality settings level ${level} to ${materials.length} materials`);
   }
 
   render(scene, camera) {

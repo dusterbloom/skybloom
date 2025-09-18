@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Logger } from '../../../utils/Logger.js';
 
 export class PlayerModels {
   constructor(playerSystem) {
@@ -43,13 +44,13 @@ export class PlayerModels {
       model.receiveShadow = false;  // Prevent self-shadowing
     });
     
-    console.log(`Created ${this.carpetModels.length} carpet models`);
+    Logger.info(`Created ${this.carpetModels.length} carpet models`);
   }
   
   createCarpetModel(playerId) {
     if (this.carpetModels.length === 0) {
       // Fallback: create a default carpet model if none available
-      console.warn('PlayerModels.createCarpetModel: No carpet models available, creating default');
+      Logger.warn('PlayerModels.createCarpetModel: No carpet models available, creating default');
       
       // Create default material
       const defaultMaterial = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.7, metalness: 0.3 });
@@ -306,14 +307,14 @@ export class PlayerModels {
   updateModels() {
     const playerState = this.playerSystem.engine.systemManager.get('playerState');
     if (!playerState || !playerState.players) {
-      console.warn('PlayerModels.updateModels: playerState or players is undefined');
+      Logger.warn('PlayerModels.updateModels: playerState or players is undefined');
       return;
     }
     
-    console.log('PlayerModels.updateModels: Updating', playerState.players.size, 'players');
+    // Logger.debug('PlayerModels.updateModels: Updating', playerState.players.size, 'players');
     playerState.players.forEach(player => {
       if (!player.model) {
-        console.warn('PlayerModels.updateModels: Player missing model:', player.id);
+        Logger.warn('PlayerModels.updateModels: Player missing model:', player.id);
         return;
       }
       // Update model position

@@ -1,3 +1,5 @@
+import { Logger } from '../../utils/Logger.js';
+
 export class QualityManager {
   constructor(engine) {
     this.engine = engine;
@@ -52,7 +54,7 @@ export class QualityManager {
       const basePixelRatio = Math.min(window.devicePixelRatio, enabled ? 1.0 : 2.0);
       this.rendererManager.renderer.setPixelRatio(basePixelRatio * this.resolutionScale);
     }
-    console.log(`Battery saving mode ${enabled ? 'enabled' : 'disabled'}`);
+    Logger.info(`Battery saving mode ${enabled ? 'enabled' : 'disabled'}`);
   }
 
   toggleHighQualityMode() {
@@ -64,7 +66,7 @@ export class QualityManager {
       const basePixelRatio = Math.min(window.devicePixelRatio, 2.0);
       this.rendererManager.renderer.setPixelRatio(basePixelRatio * this.resolutionScale);
     }
-    console.log(`High quality mode ${this.highQualityMode ? 'enabled' : 'disabled'}`);
+    Logger.info(`High quality mode ${this.highQualityMode ? 'enabled' : 'disabled'}`);
   }
 
   updateFromPerformance(report) {

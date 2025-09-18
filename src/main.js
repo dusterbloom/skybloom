@@ -1,4 +1,5 @@
-import { Engine } from './game/core/Engine';
+import { Engine } from './game/core/Engine.js';
+import { Logger } from './utils/Logger.js';
 import { setupPerformanceTools } from './PerformanceTools.js';
 
 // Update font style for the entire app

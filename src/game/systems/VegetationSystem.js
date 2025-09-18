@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Logger } from '../../utils/Logger.js';
 import { LOD } from "three";
 import { System } from "../core/System.js";
 
@@ -6,7 +7,7 @@ export class VegetationSystem extends System {
   constructor(engine) {
     super(engine, 'vegetation');
     this.requireDependencies(['world']);
-    console.log('Vegetation init: engine.systems exists?', !!engine.systems, 'engine.systemManager exists?', !!engine.systemManager, 'world via systemManager:', engine.systemManager?.systems?.get('world'));
+    Logger.debug('Vegetation init: engine.systems exists?', !!engine.systems, 'engine.systemManager exists?', !!engine.systemManager, 'world via systemManager:', engine.systemManager?.systems?.get('world'));
     this.scene = engine.scene;
     this.worldSystem = engine.systems.world;
     this.performanceMonitor = engine.performanceMonitor;
@@ -88,7 +89,7 @@ export class VegetationSystem extends System {
   }
   
   async _initialize() {
-    console.log("Initializing VegetationSystem...");
+    Logger.info("Initializing VegetationSystem...");
     
     // Create tree models with LOD
     this.createTreeModels();
@@ -99,16 +100,16 @@ export class VegetationSystem extends System {
     // Get LOD distances from MobileLODManager if available
     if (this.engine.systems.mobileLOD) {
       this.lodDistances = this.engine.systems.mobileLOD.getLODDistances().vegetation;
-      console.log(`Using mobile-optimized LOD distances: ${JSON.stringify(this.lodDistances)}`);
+      Logger.info(`Using mobile-optimized LOD distances: ${JSON.stringify(this.lodDistances)}`);
       
       // Set density from MobileLODManager if on mobile
       if (this.engine.settings && this.engine.settings.isMobile) {
         this.densityScale = this.engine.systems.mobileLOD.currentVegetationDensity;
-        console.log(`Using mobile vegetation density: ${this.densityScale}`);
+        Logger.info(`Using mobile vegetation density: ${this.densityScale}`);
       }
     }
     
-    console.log("VegetationSystem initialized");
+    Logger.info("VegetationSystem initialized");
   }
   
   createTreeModels() {
@@ -984,7 +985,7 @@ export class VegetationSystem extends System {
       // Check if density scale needs updating from MobileLODManager
       const mobileDensity = this.engine.systems.mobileLOD.currentVegetationDensity;
       if (mobileDensity !== this.densityScale) {
-        console.log(`Updating vegetation density from MobileLODManager: ${mobileDensity.toFixed(2)}`);
+        Logger.info(`Updating vegetation density from MobileLODManager: ${mobileDensity.toFixed(2)}`);
         this.densityScale = mobileDensity;
       }
       
@@ -1026,7 +1027,7 @@ export class VegetationSystem extends System {
     
     // Ignore extremely high or low values that are likely measurement errors
     if (currentFPS < 1 || currentFPS > 150) {
-      console.log(`Ignoring unrealistic FPS value: ${currentFPS}`);
+      Logger.warn(`Ignoring unrealistic FPS value: ${currentFPS}`);
       return;
     }
     

@@ -1,9 +1,10 @@
 import * as THREE from 'three';
+import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System.js';
 
 export class QuestManager extends System {
   constructor(engine) {
-    super(engine, 'quest');
+    super(engine, 'questManager');
     this.requireDependencies(['player']);
     this.eventBus = engine.eventBus;
     this.quests = [];
@@ -25,9 +26,9 @@ export class QuestManager extends System {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       this.quests = await response.json();
-      console.log('Quests loaded:', this.quests);
+      Logger.info('Quests loaded:', this.quests);
     } catch (error) {
-      console.error('Failed to load quests:', error);
+      Logger.error('Failed to load quests:', error);
       // Fallback to empty array or default quests
       this.quests = [];
     }

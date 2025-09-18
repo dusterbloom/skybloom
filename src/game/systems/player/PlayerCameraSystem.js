@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Logger } from '../../../utils/Logger.js';
 import { System } from '../../core/System.js';
 
 export class PlayerCameraSystem extends System {
@@ -8,7 +9,7 @@ export class PlayerCameraSystem extends System {
   }
 
   _initialize() {
-    console.log("PlayerCameraSystem initialized");
+    Logger.info("PlayerCameraSystem initialized");
   }
 
   _update(delta) {
