@@ -20,8 +20,7 @@ import { VegetationSystem } from "../systems/VegetationSystem";
 import { PlayerPhysics } from "../systems/player/PlayerPhysics.js";
 import { AtmosphereSystem } from "../systems/atmosphere/AtmosphereSystem";
 import { WaterSystem } from "../systems/WaterSystem";
-import { SeaFloorSystem } from "../systems/SeaFloorSystem";
-import { UnderwaterEffectsSystem } from "../systems/UnderwaterEffectsSystem";
+// SeaFloorSystem and UnderwaterEffectsSystem removed - caused geometry overlap with water
 import { SkyboxSystem } from "../systems/atmosphere/SkyboxSystem";
 import { PerformanceBenchmarkSystem } from "../systems/PerformanceBenchmarkSystem";
 import { CarpetTrailSystem } from "../systems/CarpetTrailSystem";
@@ -154,9 +153,6 @@ export class Engine {
     sm = sm.register(new WorldSystem(this));
     sm = sm.register(new WaterSystem(this));
     sm = sm.register(new SkyboxSystem(this));
-    // TEMPORARILY DISABLED for z-fighting debugging
-    // sm = sm.register(new SeaFloorSystem(this));
-    // sm = sm.register(new UnderwaterEffectsSystem(this));
     sm = sm.register(new PerformanceBenchmarkSystem(this));
     sm = sm.register(new VegetationSystem(this));
     sm = sm.register(new PlayerStateManager(this))
@@ -198,9 +194,7 @@ export class Engine {
       "mobileLOD", // Initialize LOD manager first to prepare for other systems
       "skybox", // Skybox should be initialized early for proper lighting
       "world", // Base terrain must be initialized first
-      // "seaFloor", // DISABLED for z-fighting debugging
       "water", // Water system should be initialized after terrain
-      // "underwaterEffects", // DISABLED for z-fighting debugging
       "performanceBenchmark", // Performance benchmarking system
       "vegetation", // Vegetation needs terrain to place trees
       "playerState",
