@@ -42,17 +42,18 @@ export class CloudSystem {
     // Try to load cloud texture, with fallback
     return new Promise((resolve) => {
       textureLoader.load(
-        '/assets/textures/particles.png', 
+        '/assets/textures/particles.png',
         (texture) => {
           const material = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            // opacity: 0.5,
-            blending: THREE.AdditiveBlending, // or THREE.CustomBlending
+            opacity: 0.4,  // Subtle clouds
+            blending: THREE.NormalBlending,  // Normal blending instead of additive
+            depthWrite: false
           });
           resolve(material);
         },
-        undefined, 
+        undefined,
         () => {
           Logger.warn('Error loading cloud texture, using fallback');
           // Create a simple cloud texture as fallback
@@ -60,24 +61,25 @@ export class CloudSystem {
           canvas.width = 128;
           canvas.height = 128;
           const ctx = canvas.getContext('2d');
-          
+
           // Draw a soft cloud shape
           const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-          gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
-          gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          
+          gradient.addColorStop(0, 'rgba(240, 245, 255, 0.9)');
+          gradient.addColorStop(0.5, 'rgba(230, 240, 255, 0.5)');
+          gradient.addColorStop(1, 'rgba(220, 235, 255, 0)');
+
           ctx.fillStyle = gradient;
           ctx.fillRect(0, 0, 128, 128);
-          
+
           const texture = new THREE.CanvasTexture(canvas);
           const material = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            // opacity: 0.5,
-            blending: THREE.AdditiveBlending, // or THREE.CustomBlending
+            opacity: 0.4,  // Subtle clouds
+            blending: THREE.NormalBlending,  // Normal blending
+            depthWrite: false
           });
-          
+
           resolve(material);
         }
       );
@@ -101,13 +103,10 @@ export class CloudSystem {
     
     for (let i = 0; i < this.cloudCount; i++) {
       const cloud = new THREE.Sprite(cloudMaterial.clone());
-      
-      // Add specific layer for water reflections
-      cloud.layers.enable(2);
-      
-      // Make clouds large for visibility
-      const scale = 800 + Math.random() * 600;
-      cloud.scale.set(scale, scale, 1);
+
+      // Make clouds visible but not overwhelming
+      const scale = 500 + Math.random() * 400;
+      cloud.scale.set(scale, scale * 0.7, 1);
       
       // Position clouds in a circle around player or origin
       const radius = 1000 + Math.random() * 3000;

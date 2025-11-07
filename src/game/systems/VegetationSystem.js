@@ -460,27 +460,29 @@ export class VegetationSystem extends System {
       normalizedTreeNoise * 0.1
     );
     
-    // Higher density in proper biomes
-    const densityThreshold = 1.0 - baseDensity;
-    
-    // Check against nearby trees for natural spacing
-    const minDistanceMultiplier = 0.8 + normalizedTreeNoise * 0.4; // Variable distance based on noise
+    // More relaxed density threshold for lusher forests
+    const densityThreshold = Math.max(0.2, 0.9 - baseDensity * 0.8);
+
+    // Check against nearby trees for natural spacing (optimized - only check recent trees)
+    const minDistanceMultiplier = 0.8 + normalizedTreeNoise * 0.4;
     const treeDistance = this.treeDistanceBase * minDistanceMultiplier;
-    
+
     // Different spacing for clustered areas vs sparse areas
-    const effectiveDistance = treeDistance * (normalizedForestNoise > 0.5 ? 0.7 : 1.2);
-    
-    // Check if too close to other trees
-    for (const instance of this.treeInstances) {
+    const effectiveDistance = treeDistance * (normalizedForestNoise > 0.5 ? 0.6 : 1.0);
+
+    // Only check last 50 trees for performance (trees naturally distributed)
+    const checkStart = Math.max(0, this.treeInstances.length - 50);
+    for (let i = checkStart; i < this.treeInstances.length; i++) {
+      const instance = this.treeInstances[i];
       const dx = instance.position.x - x;
       const dz = instance.position.z - z;
       const distanceSquared = dx * dx + dz * dz;
-      
+
       if (distanceSquared < effectiveDistance * effectiveDistance) {
         return false;
       }
     }
-    
+
     // Trees are more likely to appear where combined noise exceeds threshold
     return combinedNoise > densityThreshold;
   }

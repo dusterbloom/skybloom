@@ -41,17 +41,20 @@ export class AmbientLifeSystem extends System {
   createBirds() {
     // Create a simple bird shape using canvas
     const canvas = document.createElement('canvas');
-    canvas.width = 32;
-    canvas.height = 32;
+    canvas.width = 64;
+    canvas.height = 64;
     const ctx = canvas.getContext('2d');
 
-    // Draw a simple bird silhouette (two triangular wings)
-    ctx.fillStyle = 'rgba(40, 40, 40, 0.8)';
+    // Draw a more visible bird silhouette (V-shaped wings)
+    ctx.fillStyle = 'rgba(50, 50, 50, 1.0)';
     ctx.beginPath();
-    ctx.moveTo(16, 12);
-    ctx.lineTo(4, 16);
-    ctx.lineTo(16, 14);
-    ctx.lineTo(28, 16);
+    // Left wing
+    ctx.moveTo(32, 28);
+    ctx.lineTo(8, 36);
+    ctx.lineTo(32, 32);
+    // Right wing
+    ctx.lineTo(56, 36);
+    ctx.lineTo(32, 28);
     ctx.closePath();
     ctx.fill();
 
@@ -59,7 +62,9 @@ export class AmbientLifeSystem extends System {
     const material = new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
-      opacity: 0.8
+      opacity: 1.0,
+      depthTest: true,
+      depthWrite: false
     });
 
     const playerPos = this.camera.position;
@@ -67,9 +72,9 @@ export class AmbientLifeSystem extends System {
     for (let i = 0; i < this.birdCount; i++) {
       const bird = new THREE.Sprite(material.clone());
 
-      // Random size variation
-      const scale = 2 + Math.random() * 2;
-      bird.scale.set(scale, scale * 0.5, 1);
+      // Much larger size for visibility
+      const scale = 15 + Math.random() * 10;
+      bird.scale.set(scale, scale * 0.4, 1);
 
       // Position around player
       const radius = 500 + Math.random() * this.birdSpread;
@@ -107,22 +112,25 @@ export class AmbientLifeSystem extends System {
   createButterflies() {
     // Create a colorful butterfly shape
     const canvas = document.createElement('canvas');
-    canvas.width = 16;
-    canvas.height = 16;
+    canvas.width = 32;
+    canvas.height = 32;
     const ctx = canvas.getContext('2d');
 
     // Draw butterfly (simple colored dots/wings)
-    const gradient = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
-    gradient.addColorStop(0, 'rgba(255, 200, 100, 0.9)');
+    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    gradient.addColorStop(0, 'rgba(255, 200, 100, 1.0)');
+    gradient.addColorStop(0.5, 'rgba(255, 180, 80, 0.8)');
     gradient.addColorStop(1, 'rgba(255, 150, 50, 0)');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 16, 16);
+    ctx.fillRect(0, 0, 32, 32);
 
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
-      opacity: 0.7
+      opacity: 0.9,
+      depthTest: true,
+      depthWrite: false
     });
 
     const playerPos = this.camera.position;
@@ -130,8 +138,8 @@ export class AmbientLifeSystem extends System {
     for (let i = 0; i < this.butterflyCount; i++) {
       const butterfly = new THREE.Sprite(material.clone());
 
-      // Small scale
-      const scale = 0.8 + Math.random() * 0.6;
+      // Larger scale for visibility
+      const scale = 5 + Math.random() * 3;
       butterfly.scale.set(scale, scale, 1);
 
       // Position closer to ground and player
