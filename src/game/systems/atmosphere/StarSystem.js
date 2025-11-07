@@ -56,14 +56,15 @@ export class StarSystem {
     geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     
-    // Create star material
+    // Create star material - BRIGHTER for better visibility
     const starsMaterial = new THREE.PointsMaterial({
-      size: 3,
+      size: 5, // Larger stars
       vertexColors: true,
       transparent: true,
       opacity: 1.0,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
+      depthTest: false, // Render always on top
       sizeAttenuation: false
     });
     
@@ -96,14 +97,15 @@ export class StarSystem {
     geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     
-    // Create star material
+    // Create star material - BRIGHTER for horizon stars
     const starsMaterial = new THREE.PointsMaterial({
-      size: 2, // Slightly smaller for horizon stars
+      size: 4, // Slightly smaller for horizon stars
       vertexColors: true,
       transparent: true,
       opacity: 0.9,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
+      depthTest: false, // Render always on top
       sizeAttenuation: false
     });
     
