@@ -11,7 +11,7 @@ export class SimpleTreeSystem extends System {
     super(engine, 'simpleTrees');
     this.requireDependencies(['world']);
     this.scene = engine.scene;
-    this.worldSystem = engine.systems.world;
+    this.worldSystem = null; // Will be set during initialization
     this.assetManager = engine.assets;
 
     // Tree collections
@@ -44,6 +44,13 @@ export class SimpleTreeSystem extends System {
 
   async _initialize() {
     Logger.info("🌲 Initializing Simple Tree System...");
+
+    // Get world system reference (after dependencies are initialized)
+    this.worldSystem = this.engine.systems.get('world');
+    if (!this.worldSystem) {
+      Logger.error("SimpleTreeSystem: World system not found!");
+      return;
+    }
 
     // Try to load tree models
     if (this.modelPaths.length > 0) {
