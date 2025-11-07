@@ -545,89 +545,82 @@ export class SkyboxSystem extends System {
         this.skybox.position.copy(this.camera.position);
       }
 
-      // Enhanced shader material with proper sun positioning
+      // PURE GRADIENT SKYBOX - No celestial rendering
+      // All celestial objects (sun/moon/stars) handled by dedicated mesh systems
       this.skyboxMaterial = new THREE.ShaderMaterial({
         vertexShader: `
-          varying vec3 vWorldPosition;
           varying vec3 vWorldDirection;
           void main() {
             vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-            vWorldPosition = worldPosition.xyz;
 
             // Calculate direction from camera to vertex
-            vec3 cameraToVertex = position.xyz;
-            vWorldDirection = normalize(cameraToVertex);
+            vWorldDirection = normalize(position.xyz);
 
             gl_Position = projectionMatrix * viewMatrix * worldPosition;
           }
         `,
         fragmentShader: `
           uniform float _TimeOfDay;
-          uniform float _SunVisibility;
-          uniform float _MoonVisibility;
-          uniform vec3 _DirToLight;
-          varying vec3 vWorldPosition;
           varying vec3 vWorldDirection;
 
           void main() {
-            vec3 skyColor;
-
-            // Calculate horizon factor (how close to horizon)
+            // Calculate horizon factor (0 = horizon, 1 = zenith/nadir)
             float horizonFactor = abs(vWorldDirection.y);
-            horizonFactor = 1.0 - pow(horizonFactor, 0.5); // Sharper horizon
 
-            // Base sky gradient
+            // Sky colors for different times of day
+            vec3 skyColor;
+            vec3 horizonColor;
+
             if (_TimeOfDay < 0.25) {
-              // Night to dawn
+              // Night to dawn (0.0 - 0.25)
               float t = _TimeOfDay / 0.25;
-              vec3 nightColor = vec3(0.05, 0.1, 0.2);
-              vec3 dawnColor = vec3(0.3, 0.4, 0.6);
-              skyColor = mix(nightColor, dawnColor, t);
+              vec3 nightSky = vec3(0.02, 0.05, 0.15);
+              vec3 nightHorizon = vec3(0.05, 0.08, 0.2);
+              vec3 dawnSky = vec3(0.3, 0.4, 0.6);
+              vec3 dawnHorizon = vec3(0.8, 0.5, 0.3);
+
+              skyColor = mix(nightSky, dawnSky, t);
+              horizonColor = mix(nightHorizon, dawnHorizon, t);
+
             } else if (_TimeOfDay < 0.75) {
-              // Dawn to dusk
+              // Day (0.25 - 0.75)
               float t = (_TimeOfDay - 0.25) / 0.5;
-              vec3 dawnColor = vec3(0.3, 0.4, 0.6);
-              vec3 dayColor = vec3(0.5, 0.7, 0.9);
-              skyColor = mix(dawnColor, dayColor, t);
-            } else {
-              // Dusk to night
-              float t = (_TimeOfDay - 0.75) / 0.25;
-              vec3 dayColor = vec3(0.5, 0.7, 0.9);
-              vec3 nightColor = vec3(0.05, 0.1, 0.2);
-              skyColor = mix(dayColor, nightColor, t);
-            }
+              vec3 dawnSky = vec3(0.3, 0.4, 0.6);
+              vec3 dawnHorizon = vec3(0.8, 0.5, 0.3);
+              vec3 daySky = vec3(0.4, 0.6, 0.9);
+              vec3 dayHorizon = vec3(0.7, 0.8, 0.95);
+              vec3 duskSky = vec3(0.3, 0.4, 0.6);
+              vec3 duskHorizon = vec3(0.9, 0.4, 0.2);
 
-            // Subtle sun glow in sky (actual sun mesh rendered separately)
-            if (_SunVisibility > 0.0) {
-              float sunDot = dot(vWorldDirection, normalize(_DirToLight));
-              float sunGlow = pow(max(0.0, sunDot), 1500.0) * _SunVisibility; // Tight glow
-              skyColor += vec3(1.0, 0.95, 0.8) * sunGlow * 0.3; // Very subtle
-            }
-
-            // Subtle moon glow in sky (actual moon mesh rendered separately)
-            if (_MoonVisibility > 0.0) {
-              vec3 moonDir = -_DirToLight; // Moon opposite to sun
-              float moonDot = dot(vWorldDirection, normalize(moonDir));
-              float moonGlow = pow(max(0.0, moonDot), 800.0) * _MoonVisibility; // Tighter glow
-              skyColor += vec3(0.9, 0.95, 1.0) * moonGlow * 0.3; // Reduced intensity
-            }
-
-            // Add stars at night
-            if (_TimeOfDay < 0.2 || _TimeOfDay > 0.8) {
-              float starNoise = sin(vWorldPosition.x * 10.0) * cos(vWorldPosition.y * 10.0) * sin(vWorldPosition.z * 10.0);
-              if (starNoise > 0.95) {
-                float starBrightness = (starNoise - 0.95) * 20.0 * (1.0 - _SunVisibility);
-                skyColor += vec3(0.8, 0.9, 1.0) * starBrightness;
+              if (t < 0.5) {
+                // Dawn to midday
+                float tt = t * 2.0;
+                skyColor = mix(dawnSky, daySky, tt);
+                horizonColor = mix(dawnHorizon, dayHorizon, tt);
+              } else {
+                // Midday to dusk
+                float tt = (t - 0.5) * 2.0;
+                skyColor = mix(daySky, duskSky, tt);
+                horizonColor = mix(dayHorizon, duskHorizon, tt);
               }
+
+            } else {
+              // Dusk to night (0.75 - 1.0)
+              float t = (_TimeOfDay - 0.75) / 0.25;
+              vec3 duskSky = vec3(0.3, 0.4, 0.6);
+              vec3 duskHorizon = vec3(0.9, 0.4, 0.2);
+              vec3 nightSky = vec3(0.02, 0.05, 0.15);
+              vec3 nightHorizon = vec3(0.05, 0.08, 0.2);
+
+              skyColor = mix(duskSky, nightSky, t);
+              horizonColor = mix(duskHorizon, nightHorizon, t);
             }
 
-            // Add subtle atmospheric haze for distant objects
-            float distanceFromCamera = length(vWorldPosition - cameraPosition);
-            float hazeFactor = 1.0 - exp(-distanceFromCamera * 0.0001);
-            hazeFactor = clamp(hazeFactor, 0.0, 0.3); // Limit haze to 30% max
-            skyColor = mix(skyColor, vec3(0.8, 0.9, 1.0), hazeFactor * 0.1);
+            // Blend between horizon and sky based on view angle
+            float blendFactor = pow(horizonFactor, 0.6);
+            vec3 finalColor = mix(horizonColor, skyColor, blendFactor);
 
-            gl_FragColor = vec4(skyColor, 1.0);
+            gl_FragColor = vec4(finalColor, 1.0);
           }
         `,
         side: THREE.BackSide,
@@ -635,10 +628,7 @@ export class SkyboxSystem extends System {
         depthTest: true,
         fog: false,
         uniforms: {
-          _TimeOfDay: { value: 0.5 },
-          _SunVisibility: { value: 1.0 },
-          _MoonVisibility: { value: 0.0 },
-          _DirToLight: { value: new THREE.Vector3(0, 1, 0) }
+          _TimeOfDay: { value: 0.5 }
         }
       });
 
