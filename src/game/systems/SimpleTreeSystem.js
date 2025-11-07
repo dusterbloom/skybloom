@@ -37,6 +37,10 @@ export class SimpleTreeSystem extends System {
 
     // Fallback to procedural if no models
     this.useProcedural = false;
+
+    // Diagnostic flags
+    this._loggedNoPlayer = false;
+    this._loggedFirstUpdate = false;
   }
 
   async _initialize() {
@@ -153,7 +157,20 @@ export class SimpleTreeSystem extends System {
    */
   _update(delta) {
     const player = this.engine.systems.playerState?.localPlayer;
-    if (!player) return;
+    if (!player) {
+      // Log once to diagnose
+      if (!this._loggedNoPlayer) {
+        Logger.warn("SimpleTreeSystem: No player found yet, skipping tree spawning");
+        this._loggedNoPlayer = true;
+      }
+      return;
+    }
+
+    // Log first successful update
+    if (!this._loggedFirstUpdate) {
+      Logger.info(`🌲 Tree system starting - Player at (${player.position.x.toFixed(0)}, ${player.position.z.toFixed(0)})`);
+      this._loggedFirstUpdate = true;
+    }
 
     const chunkSize = this.worldSystem.chunkSize;
     const playerChunkX = Math.floor(player.position.x / chunkSize);
