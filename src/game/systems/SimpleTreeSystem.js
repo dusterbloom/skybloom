@@ -22,8 +22,8 @@ export class SimpleTreeSystem extends System {
     // Configuration - tuned for cozy, lush forest feel
     this.treeDensity = 0.4; // Probability of tree per attempt (much higher for lush forests)
     this.attemptsPerChunk = 250; // How many tries per chunk (more attempts = more trees)
-    this.minTreeDistance = 12; // Min distance between trees (allows natural clustering)
-    this.maxTreesPerChunk = 120; // Limit trees per chunk (creates proper forests)
+    this.minTreeDistance = 8; // Min distance between trees (tight natural clustering)
+    this.maxTreesPerChunk = 180; // Limit trees per chunk (dense forests)
 
     // Model paths - Kenney Nature Kit trees (CC0 License)
     this.modelPaths = [
