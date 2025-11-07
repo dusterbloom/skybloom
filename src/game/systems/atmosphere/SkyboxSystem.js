@@ -726,7 +726,9 @@ export class SkyboxSystem extends System {
     const rotationMatrix = new THREE.Matrix4().makeRotationZ(rotationAngle);
     this.skyRotationMatrix.setFromMatrix4(rotationMatrix);
 
-    if (this.skyboxMaterial) {
+    // Note: The current simple skybox doesn't use rotation matrix uniforms
+    // The sun/moon position is controlled via _DirToLight uniform instead
+    if (this.skyboxMaterial && this.skyboxMaterial.uniforms._SkyRotationMatrix) {
       this.skyboxMaterial.uniforms._SkyRotationMatrix.value = this.skyRotationMatrix;
     }
   }

@@ -46,10 +46,10 @@ export class WaterSystem extends System {
 
       // Calculate water level with diagnostic info
       const baseLevel = this.engine.systems.world.minHeight || 0;
-      // Position water at beach level to eliminate shoreline flickering
-      // Beach starts at minHeight + 35, so put water at minHeight + 34
-this.waterLevel = baseLevel + 30;
-        // Logger.info(`Setting water level to ${this.waterLevel.toFixed(2)} (baseLevel=${baseLevel}, beach starts at ${baseLevel + 35}, 5-unit gap for anti-flickering)`);
+      // Position water below beach level to prevent z-fighting
+      // Beach starts at minHeight + 35, water at minHeight + 25 (10 unit gap)
+      this.waterLevel = baseLevel + 25;
+        // Logger.info(`Setting water level to ${this.waterLevel.toFixed(2)} (baseLevel=${baseLevel}, beach starts at ${baseLevel + 35}, 10-unit gap for anti-flickering)`);
     } else {
       this.waterLevel = 0;
       // Logger.warn("World system not available, defaulting water level to 0");
@@ -337,8 +337,8 @@ this.waterLevel = baseLevel + 30;
     mat.depthTest = true;
     mat.depthWrite = false;
     mat.polygonOffset = true;
-    mat.polygonOffsetFactor = -2; // More aggressive
-    mat.polygonOffsetUnits = -2;
+    mat.polygonOffsetFactor = -4; // Aggressive offset to prevent z-fighting with terrain
+    mat.polygonOffsetUnits = -4;
     mat.transparent = true;
     mat.alphaTest = 0.01; // Lower threshold
 
@@ -434,10 +434,10 @@ this.waterLevel = baseLevel + 30;
       alphaTest: 0.05 // Prevent rendering of nearly transparent pixels
     });
 
-    // More aggressive polygon offset to prevent shoreline z-fighting
+    // Aggressive polygon offset to prevent shoreline z-fighting
     material.polygonOffset = true;
-    material.polygonOffsetFactor = -2;
-    material.polygonOffsetUnits = -2;
+    material.polygonOffsetFactor = -4;
+    material.polygonOffsetUnits = -4;
 
     // Ensure proper depth handling for shoreline
     material.depthWrite = false;
@@ -565,10 +565,10 @@ this.waterLevel = baseLevel + 30;
       this.water.material.depthTest = true;
        this.water.material.depthWrite = false; // Prevent z-fighting with terrain
 
-      // More aggressive polygon offset to prevent z-fighting with terrain
+      // Aggressive polygon offset to prevent z-fighting with terrain
       this.water.material.polygonOffset = true;
-      this.water.material.polygonOffsetFactor = -2;
-      this.water.material.polygonOffsetUnits = -2;
+      this.water.material.polygonOffsetFactor = -4;
+      this.water.material.polygonOffsetUnits = -4;
 
       // Ensure proper blending
       this.water.material.transparent = true;

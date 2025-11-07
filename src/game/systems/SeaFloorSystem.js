@@ -67,10 +67,10 @@ export class SeaFloorSystem extends System {
       depthWrite: false // Prevent z-fighting with water
     });
 
-    // Set polygon offset to render behind water
+    // Set polygon offset to render behind water (less aggressive than water)
     this.terrainMaterial.polygonOffset = true;
-    this.terrainMaterial.polygonOffsetFactor = -2;
-    this.terrainMaterial.polygonOffsetUnits = -2;
+    this.terrainMaterial.polygonOffsetFactor = -1;
+    this.terrainMaterial.polygonOffsetUnits = -1;
   }
 
   generateInitialTerrain() {
