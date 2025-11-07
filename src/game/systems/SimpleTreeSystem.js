@@ -19,18 +19,20 @@ export class SimpleTreeSystem extends System {
     this.spawnedTrees = []; // Trees in the scene
     this.chunksWithTrees = new Set();
 
-    // Configuration
-    this.treeDensity = 0.03; // Probability of tree per attempt
-    this.attemptsPerChunk = 30; // How many tries per chunk
-    this.minTreeDistance = 20; // Min distance between trees
-    this.maxTreesPerChunk = 15; // Limit trees per chunk
+    // Configuration - tuned for cozy forest feel
+    this.treeDensity = 0.08; // Probability of tree per attempt (increased for lush forests)
+    this.attemptsPerChunk = 50; // How many tries per chunk (more attempts = more trees)
+    this.minTreeDistance = 18; // Min distance between trees (slightly closer)
+    this.maxTreesPerChunk = 25; // Limit trees per chunk (increased for lusher world)
 
-    // Model paths (user will add these)
+    // Model paths - Kenney Nature Kit trees (CC0 License)
     this.modelPaths = [
-      // Examples - user should download models and add paths here:
-      // '/assets/models/tree1.glb',
-      // '/assets/models/tree2.glb',
-      // '/assets/models/tree3.glb',
+      '/assets/models/pine_tree.glb',
+      '/assets/models/oak_tree.glb',
+      '/assets/models/default_tree.glb',
+      '/assets/models/palm_tree.glb',
+      '/assets/models/detailed_tree.glb',
+      '/assets/models/fat_tree.glb',
     ];
 
     // Fallback to procedural if no models
