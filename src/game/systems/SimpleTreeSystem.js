@@ -9,7 +9,7 @@ import { Logger } from '../../utils/Logger.js';
 export class SimpleTreeSystem extends System {
   constructor(engine) {
     super(engine, 'simpleTrees');
-    this.requireDependencies(['world', 'player']);
+    this.requireDependencies(['world']);
     this.scene = engine.scene;
     this.worldSystem = engine.systems.world;
     this.assetManager = engine.assets;
