@@ -597,15 +597,11 @@ export class SkyboxSystem extends System {
               skyColor = mix(dayColor, nightColor, t);
             }
 
-            // Add sun glow when visible
+            // Subtle sun glow in sky (actual sun mesh rendered separately)
             if (_SunVisibility > 0.0) {
               float sunDot = dot(vWorldDirection, normalize(_DirToLight));
-              float sunGlow = pow(max(0.0, sunDot), 1000.0) * _SunVisibility;
-              skyColor += vec3(1.0, 0.9, 0.7) * sunGlow * 2.0;
-
-              // Sun disk
-              float sunDisk = pow(max(0.0, sunDot), 2000.0) * _SunVisibility;
-              skyColor += vec3(1.0, 1.0, 0.8) * sunDisk * 10.0;
+              float sunGlow = pow(max(0.0, sunDot), 1500.0) * _SunVisibility; // Tight glow
+              skyColor += vec3(1.0, 0.95, 0.8) * sunGlow * 0.3; // Very subtle
             }
 
             // Subtle moon glow in sky (actual moon mesh rendered separately)
