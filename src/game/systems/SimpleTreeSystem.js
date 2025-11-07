@@ -156,7 +156,7 @@ export class SimpleTreeSystem extends System {
    * Update - spawn trees for visible chunks
    */
   _update(delta) {
-    const player = this.engine.systems.playerState?.localPlayer;
+    const player = this.engine.systems.player?.localPlayer;
     if (!player) {
       // Log once to diagnose
       if (!this._loggedNoPlayer) {
