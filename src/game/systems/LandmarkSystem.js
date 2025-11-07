@@ -562,9 +562,7 @@ export class LandmarkSystem extends System {
       
       // Check more frequently for landmarks
       if (Math.random() > 0.05) return; // 5% chance per call (increased from 1%)
-      
-      Logger.debug(`[LandmarkSystem] Checking for landmark locations. Player at: ${player.position.x.toFixed(2)}, ${player.position.z.toFixed(2)}. Current landmarks: ${this.landmarks.size}`)
-      
+
       // Get player chunk
       const playerChunkX = Math.floor(player.position.x / this.worldSystem.chunkSize);
       const playerChunkZ = Math.floor(player.position.z / this.worldSystem.chunkSize);

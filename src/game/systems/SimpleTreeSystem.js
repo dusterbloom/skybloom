@@ -39,7 +39,8 @@ export class SimpleTreeSystem extends System {
     this.useProcedural = false;
 
     // Diagnostic flags
-    this._loggedNoPlayer = false;
+    this._loggedNoPlayerSystem = false;
+    this._loggedNoLocalPlayer = false;
     this._loggedFirstUpdate = false;
   }
 
@@ -157,8 +158,21 @@ export class SimpleTreeSystem extends System {
    */
   _update(delta) {
     const playerSystem = this.engine.systems.player;
-    if (!playerSystem || !playerSystem.localPlayer) {
-      return; // Silently skip until player is ready
+    if (!playerSystem) {
+      if (!this._loggedNoPlayerSystem) {
+        Logger.warn("TreeSystem: No player system found");
+        this._loggedNoPlayerSystem = true;
+      }
+      return;
+    }
+
+    if (!playerSystem.localPlayer) {
+      if (!this._loggedNoLocalPlayer) {
+        Logger.warn("TreeSystem: Player system exists but localPlayer is null/undefined");
+        Logger.warn("TreeSystem: playerSystem keys:", Object.keys(playerSystem));
+        this._loggedNoLocalPlayer = true;
+      }
+      return;
     }
 
     const player = playerSystem.localPlayer;
