@@ -19,11 +19,11 @@ export class SimpleTreeSystem extends System {
     this.spawnedTrees = []; // Trees in the scene
     this.chunksWithTrees = new Set();
 
-    // Configuration - tuned for cozy forest feel
-    this.treeDensity = 0.08; // Probability of tree per attempt (increased for lush forests)
-    this.attemptsPerChunk = 50; // How many tries per chunk (more attempts = more trees)
-    this.minTreeDistance = 18; // Min distance between trees (slightly closer)
-    this.maxTreesPerChunk = 25; // Limit trees per chunk (increased for lusher world)
+    // Configuration - tuned for cozy, lush forest feel
+    this.treeDensity = 0.4; // Probability of tree per attempt (much higher for lush forests)
+    this.attemptsPerChunk = 250; // How many tries per chunk (more attempts = more trees)
+    this.minTreeDistance = 12; // Min distance between trees (allows natural clustering)
+    this.maxTreesPerChunk = 120; // Limit trees per chunk (creates proper forests)
 
     // Model paths - Kenney Nature Kit trees (CC0 License)
     this.modelPaths = [
@@ -281,9 +281,8 @@ export class SimpleTreeSystem extends System {
     // Random rotation
     tree.rotation.y = Math.random() * Math.PI * 2;
 
-    // MUCH larger scale - Kenney models are small!
-    // Scale up 15-25x to be visible in the world
-    const scale = 15 + Math.random() * 10;
+    // Scale to carpet-relative size (carpet is 5x8 units)
+    const scale = 6 + Math.random() * 6; // 6-12 units tall
     tree.scale.set(scale, scale, scale);
 
     // Ensure all meshes are visible
