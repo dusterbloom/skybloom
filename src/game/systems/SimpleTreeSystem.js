@@ -61,30 +61,44 @@ export class SimpleTreeSystem extends System {
    * Load tree models from GLTF files
    */
   async loadTreeModels() {
+    Logger.info(`Attempting to load ${this.modelPaths.length} tree models...`);
     const loadPromises = this.modelPaths.map(async (path) => {
       try {
         return new Promise((resolve, reject) => {
           this.assetManager.gltfLoader.load(
             path,
             (gltf) => {
-              Logger.info(`Loaded tree model: ${path}`);
+              Logger.info(`✅ Successfully loaded tree model: ${path}`);
+              // Make sure materials are visible
+              gltf.scene.traverse((node) => {
+                if (node.isMesh) {
+                  node.castShadow = true;
+                  node.receiveShadow = true;
+                  if (node.material) {
+                    node.material.needsUpdate = true;
+                  }
+                }
+              });
               resolve(gltf.scene);
             },
-            undefined,
+            (progress) => {
+              // Optional: log progress
+            },
             (error) => {
-              Logger.warn(`Failed to load tree model ${path}:`, error);
+              Logger.error(`❌ Failed to load tree model ${path}:`, error);
               resolve(null);
             }
           );
         });
       } catch (error) {
-        Logger.warn(`Error loading tree model ${path}:`, error);
+        Logger.error(`❌ Error loading tree model ${path}:`, error);
         return null;
       }
     });
 
     const loadedModels = await Promise.all(loadPromises);
     this.treeModels = loadedModels.filter(model => model !== null);
+    Logger.info(`Loaded ${this.treeModels.length} out of ${this.modelPaths.length} tree models`);
   }
 
   /**
@@ -165,13 +179,19 @@ export class SimpleTreeSystem extends System {
    * Spawn trees for a chunk
    */
   spawnTreesForChunk(chunkX, chunkZ) {
-    if (this.treeModels.length === 0) return;
+    if (this.treeModels.length === 0) {
+      if (this.chunksWithTrees.size === 0) {
+        Logger.warn("No tree models loaded! Falling back to procedural...");
+      }
+      return;
+    }
 
     const chunkSize = this.worldSystem.chunkSize;
     const minX = chunkX * chunkSize;
     const minZ = chunkZ * chunkSize;
 
     let treesSpawned = 0;
+    let rejectedReasons = { water: 0, tooHigh: 0, steep: 0, tooClose: 0, density: 0 };
 
     for (let i = 0; i < this.attemptsPerChunk && treesSpawned < this.maxTreesPerChunk; i++) {
       // Random position in chunk
@@ -181,16 +201,18 @@ export class SimpleTreeSystem extends System {
       // Get terrain height
       const height = this.worldSystem.getTerrainHeight(x, z);
 
-      // Basic checks
-      if (height < 5 || height > 150) continue; // Not on water or too high
+      // Basic checks - MUCH more permissive height range
+      if (height < 5) { rejectedReasons.water++; continue; } // Not underwater
+      if (height > 300) { rejectedReasons.tooHigh++; continue; } // Not on extreme peaks
+
       const slope = this.worldSystem.calculateSlope(x, z);
-      if (slope > 0.5) continue; // Too steep
+      if (slope > 0.6) { rejectedReasons.steep++; continue; } // Slightly less restrictive
 
       // Check distance to nearby trees
-      if (!this.isValidTreePosition(x, z)) continue;
+      if (!this.isValidTreePosition(x, z)) { rejectedReasons.tooClose++; continue; }
 
       // Random chance
-      if (Math.random() > this.treeDensity) continue;
+      if (Math.random() > this.treeDensity) { rejectedReasons.density++; continue; }
 
       // Spawn tree!
       this.spawnTree(x, height, z);
@@ -198,7 +220,9 @@ export class SimpleTreeSystem extends System {
     }
 
     if (treesSpawned > 0) {
-      Logger.info(`Spawned ${treesSpawned} trees in chunk ${chunkX},${chunkZ}`);
+      Logger.info(`🌲 Spawned ${treesSpawned} trees in chunk ${chunkX},${chunkZ}`);
+    } else if (this.chunksWithTrees.size < 5) {
+      Logger.warn(`No trees spawned in chunk ${chunkX},${chunkZ}. Rejected: ${JSON.stringify(rejectedReasons)}`);
     }
   }
 
@@ -229,8 +253,8 @@ export class SimpleTreeSystem extends System {
     const modelIndex = Math.floor(Math.random() * this.treeModels.length);
     const originalModel = this.treeModels[modelIndex];
 
-    // Clone the model
-    const tree = originalModel.clone();
+    // Clone the model (deep clone with materials)
+    const tree = originalModel.clone(true);
 
     // Position
     tree.position.set(x, y, z);
@@ -238,13 +262,28 @@ export class SimpleTreeSystem extends System {
     // Random rotation
     tree.rotation.y = Math.random() * Math.PI * 2;
 
-    // Random scale
-    const scale = 0.8 + Math.random() * 0.6;
+    // MUCH larger scale - Kenney models are small!
+    // Scale up 15-25x to be visible in the world
+    const scale = 15 + Math.random() * 10;
     tree.scale.set(scale, scale, scale);
+
+    // Ensure all meshes are visible
+    tree.traverse((node) => {
+      if (node.isMesh) {
+        node.castShadow = true;
+        node.receiveShadow = true;
+        node.visible = true;
+      }
+    });
 
     // Add to scene
     this.scene.add(tree);
     this.spawnedTrees.push(tree);
+
+    // Log first few trees for debugging
+    if (this.spawnedTrees.length <= 5) {
+      Logger.info(`Spawned tree #${this.spawnedTrees.length} at (${x.toFixed(0)}, ${y.toFixed(0)}, ${z.toFixed(0)}) with scale ${scale.toFixed(1)}`);
+    }
   }
 
   /**
