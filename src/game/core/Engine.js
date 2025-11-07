@@ -138,12 +138,15 @@ export class Engine {
     // Register systems to SystemManager
     let sm = this.systemManager;
 
-    // Register material and physics systems if available (from main branch)
+    // Handle legacy systems that don't follow System pattern (from main branch)
+    // These are managed separately from SystemManager
     if (MaterialSystemIntegration) {
-      sm = sm.register(new MaterialSystemIntegration(this));
+      this.materialSystem = new MaterialSystemIntegration(this);
+      Logger.info('MaterialSystemIntegration loaded (legacy, not managed by SystemManager)');
     }
     if (PhysicsSystem) {
-      sm = sm.register(new PhysicsSystem(this));
+      this.physicsSystem = new PhysicsSystem(this);
+      Logger.info('PhysicsSystem loaded (legacy, not managed by SystemManager)');
     }
 
     sm = sm.register(new NetworkManager(this));
@@ -178,11 +181,19 @@ export class Engine {
       // Note: MobileUI might not follow the System pattern, so handle separately
     }
 
+    // Initialize legacy systems first (if available)
+    if (this.materialSystem && typeof this.materialSystem.initialize === 'function') {
+      await this.materialSystem.initialize();
+      Logger.info('MaterialSystem initialized');
+    }
+    if (this.physicsSystem && typeof this.physicsSystem.initialize === 'function') {
+      await this.physicsSystem.initialize();
+      Logger.info('PhysicsSystem initialized');
+    }
+
     // Define initialization order (some systems depend on others)
     const initOrder = [
-      "materials", // Material system from main
       "network",
-      "physics", // Physics system from main
       "mobileLOD", // Initialize LOD manager first to prepare for other systems
       "skybox", // Skybox should be initialized early for proper lighting
       "world", // Base terrain must be initialized first
@@ -350,6 +361,16 @@ export class Engine {
 
     // Update quality
     this.qualityManager.update(this.delta);
+
+    // Update legacy systems (if available)
+    if (this.physicsSystem && typeof this.physicsSystem.update === 'function') {
+      // PhysicsSystem needs world reference
+      const world = this.systemManager.get('world');
+      this.physicsSystem.update(this.delta, world, this.elapsed);
+    }
+    if (this.materialSystem && typeof this.materialSystem.update === 'function') {
+      this.materialSystem.update(this.delta, this.elapsed);
+    }
 
     // Update systems
     this.systemManager.update(this.delta, this.elapsed);

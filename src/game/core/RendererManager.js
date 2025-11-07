@@ -89,9 +89,14 @@ export class RendererManager {
   }
 
   updateResolution() {
-    // Safety check: ensure camera exists before updating
+    // Safety check: ensure camera and renderer exist before updating
     if (!this.camera) {
       console.warn('RendererManager.updateResolution: Camera not available, skipping update');
+      return;
+    }
+
+    if (!this.renderer) {
+      // Renderer not created yet (called before setup()), skip silently
       return;
     }
 
