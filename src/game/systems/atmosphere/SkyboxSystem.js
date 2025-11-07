@@ -765,13 +765,23 @@ export class SkyboxSystem extends System {
       this.twilightVisibility = 0;
     }
 
-    // Update material uniforms
-    if (this.skyboxMaterial) {
-      this.skyboxMaterial.uniforms._SunVisibility.value = this.sunVisibility;
-      this.skyboxMaterial.uniforms._MoonVisibility.value = this.moonVisibility;
-      this.skyboxMaterial.uniforms._TwilightVisibility.value = this.twilightVisibility;
-      this.skyboxMaterial.uniforms._TwilightTime.value = this.twilightTime;
-      this.skyboxMaterial.uniforms._DirToLight.value.copy(this.sunDirection);
+    // Update material uniforms (with safety checks for optional uniforms)
+    if (this.skyboxMaterial && this.skyboxMaterial.uniforms) {
+      if (this.skyboxMaterial.uniforms._SunVisibility) {
+        this.skyboxMaterial.uniforms._SunVisibility.value = this.sunVisibility;
+      }
+      if (this.skyboxMaterial.uniforms._MoonVisibility) {
+        this.skyboxMaterial.uniforms._MoonVisibility.value = this.moonVisibility;
+      }
+      if (this.skyboxMaterial.uniforms._TwilightVisibility) {
+        this.skyboxMaterial.uniforms._TwilightVisibility.value = this.twilightVisibility;
+      }
+      if (this.skyboxMaterial.uniforms._TwilightTime) {
+        this.skyboxMaterial.uniforms._TwilightTime.value = this.twilightTime;
+      }
+      if (this.skyboxMaterial.uniforms._DirToLight) {
+        this.skyboxMaterial.uniforms._DirToLight.value.copy(this.sunDirection);
+      }
     }
   }
 
