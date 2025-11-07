@@ -75,6 +75,7 @@ export class MoonSystem {
     
     this.moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
     this.moonMesh.renderOrder = 100; // Render moon after most other objects
+    this.moonMesh.layers.set(10); // Same layer as sun for consistent rendering
     this.scene.add(this.moonMesh);
     
     // Add moonlight

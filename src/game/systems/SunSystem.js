@@ -84,8 +84,8 @@ export class SunSystem extends System {
       opacity: 0.9,
       side: THREE.FrontSide,
       depthWrite: false,
-      depthTest: true,
-      depthFunc: THREE.AlwaysDepth
+      depthTest: false, // Render sun always on top of sky
+      fog: false
     });
 
     // Create sun mesh
@@ -106,8 +106,8 @@ export class SunSystem extends System {
       opacity: this.config.GLOW_OPACITY,
       side: THREE.DoubleSide,
       depthWrite: false,
-      depthTest: true,
-      depthFunc: THREE.AlwaysDepth
+      depthTest: false, // Render glow always on top
+      fog: false
     });
 
     this.sunGlow = new THREE.Mesh(glowGeometry, glowMaterial);

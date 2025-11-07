@@ -69,6 +69,7 @@ export class StarSystem {
     
     // Create star field
     this.starField = new THREE.Points(geometry, starsMaterial);
+    this.starField.layers.set(10); // Same layer as sun/moon for consistent rendering
     this.scene.add(this.starField);
   }
   
@@ -108,6 +109,7 @@ export class StarSystem {
     
     // Create horizon star field
     this.horizonStarField = new THREE.Points(geometry, starsMaterial);
+    this.horizonStarField.layers.set(10); // Same layer as sun/moon for consistent rendering
     this.scene.add(this.horizonStarField);
   }
   

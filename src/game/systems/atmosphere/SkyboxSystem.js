@@ -608,16 +608,12 @@ export class SkyboxSystem extends System {
               skyColor += vec3(1.0, 1.0, 0.8) * sunDisk * 10.0;
             }
 
-            // Add moon when visible
+            // Subtle moon glow in sky (actual moon mesh rendered separately)
             if (_MoonVisibility > 0.0) {
               vec3 moonDir = -_DirToLight; // Moon opposite to sun
               float moonDot = dot(vWorldDirection, normalize(moonDir));
-              float moonGlow = pow(max(0.0, moonDot), 500.0) * _MoonVisibility;
-              skyColor += vec3(0.9, 0.95, 1.0) * moonGlow * 1.5;
-
-              // Moon disk
-              float moonDisk = pow(max(0.0, moonDot), 1000.0) * _MoonVisibility;
-              skyColor += vec3(0.8, 0.85, 0.9) * moonDisk * 5.0;
+              float moonGlow = pow(max(0.0, moonDot), 800.0) * _MoonVisibility; // Tighter glow
+              skyColor += vec3(0.9, 0.95, 1.0) * moonGlow * 0.3; // Reduced intensity
             }
 
             // Add stars at night
@@ -639,6 +635,9 @@ export class SkyboxSystem extends System {
           }
         `,
         side: THREE.BackSide,
+        depthWrite: false,
+        depthTest: true,
+        fog: false,
         uniforms: {
           _TimeOfDay: { value: 0.5 },
           _SunVisibility: { value: 1.0 },
