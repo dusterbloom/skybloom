@@ -16,7 +16,8 @@ import { PlayerInputSystem } from "../systems/player/PlayerInputSystem.js";
 import { PlayerCameraSystem } from "../systems/player/PlayerCameraSystem.js";
 import { UISystem } from "../systems/UISystem";
 // Import new systems
-import { VegetationSystem } from "../systems/VegetationSystem";
+// import { VegetationSystem } from "../systems/VegetationSystem"; // Disabled - using SimpleTreeSystem instead
+import { SimpleTreeSystem } from "../systems/SimpleTreeSystem";
 import { PlayerPhysics } from "../systems/player/PlayerPhysics.js";
 import { AtmosphereSystem } from "../systems/atmosphere/AtmosphereSystem";
 import { WaterSystem } from "../systems/WaterSystem";
@@ -155,7 +156,7 @@ export class Engine {
     sm = sm.register(new WaterSystem(this));
     sm = sm.register(new SkyboxSystem(this));
     sm = sm.register(new PerformanceBenchmarkSystem(this));
-    sm = sm.register(new VegetationSystem(this));
+    sm = sm.register(new SimpleTreeSystem(this)); // Replaced VegetationSystem with simpler model-based system
     sm = sm.register(new PlayerStateManager(this))
       .register(new PlayerPhysics(this))
       .register(new PlayerInputSystem(this))
@@ -198,7 +199,7 @@ export class Engine {
       "world", // Base terrain must be initialized first
       "water", // Water system should be initialized after terrain
       "performanceBenchmark", // Performance benchmarking system
-      "vegetation", // Vegetation needs terrain to place trees
+      "simpleTrees", // Simple model-based tree spawning
       "playerState",
       "playerPhysics", // Physics after playerState for localPlayer access
       "playerInput", // Input after physics

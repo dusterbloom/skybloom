@@ -116,11 +116,11 @@ export class AmbientLifeSystem extends System {
     canvas.height = 32;
     const ctx = canvas.getContext('2d');
 
-    // Draw butterfly (simple colored dots/wings)
+    // Draw butterfly (purple/pink gradient - distinct from mana orbs)
     const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-    gradient.addColorStop(0, 'rgba(255, 200, 100, 1.0)');
-    gradient.addColorStop(0.5, 'rgba(255, 180, 80, 0.8)');
-    gradient.addColorStop(1, 'rgba(255, 150, 50, 0)');
+    gradient.addColorStop(0, 'rgba(255, 100, 200, 1.0)');  // Bright pink center
+    gradient.addColorStop(0.5, 'rgba(200, 100, 255, 0.9)'); // Purple middle
+    gradient.addColorStop(1, 'rgba(180, 80, 220, 0)');       // Fade to transparent
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 32, 32);
 
@@ -138,9 +138,9 @@ export class AmbientLifeSystem extends System {
     for (let i = 0; i < this.butterflyCount; i++) {
       const butterfly = new THREE.Sprite(material.clone());
 
-      // Larger scale for visibility
-      const scale = 5 + Math.random() * 3;
-      butterfly.scale.set(scale, scale, 1);
+      // Smaller and more delicate than mana orbs
+      const scale = 3 + Math.random() * 2;
+      butterfly.scale.set(scale, scale * 1.2, 1); // Slightly taller than wide
 
       // Position closer to ground and player
       const radius = 100 + Math.random() * this.butterflySpread;
