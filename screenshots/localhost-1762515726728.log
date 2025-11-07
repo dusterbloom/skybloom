@@ -1,0 +1,2180 @@
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.22980000007031
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.2, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5696.77, 8921.60. Current landmarks: 103
+ [INFO] [LandmarkSystem] Creating magical_circle landmark at 2279.73, 10159.05
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 104
+ [DEBUG] AtmosphereSystem.update called with delta=0.017399999976158143, elapsed=99.24720000004648
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016299999952316284, elapsed=99.26349999999879
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016300000071525572, elapsed=99.27980000007031
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.3, 2999.9, 0.0)
+ Pointer lock released
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=99.29649999999879
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.31310000002263
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.3298000000703
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.34640000009415
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=99.36310000002263
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=99.38010000002262
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=99.39649999999878
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.41310000002262
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.4298000000703
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=99.44660000002261
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=99.4631000000226
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.47980000007028
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=99.49649999999876
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.5131000000226
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=99.52990000009413
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=99.54649999999876
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.56320000004644
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=99.5801000000226
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01839999997615814, elapsed=99.59849999999875
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014600000023841857, elapsed=99.6131000000226
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.62980000007028
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.64640000009412
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=99.66320000004643
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.67990000009411
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=99.6964000000941
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=99.71310000002258
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.72970000004642
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.7464000000941
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=99.76310000002258
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.77970000004642
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.7964000000941
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=99.81310000002257
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=99.82980000007025
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.84640000009409
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=99.8632000000464
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-106.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.87980000007025
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=99.89640000009409
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=99.91310000002257
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=99.93010000002256
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018700000047683716, elapsed=99.94880000007025
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017399999976158143, elapsed=99.96620000004641
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.013600000023841858, elapsed=99.97980000007026
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=99.99649999999873
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=100.01299999999873
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.0297000000464
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=100.04649999999872
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.06310000002256
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.07980000007024
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.09640000009408
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=100.1129999999987
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.2, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5722.01, 8856.73. Current landmarks: 104
+ [INFO] [LandmarkSystem] Creating crystal_formation landmark at 4306.03, -479.11
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 105
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.12970000004638
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=100.1464999999987
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.16310000002254
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.17980000007022
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.19640000009406
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.21310000002254
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.22980000007021
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.24640000009406
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.26310000002253
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=100.27990000009406
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018799999952316283, elapsed=100.29870000004638
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014299999952316284, elapsed=100.3129999999987
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=100.32980000007022
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.34640000009406
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.36310000002254
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.5, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5729.70, 8837.03. Current landmarks: 105
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.37980000007022
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.3964999999987
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.41310000002254
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.42980000007022
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.4464999999987
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.46310000002254
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.47980000007021
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.49640000009406
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.51310000002253
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.52980000007021
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.54640000009405
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.7, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5735.48, 8822.22. Current landmarks: 105
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.56310000002253
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.57970000004637
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.59640000009405
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.61310000002253
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=100.62999999999869
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018400000095367432, elapsed=100.64840000009406
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.8, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5738.75, 8813.85. Current landmarks: 105
+ [DEBUG] AtmosphereSystem.update called with delta=0.01459999990463257, elapsed=100.66299999999869
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=100.67980000007022
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.69640000009406
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.8, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5740.30, 8809.88. Current landmarks: 105
+ [INFO] [LandmarkSystem] Creating magical_circle landmark at 12161.95, 15812.27
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 106
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=100.71299999999869
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.72970000004636
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=100.74649999999868
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.76310000002252
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.77970000004636
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-107.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.7963000000702
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=100.81310000002252
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.82970000004636
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.84640000009404
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.86310000002251
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=100.87980000007019
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=100.89640000009403
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=100.91299999999866
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=100.92980000007019
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=100.94649999999866
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=100.96330000007019
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017899999976158144, elapsed=100.98120000004634
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015299999952316285, elapsed=100.99649999999866
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.0131000000225
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=101.02990000009403
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=101.04640000009402
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=101.06299999999865
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=101.07980000007018
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.09640000009402
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=101.11299999999865
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=101.12980000007018
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.14640000009402
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=101.1631000000225
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.17970000004634
+ [DEBUG] SunSystem updated: timeOfDay=0.5011, position=(-108.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.19640000009402
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=101.2131000000225
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.4, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5757.55, 8765.79. Current landmarks: 106
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.22970000004634
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.24630000007018
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=101.26320000004634
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.27980000007018
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.29640000009402
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=101.3131000000225
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=101.3301000000225
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017800000071525574, elapsed=101.34790000009403
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015099999904632568, elapsed=101.36299999999866
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.37970000004634
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.6, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5763.31, 8751.06. Current landmarks: 106
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=101.39649999999865
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.4131000000225
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.42980000007017
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=101.44630000007017
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=101.46299999999864
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01690000009536743, elapsed=101.479900000094
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=101.496400000094
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=101.51310000002248
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=101.52960000002247
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.54630000007015
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=101.56310000002246
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.57980000007014
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=101.59649999999861
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=101.6129999999986
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.8, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5771.55, 8730.03. Current landmarks: 106
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.62970000004628
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.64640000009396
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=101.66330000007012
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018100000023841857, elapsed=101.68140000009396
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014899999976158143, elapsed=101.69630000007011
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-108.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=101.71310000002242
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.72970000004626
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.74640000009394
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=101.76299999999857
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.77970000004625
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=101.79649999999856
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=101.81299999999855
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.82970000004623
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.84640000009391
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=101.86299999999854
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=101.87980000007006
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.8964000000939
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=101.91299999999853
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.92970000004621
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=101.94630000007005
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=101.96299999999853
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.97970000004621
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=101.99640000009389
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=102.01330000007005
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017699999928474427, elapsed=102.03099999999851
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015400000095367431, elapsed=102.04640000009388
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=102.06299999999851
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.07970000004619
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.09640000009387
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=102.11310000002234
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=102.12970000004618
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.4, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5790.49, 8681.74. Current landmarks: 106
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=102.14630000007003
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=102.1629999999985
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.4, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5791.74, 8678.55. Current landmarks: 106
+ [INFO] [LandmarkSystem] Creating crystal_formation landmark at 150.60, 11442.72
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 107
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.17970000004618
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.19640000009386
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=102.21299999999849
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.22970000004617
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.24640000009384
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=102.26299999999847
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=102.27980000007
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=102.29630000006999
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=102.31299999999847
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=102.32980000007
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018199999928474427, elapsed=102.34799999999846
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015, elapsed=102.36299999999846
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.37970000004614
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.39640000009382
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=102.41299999999845
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.42970000004613
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.4464000000938
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=102.46310000002228
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.47980000006996
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=102.4964000000938
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=102.51299999999843
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=102.52980000006995
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=102.5464000000938
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017099999904632568, elapsed=102.56349999999843
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016200000047683717, elapsed=102.57970000004612
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.5964000000938
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=102.61299999999842
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-109.9, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5809.04, 8634.50. Current landmarks: 107
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.6297000000461
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.64640000009378
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=102.6629999999984
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.67970000004608
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=102.69630000006993
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.0, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5812.32, 8626.16. Current landmarks: 107
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=102.7129999999984
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01690000009536743, elapsed=102.72990000009376
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=102.74640000009376
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=102.76340000009375
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.023299999952316283, elapsed=102.78670000004607
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014200000047683715, elapsed=102.80090000009375
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.012299999952316284, elapsed=102.81320000004607
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=102.82980000006991
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=102.84649999999839
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.86320000004606
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=102.87990000009374
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=102.89649999999837
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=102.9133000000699
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=102.92999999999837
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=102.94660000002222
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=102.96310000002221
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=102.97990000009374
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=102.99640000009373
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=103.0131000000222
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=103.02990000009373
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=103.04640000009373
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.06320000004604
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.07999999999835
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01640000009536743, elapsed=103.09640000009372
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=103.1131000000222
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=103.12999999999836
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.020300000071525572, elapsed=103.15030000006989
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015399999976158141, elapsed=103.16570000004604
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014100000023841859, elapsed=103.17980000006989
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=103.19640000009373
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.21320000004604
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=103.22970000004604
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.24649999999835
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=103.26310000002219
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=103.27990000009372
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=103.2966000000222
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.31330000006987
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=103.32980000006987
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.34660000002218
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=103.36320000004602
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=103.37970000004601
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.39649999999833
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=103.41299999999832
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.429700000046
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.44640000009367
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=103.46310000002215
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=103.47999999999831
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.02010000002384186, elapsed=103.50010000002216
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014200000047683715, elapsed=103.51430000006984
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015399999976158141, elapsed=103.52970000004599
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-110.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.54640000009367
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=103.5629999999983
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.57970000004597
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=103.59630000006982
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.61310000002213
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=103.62970000004597
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.64640000009365
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.66320000004596
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.67990000009364
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=103.69640000009363
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=103.71310000002211
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=103.72970000004595
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.74649999999826
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.019300000071525575, elapsed=103.76580000006979
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.013899999976158142, elapsed=103.77970000004595
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.79640000009363
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.81320000004594
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01889999997615814, elapsed=103.8321000000221
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014800000071525574, elapsed=103.84690000009363
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016099999904632567, elapsed=103.86299999999827
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.87970000004594
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=103.89620000004594
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=103.91299999999825
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.92970000004593
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=103.94630000006977
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=103.96299999999825
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=103.97960000002209
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.4, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5865.73, 8490.43. Current landmarks: 107
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=103.99630000006977
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=104.01299999999824
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.5, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5867.19, 8486.72. Current landmarks: 107
+ [INFO] [LandmarkSystem] Creating magical_circle landmark at 4284.51, 1866.01
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 108
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.02970000004592
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=104.04630000006976
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=104.06299999999824
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.07970000004592
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.0964000000936
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=104.11299999999822
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.1297000000459
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=104.14660000002206
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018700000047683716, elapsed=104.16530000006975
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.6, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5873.90, 8469.70. Current landmarks: 108
+ [DEBUG] AtmosphereSystem.update called with delta=0.014299999952316284, elapsed=104.17960000002206
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.19630000006974
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=104.21290000009358
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=104.22960000002206
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.24630000006974
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=104.26299999999821
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=104.27980000006974
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=104.2962000000459
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.31290000009358
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=104.32970000004589
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=104.34630000006973
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=104.36299999999821
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.37970000004589
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.39640000009356
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=104.41299999999819
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.42970000004587
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.44640000009355
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-111.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=104.46299999999817
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=104.47970000004585
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=104.49660000002201
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.0, 2999.9, 0.0)
+ [INFO] Resetting carpet contrail system
+ [DEBUG] AtmosphereSystem.update called with delta=0.06666666666666667, elapsed=113.63410000002202
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=113.65099999999818
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0295, elapsed=113.68049999999818
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.1, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5893.90, 8418.97. Current landmarks: 108
+ [DEBUG] AtmosphereSystem.update called with delta=0.017900000095367432, elapsed=113.69840000009354
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.020699999928474426, elapsed=113.71910000002201
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.02010000002384186, elapsed=113.73920000004586
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0195, elapsed=113.75870000004585
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.021200000047683715, elapsed=113.77990000009353
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01889999997615814, elapsed=113.79880000006969
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.019100000023841858, elapsed=113.81790000009353
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=113.83490000009353
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017899999976158144, elapsed=113.85280000006968
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.019299999952316283, elapsed=113.87210000002199
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.019100000023841858, elapsed=113.89120000004583
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.019799999952316284, elapsed=113.91099999999814
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.010200000047683715, elapsed=113.92120000004583
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.4, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5905.07, 8390.67. Current landmarks: 108
+ [DEBUG] AtmosphereSystem.update called with delta=0.008100000023841859, elapsed=113.92930000006967
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=113.94599999999815
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=113.96270000004583
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=113.97930000006967
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=113.99590000009351
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.01260000002199
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.02930000006967
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.04599999999814
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.06260000002199
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.07920000004583
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.09590000009351
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.11270000004582
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.12930000006966
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.14599999999814
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.16260000002198
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=114.17940000009351
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.19610000002199
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.21280000006966
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.2294000000935
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.7, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5919.62, 8353.80. Current landmarks: 108
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=114.24599999999813
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.26270000004581
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.27940000009349
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=114.29599999999812
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.3127000000458
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.32940000009347
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.34610000002195
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.36270000004579
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.37940000009347
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=114.39620000004578
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=114.41270000004577
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.42940000009345
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.44610000002193
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-112.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.46270000004577
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.47930000006961
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=114.49620000004577
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017100000023841856, elapsed=114.51330000006962
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015899999976158142, elapsed=114.52920000004578
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.54590000009345
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=114.56270000004577
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.57930000006961
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.1, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5936.49, 8311.08. Current landmarks: 108
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.59590000009345
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.61260000002193
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.62920000004577
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.64590000009345
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=114.66249999999808
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=114.6793000000696
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.69590000009345
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=114.71249999999807
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.72920000004575
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=114.74599999999806
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.76270000004574
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.77930000006958
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.79599999999806
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.8126000000219
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.82930000006958
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.84590000009342
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.8626000000219
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.87920000004574
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.4, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5951.23, 8273.77. Current landmarks: 108
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.89599999999805
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.9126000000219
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.92930000006957
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.94590000009342
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=114.9626000000219
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=114.97920000004574
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=114.99590000009341
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.01260000002189
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.02930000006957
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.04590000009341
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=115.06270000004572
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.0794000000934
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=115.0964000000934
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016199999928474425, elapsed=115.11260000002187
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.12920000004571
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.14590000009339
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.16260000002187
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.17930000006955
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.19590000009339
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.21260000002187
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.22930000006954
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.8, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 5968.75, 8229.44. Current landmarks: 108
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.24599999999802
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.26260000002186
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.2792000000457
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.29590000009338
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.31260000002186
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.32930000006954
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.34599999999801
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.36270000004569
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-113.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.37930000006953
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.39599999999801
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.41260000002185
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.42930000006953
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.44599999999801
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.46270000004569
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.47940000009336
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=115.49599999999799
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.51260000002183
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=115.52940000009336
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.54610000002184
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.06666666666666667, elapsed=115.744499999998
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016300000071525572, elapsed=115.76080000006952
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.008100000023841859, elapsed=115.76890000009337
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.014399999976158142, elapsed=115.78330000006953
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.012600000023841857, elapsed=115.79590000009337
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.81260000002185
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.82930000006952
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.84590000009337
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=115.86260000002184
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.87930000006952
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.89590000009336
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.017699999928474427, elapsed=115.91360000002183
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.019100000023841858, elapsed=115.93270000004567
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.014399999976158142, elapsed=115.94710000002183
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0155, elapsed=115.96260000002184
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=115.97930000006951
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=115.99590000009336
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=116.01260000002183
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=116.02920000004568
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=116.04590000009335
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=116.06280000006952
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=116.07930000006951
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=116.09590000009335
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=116.11260000002183
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=116.1293000000695
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=116.14590000009335
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=116.16249999999798
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=116.17920000004565
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=116.19590000009333
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=116.21260000002181
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=116.22930000006949
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=116.2461000000218
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0255, elapsed=116.27160000002179
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=116.28840000009332
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=116.30530000006948
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.014399999976158142, elapsed=116.31970000004564
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.009600000023841858, elapsed=116.32930000006948
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=116.34590000009332
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=116.3626000000218
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=116.37920000004564
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=116.39599999999795
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-114.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=116.41270000004563
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.026600000023841858, elapsed=116.43930000006948
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.014899999976158143, elapsed=116.45420000004563
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.009200000047683716, elapsed=116.46340000009332
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015899999976158142, elapsed=116.47930000006947
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6027.14, 8081.85. Current landmarks: 108
+Logger.js:29 [INFO] [LandmarkSystem] Creating crystal_formation landmark at 12629.91, -2018.30
+Logger.js:29 [INFO] [LandmarkSystem] Successfully created landmark, total count: 109
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=116.49590000009331
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=116.51249999999794
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=116.52930000006947
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=116.54590000009331
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.06666666666666667, elapsed=116.67310000002179
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016, elapsed=116.6891000000218
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.009300000071525573, elapsed=116.69840000009332
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015099999904632568, elapsed=116.71349999999795
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015700000047683717, elapsed=116.72920000004564
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.018100000023841857, elapsed=116.74730000006947
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015399999976158141, elapsed=116.76270000004563
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.025, elapsed=116.78770000004563
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.023899999976158142, elapsed=116.81160000002178
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015800000071525575, elapsed=116.8274000000933
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.008599999904632569, elapsed=116.83599999999794
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015200000047683716, elapsed=116.85120000004562
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.011299999952316285, elapsed=116.86249999999794
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01690000009536743, elapsed=116.8794000000933
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.023199999928474425, elapsed=116.90260000002178
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=116.91920000004562
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01, elapsed=116.92920000004563
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01839999997615814, elapsed=116.94760000002178
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=116.96399999999794
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015200000047683716, elapsed=116.97920000004562
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=116.9959000000933
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.028199999928474426, elapsed=117.02410000002178
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015899999976158142, elapsed=117.03999999999793
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6054.42, 8012.96. Current landmarks: 109
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.010600000023841857, elapsed=117.05060000002177
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0145, elapsed=117.06510000002177
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0145, elapsed=117.07960000002177
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.022700000047683716, elapsed=117.10230000006945
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=117.11880000006944
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.010399999976158142, elapsed=117.1292000000456
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.018799999952316283, elapsed=117.14799999999792
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.02410000002384186, elapsed=117.17210000002176
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015899999976158142, elapsed=117.18799999999791
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.008600000023841857, elapsed=117.19660000002176
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016, elapsed=117.21260000002177
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=117.22930000006944
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.017899999976158144, elapsed=117.2472000000456
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6065.91, 7983.94. Current landmarks: 109
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.023799999952316284, elapsed=117.27099999999791
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.017600000023841857, elapsed=117.28860000002176
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016300000071525572, elapsed=117.30490000009328
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.009699999928474427, elapsed=117.31460000002176
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=117.33160000002175
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.014600000023841857, elapsed=117.3462000000456
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01939999997615814, elapsed=117.36560000002176
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-115.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0265, elapsed=117.39210000002176
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.014899999976158143, elapsed=117.40699999999791
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.008300000071525574, elapsed=117.41530000006944
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.021199999928474426, elapsed=117.4364999999979
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0255, elapsed=117.4619999999979
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0145, elapsed=117.4764999999979
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.009100000023841858, elapsed=117.48560000002173
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0215, elapsed=117.50710000002174
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.02760000002384186, elapsed=117.53470000004558
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015399999976158141, elapsed=117.55010000002173
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.012700000047683716, elapsed=117.56280000006942
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.023299999952316283, elapsed=117.58610000002173
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015600000023841858, elapsed=117.60170000004557
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.010899999976158143, elapsed=117.61260000002173
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=117.62920000004557
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=117.64590000009325
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=117.66260000002173
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=117.67920000004557
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=117.69590000009325
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=117.71260000002172
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=117.72910000002172
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=117.74599999999788
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=117.76270000004556
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=117.77920000004555
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=117.79590000009323
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=117.81249999999785
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=117.82920000004553
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=117.84580000006937
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=117.86260000002169
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=117.87920000004553
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=117.8959000000932
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6102.62, 7891.33. Current landmarks: 109
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=117.91260000002168
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=117.92930000006936
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.02239999997615814, elapsed=117.95170000004552
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01610000002384186, elapsed=117.96780000006936
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.011299999952316285, elapsed=117.97910000002167
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=117.9959000000932
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=118.01249999999783
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=118.02930000006936
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=118.04580000006935
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=118.06249999999783
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=118.0792000000455
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.018600000023841858, elapsed=118.09780000006934
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01610000002384186, elapsed=118.11390000009318
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015299999952316285, elapsed=118.1292000000455
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6116.07, 7857.40. Current landmarks: 109
+Logger.js:29 [INFO] [LandmarkSystem] Creating magical_circle landmark at -5102.19, 2910.30
+Logger.js:29 [INFO] [LandmarkSystem] Successfully created landmark, total count: 110
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=118.14580000006934
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=118.16260000002165
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=118.1792000000455
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=118.19590000009318
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=118.2124999999978
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=118.22930000006933
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=118.24580000006932
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6122.84, 7840.33. Current landmarks: 110
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.019699999928474425, elapsed=118.2654999999978
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.017600000023841857, elapsed=118.28310000002165
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.014200000047683715, elapsed=118.29730000006933
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-116.9, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015199999928474426, elapsed=118.3124999999978
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=118.32920000004547
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=118.34580000006932
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=118.36260000002163
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=118.37920000004547
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=118.39590000009315
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.0, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=118.41249999999778
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=118.4293000000693
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=118.44590000009315
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=118.46249999999777
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=118.4793000000693
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.1, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=118.4958000000693
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=118.51249999999777
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=118.5293000000693
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=118.54590000009314
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=118.56270000004545
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=118.5793000000693
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.2, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.018799999952316283, elapsed=118.59810000002162
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.015600000023841858, elapsed=118.61370000004545
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.3, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0155, elapsed=118.62920000004546
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.3, 2999.9, 0.0)
+[Violation] 'requestAnimationFrame' handler took 173ms
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.06666666666666667, elapsed=118.80660000002162
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.026700000047683716, elapsed=118.8333000000693
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6150.85, 7769.70. Current landmarks: 110
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01610000002384186, elapsed=118.84940000009314
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.013099999904632568, elapsed=118.86249999999778
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.4, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=118.87910000002162
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=118.8958000000693
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=118.91249999999778
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=118.92920000004545
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=118.94590000009313
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=118.96260000002161
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.5, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=118.9791000000216
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=118.99599999999776
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=119.01249999999776
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.02920000004544
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.04590000009311
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.6, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=119.0624000000931
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=119.07920000004542
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.09580000006926
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=119.11249999999774
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=119.12930000006926
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=119.14580000006926
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.7, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=119.16249999999773
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.17910000002158
+Logger.js:35 [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.8, 2999.9, 0.0)
+Logger.js:35 [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.19580000006926
+ [DEBUG] SunSystem updated: timeOfDay=0.5012, position=(-117.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.2124000000931
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-117.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=119.22920000004541
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-117.8, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6174.63, 7709.77. Current landmarks: 110
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.24590000009309
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-117.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=119.26290000009308
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-117.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.02259999990463257, elapsed=119.28549999999771
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-117.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018200000047683716, elapsed=119.3037000000454
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-117.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015100000023841858, elapsed=119.31880000006923
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-117.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.010299999952316284, elapsed=119.32910000002154
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-117.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.34580000006922
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=119.3624999999977
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.37910000002154
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.39580000006922
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=119.41249999999769
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.42920000004537
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.44580000006921
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=119.46260000002152
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=119.47910000002152
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=119.49590000009304
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=119.51240000009304
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=119.52899999999767
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01690000009536743, elapsed=119.54590000009303
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=119.5626000000215
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=119.5791000000215
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=119.59590000009302
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=119.6126000000215
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0265, elapsed=119.6391000000215
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.02060000002384186, elapsed=119.65970000004535
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016299999952316284, elapsed=119.67599999999766
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.008900000095367431, elapsed=119.68490000009302
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0155, elapsed=119.70049999999766
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.012, elapsed=119.71249999999766
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.72920000004534
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=119.74599999999765
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.7626000000215
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=119.77940000009302
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=119.79580000006918
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=119.81249999999766
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.8291000000215
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=119.84590000009302
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=119.86249999999765
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=119.87920000004533
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=119.89599999999764
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.91260000002148
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=119.92920000004533
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017100000023841856, elapsed=119.94630000006917
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.022, elapsed=119.96830000006918
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0155, elapsed=119.98380000006918
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.012, elapsed=119.99580000006918
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=120.01249999999766
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=120.02920000004534
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.04580000006918
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.06240000009302
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=120.07920000004533
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=120.09590000009301
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=120.11249999999764
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.12910000002148
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=120.14580000006916
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0185, elapsed=120.16430000006916
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014799999952316284, elapsed=120.17910000002148
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=120.19580000006916
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=120.21249999999763
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=120.22920000004531
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=120.24610000002147
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-118.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=120.26260000002146
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=120.27910000002146
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=120.29590000009298
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=120.31240000009298
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=120.32910000002146
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=120.34599999999762
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.022200000047683716, elapsed=120.3682000000453
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.022600000023841858, elapsed=120.39080000006915
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014699999928474426, elapsed=120.40549999999762
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.008700000047683716, elapsed=120.4142000000453
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014899999976158143, elapsed=120.42910000002145
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.44570000004529
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=120.46240000009297
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=120.47920000004528
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=120.49590000009296
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=120.51249999999759
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.52910000002143
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=120.54590000009296
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=120.56249999999758
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.57910000002143
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.59570000004527
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=120.61260000002143
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.62920000004527
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.64580000006912
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.66240000009296
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=120.67910000002144
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017300000071525573, elapsed=120.69640000009296
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.021299999952316285, elapsed=120.71770000004528
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015600000023841858, elapsed=120.73330000006912
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.012600000023841857, elapsed=120.74590000009296
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=120.76249999999759
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.77910000002143
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=120.79580000006911
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.81240000009295
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=120.82910000002143
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=120.84590000009295
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0175, elapsed=120.86340000009295
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0185, elapsed=120.88190000009295
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01809999990463257, elapsed=120.89999999999759
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0175, elapsed=120.91749999999759
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.012700000047683716, elapsed=120.93020000004528
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015600000023841858, elapsed=120.94580000006911
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=120.96240000009296
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=120.97910000002143
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=120.99590000009296
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=121.01270000004527
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.026600000023841858, elapsed=121.03930000006912
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0195, elapsed=121.05880000006911
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015399999976158141, elapsed=121.07420000004527
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.008700000047683716, elapsed=121.08290000009295
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015099999904632568, elapsed=121.09799999999758
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0145, elapsed=121.11249999999758
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017100000023841856, elapsed=121.12960000002143
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01610000002384186, elapsed=121.14570000004527
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.9, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6294.41, 7408.17. Current landmarks: 110
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=121.16240000009294
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-119.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=121.17910000002142
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=121.19599999999758
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.0, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6297.64, 7400.03. Current landmarks: 110
+ [INFO] [LandmarkSystem] Creating magical_circle landmark at 12493.80, 4115.62
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 111
+ [DEBUG] AtmosphereSystem.update called with delta=0.018700000047683716, elapsed=121.21470000004527
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014700000047683716, elapsed=121.22940000009295
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=121.24580000006911
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=121.26270000004526
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=121.27910000002142
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=121.2958000000691
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017100000023841856, elapsed=121.31290000009294
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016299999952316284, elapsed=121.32920000004525
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=121.34580000006909
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=121.3626000000214
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=121.3791000000214
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=121.39599999999756
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0255, elapsed=121.42149999999755
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01640000009536743, elapsed=121.43790000009292
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.007899999976158142, elapsed=121.44580000006908
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=121.46249999999756
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=121.47920000004524
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=121.49590000009292
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=121.51240000009291
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=121.52920000004522
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=121.54570000004522
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=121.5624000000929
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.030299999952316282, elapsed=121.59270000004521
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.023, elapsed=121.61570000004521
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0255, elapsed=121.6412000000452
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.013700000047683715, elapsed=121.65490000009288
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.009599999904632568, elapsed=121.66449999999752
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=121.68130000006904
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=121.69780000006904
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=121.7147000000452
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018, elapsed=121.7327000000452
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.020799999952316284, elapsed=121.75349999999752
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014700000047683716, elapsed=121.7682000000452
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.013200000047683716, elapsed=121.78140000009289
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=121.79810000002136
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016300000071525572, elapsed=121.81440000009289
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=121.8312000000452
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=121.84780000006904
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=121.86449999999752
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01690000009536743, elapsed=121.88140000009288
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=121.89810000002136
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=121.91460000002135
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=121.93110000002135
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=121.94770000004519
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=121.9644999999975
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=121.98120000004518
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=121.99790000009286
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=122.01440000009285
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=122.03110000002133
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=122.047800000069
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=122.06460000002131
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=122.08120000004516
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-120.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=122.09810000002132
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016200000047683717, elapsed=122.11430000006901
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.019299999952316283, elapsed=122.13360000002132
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.0, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6358.96, 7245.78. Current landmarks: 111
+ [DEBUG] AtmosphereSystem.update called with delta=0.016, elapsed=122.14960000002132
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015200000047683716, elapsed=122.16480000006901
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=122.18140000009285
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=122.19840000009285
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=122.21490000009284
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.1, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6364.36, 7232.21. Current landmarks: 111
+ [INFO] [LandmarkSystem] Creating magical_circle landmark at -3632.98, 17065.98
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 112
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=122.231800000069
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01610000002384186, elapsed=122.24790000009284
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=122.26440000009283
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=122.28110000002131
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=122.29799999999747
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=122.31449999999747
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=122.33120000004514
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=122.34790000009282
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.2, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6373.21, 7209.95. Current landmarks: 112
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=122.36490000009282
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=122.38130000006898
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=122.39780000006897
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=122.41449999999745
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=122.43099999999744
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01690000009536743, elapsed=122.4479000000928
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018, elapsed=122.4659000000928
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017899999976158144, elapsed=122.48380000006895
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0145, elapsed=122.49830000006895
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01610000002384186, elapsed=122.51440000009279
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=122.5312000000451
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=122.54780000006895
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=122.56449999999742
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017700000047683715, elapsed=122.5822000000451
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015899999976158142, elapsed=122.59810000002126
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016300000071525572, elapsed=122.61440000009279
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.5, 2999.9, 0.0)
+[Violation] 'requestAnimationFrame' handler took 173ms
+ [DEBUG] AtmosphereSystem.update called with delta=0.06666666666666667, elapsed=122.79049999999742
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.022800000071525574, elapsed=122.81330000006895
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014299999952316284, elapsed=122.82760000002126
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.007399999976158142, elapsed=122.83499999999742
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.012900000095367431, elapsed=122.84790000009279
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0145, elapsed=122.86240000009279
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=122.87899999999742
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=122.8957000000451
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=122.91230000006894
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=122.92899999999742
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=122.9457000000451
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=122.96240000009277
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=122.9789999999974
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=122.99570000004508
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.01240000009275
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=123.02899999999738
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.04570000004506
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.06240000009274
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=123.07899999999736
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.09570000004504
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-121.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.11240000009272
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.0, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6417.32, 7099.06. Current landmarks: 112
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=123.12890000009271
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=123.14560000002119
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.16230000006887
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=123.17899999999734
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.19570000004502
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=123.21260000002118
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018300000071525574, elapsed=123.2309000000927
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014699999928474426, elapsed=123.24560000002117
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=123.2624000000927
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=123.27899999999732
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=123.29580000006885
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=123.31230000006884
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.32890000009269
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=123.34580000006885
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=123.36230000006884
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=123.37899999999732
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.2, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6435.50, 7053.35. Current landmarks: 112
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.395700000045
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.41230000006884
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=123.42910000002115
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.445700000045
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.46230000006884
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=123.47899999999731
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.49570000004499
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.51230000006883
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.52890000009268
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=123.54560000002115
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.56230000006883
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=123.57899999999731
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.59570000004499
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=123.61220000004498
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=123.62899999999729
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.64560000002113
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=123.66240000009266
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=123.67920000004497
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.022299999952316286, elapsed=123.70149999999728
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=123.71830000006881
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014, elapsed=123.7323000000688
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.013600000023841858, elapsed=123.74590000009265
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.020399999976158142, elapsed=123.76630000006881
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.7, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6462.13, 6986.45. Current landmarks: 112
+ [INFO] [LandmarkSystem] Creating crystal_formation landmark at 13674.60, 1703.63
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 113
+ [DEBUG] AtmosphereSystem.update called with delta=0.013600000023841858, elapsed=123.77990000009265
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015699999928474425, elapsed=123.79560000002112
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.81220000004497
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.82890000009264
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=123.84570000004496
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.86240000009263
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=123.87899999999726
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.8, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6469.92, 6966.88. Current landmarks: 113
+ [INFO] [LandmarkSystem] Creating ancient_ruins landmark at 12798.79, -4078.25
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 114
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.89570000004494
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.91230000006878
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=123.92890000009263
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=123.94570000004494
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.9, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6474.54, 6955.27. Current landmarks: 114
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=123.96240000009261
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=123.97910000002109
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.019899999976158142, elapsed=123.99899999999725
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.013400000095367431, elapsed=124.01240000009263
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-122.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=124.02899999999725
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.0456000000211
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.06230000006877
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.07890000009262
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.09570000004493
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=124.11220000004492
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.12899999999723
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=124.14549999999723
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=124.16230000006875
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.1789000000926
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.19570000004491
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.1, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6491.90, 6911.64. Current landmarks: 114
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=124.2122000000449
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.22899999999721
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.24560000002106
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.26230000006873
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=124.27899999999721
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.29570000004489
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.31230000006873
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.32890000009257
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.34570000004489
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.36230000006873
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.37890000009257
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=124.39560000002105
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.41230000006873
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=124.4289999999972
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.44570000004488
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.020200000047683717, elapsed=124.46590000009256
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.013699999928474427, elapsed=124.47960000002104
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016300000071525572, elapsed=124.49590000009256
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016299999952316284, elapsed=124.51220000004487
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.52890000009255
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.54570000004486
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.56240000009254
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=124.57899999999717
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.6, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6518.71, 6844.31. Current landmarks: 114
+ [INFO] [LandmarkSystem] Creating crystal_formation landmark at 15220.22, -3404.97
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 115
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.59560000002101
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.61230000006869
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=124.62899999999716
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.64570000004484
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=124.66220000004483
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.67899999999715
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.69560000002099
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.71230000006867
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.72890000009251
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.74570000004482
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.76230000006866
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.7789000000925
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=124.79580000006867
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.018699999928474428, elapsed=124.81449999999714
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014400000095367432, elapsed=124.8289000000925
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.84570000004481
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=124.86220000004481
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=124.87899999999712
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.9, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6539.85, 6791.22. Current landmarks: 115
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.8957000000448
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.91230000006864
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.92890000009248
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-123.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=124.94560000002096
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=124.96230000006864
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=124.97890000009248
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=124.99549999999711
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.01220000004479
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.02890000009246
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=125.04570000004477
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.06240000009245
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.07910000002093
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=125.09549999999709
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=125.11249999999708
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01640000009536743, elapsed=125.12890000009246
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.14560000002093
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.16220000004478
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.17890000009245
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.19560000002093
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.21230000006861
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.22890000009245
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.24560000002093
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.26220000004477
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.27890000009245
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.29560000002093
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016800000071525573, elapsed=125.31240000009245
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=125.32899999999708
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.34560000002092
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.3623000000686
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.37890000009244
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.39560000002092
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.41220000004476
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.42890000009244
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.44560000002092
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.4623000000686
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.47899999999707
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.49560000002091
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.51230000006859
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.6, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6584.89, 6678.13. Current landmarks: 115
+ [INFO] [LandmarkSystem] Creating magical_circle landmark at 15237.18, 11813.38
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 116
+ [DEBUG] AtmosphereSystem.update called with delta=0.017, elapsed=125.52930000006859
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01960000002384186, elapsed=125.54890000009243
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014099999904632569, elapsed=125.56299999999706
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015800000071525575, elapsed=125.57880000006858
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=125.5956000000209
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.61230000006857
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.62890000009241
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.64560000002089
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.66220000004473
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.7, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.67890000009241
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.69560000002089
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.71230000006857
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.72890000009241
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=125.74570000004472
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=125.76220000004471
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.8, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.77890000009239
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.79560000002087
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.81220000004471
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.82890000009239
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=125.84549999999702
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-124.9, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017800000071525574, elapsed=125.86330000006855
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.015600000023841858, elapsed=125.87890000009239
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=125.89549999999701
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.91220000004469
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=125.92890000009237
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=125.94580000006853
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.0, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=125.96220000004469
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=125.97880000006853
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=125.99549999999701
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=126.01220000004469
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=126.02890000009236
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.1, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=126.04570000004468
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.0165, elapsed=126.06220000004467
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.07880000006851
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=126.09560000002082
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.2, 2999.9, 0.0)
+ [DEBUG] [LandmarkSystem] Checking for landmark locations. Player at: 6626.84, 6572.81. Current landmarks: 116
+ [INFO] [LandmarkSystem] Creating magical_circle landmark at 5321.74, 4919.19
+ [INFO] [LandmarkSystem] Successfully created landmark, total count: 117
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.11220000004467
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=126.12890000009234
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.2, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=126.1456000000208
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.16220000004465
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.17880000006849
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=126.1956000000208
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.21220000004465
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.3, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016700000047683714, elapsed=126.22890000009232
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016799999952316284, elapsed=126.24570000004464
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.02339999997615814, elapsed=126.2691000000208
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.014600000023841857, elapsed=126.28370000004465
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.011799999952316283, elapsed=126.29549999999696
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01690000009536743, elapsed=126.31240000009232
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.4, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=126.32880000006848
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016899999976158143, elapsed=126.34570000004464
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.36230000006849
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.37890000009233
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.017199999928474426, elapsed=126.39610000002081
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.5, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016399999976158142, elapsed=126.41249999999697
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01640000009536743, elapsed=126.42890000009234
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016699999928474426, elapsed=126.44560000002082
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.4623000000685
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.01660000002384186, elapsed=126.47890000009234
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.6, 2999.9, 0.0)
+ [DEBUG] AtmosphereSystem.update called with delta=0.016599999904632567, elapsed=126.49549999999697
+ [DEBUG] SunSystem updated: timeOfDay=0.5013, position=(-125.6, 2999.9, 0.0)
