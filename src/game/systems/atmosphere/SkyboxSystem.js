@@ -505,17 +505,9 @@ export class SkyboxSystem extends System {
   updateShaderUniforms() {
     if (!this.skyboxMaterial || !this.skyboxMaterial.uniforms) return;
 
+    // Only update time of day - pure gradient skybox
     if (this.skyboxMaterial.uniforms._TimeOfDay) {
       this.skyboxMaterial.uniforms._TimeOfDay.value = this.timeOfDay;
-    }
-    if (this.skyboxMaterial.uniforms._SunVisibility) {
-      this.skyboxMaterial.uniforms._SunVisibility.value = this.sunVisibility;
-    }
-    if (this.skyboxMaterial.uniforms._MoonVisibility) {
-      this.skyboxMaterial.uniforms._MoonVisibility.value = this.moonVisibility;
-    }
-    if (this.skyboxMaterial.uniforms._DirToLight) {
-      this.skyboxMaterial.uniforms._DirToLight.value.copy(this.sunDirection);
     }
   }
 
