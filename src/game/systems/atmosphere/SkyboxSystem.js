@@ -363,11 +363,6 @@ export class SkyboxSystem extends System {
 
     // Update shader uniforms if they exist
     this.updateShaderUniforms();
-
-    // Debug logging
-    if (Math.floor(this.timeOfDay * 100) % 5 === 0) {
-      Logger.debug(`Skybox: time=${this.timeOfDay.toFixed(2)}, sunVis=${this.sunVisibility.toFixed(2)}, horizon=${this.horizonOffset.toFixed(1)}`);
-    }
   }
 
   updateSkyboxPosition() {
@@ -398,7 +393,6 @@ export class SkyboxSystem extends System {
           this.camera.position.z
         );
         this.horizonOffset = terrainHeight || 0;
-        Logger.debug(`Horizon offset updated: ${this.horizonOffset.toFixed(1)} at camera pos (${this.camera.position.x.toFixed(0)}, ${this.camera.position.z.toFixed(0)})`);
       } catch (error) {
         this.horizonOffset = 0;
         Logger.warn("Could not get terrain height for horizon calculation:", error.message);
@@ -445,8 +439,6 @@ export class SkyboxSystem extends System {
       Math.sin(moonAltitude),
       Math.cos(moonAzimuth) * cosMoonAlt
     );
-
-    Logger.debug(`Sun position: alt=${(adjustedSunAltitude * 180 / Math.PI).toFixed(1)}°, az=${(sunAzimuth * 180 / Math.PI).toFixed(1)}°, terrainAdj=${(terrainAdjustment * 180 / Math.PI).toFixed(1)}°`);
   }
 
   updateVisibility() {
@@ -508,8 +500,6 @@ export class SkyboxSystem extends System {
     // Apply fog settings to scene
     this.scene.fog.color.copy(fogColor);
     this.scene.fog.density = fogDensity;
-
-    Logger.debug(`Fog updated: color=#${fogColor.getHexString()}, density=${fogDensity.toFixed(6)}, time=${this.timeOfDay.toFixed(2)}`);
   }
 
   updateShaderUniforms() {

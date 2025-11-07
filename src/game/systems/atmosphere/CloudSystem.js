@@ -99,8 +99,6 @@ export class CloudSystem {
     const player = this.engine.systems.player?.localPlayer;
     const playerPos = player ? player.position : new THREE.Vector3(0, 0, 0);
     
-    Logger.debug('Player available for cloud positioning:', player ? 'Yes' : 'No');
-    
     for (let i = 0; i < this.cloudCount; i++) {
       const cloud = new THREE.Sprite(cloudMaterial.clone());
 

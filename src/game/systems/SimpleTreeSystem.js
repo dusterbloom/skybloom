@@ -9,7 +9,7 @@ import { Logger } from '../../utils/Logger.js';
 export class SimpleTreeSystem extends System {
   constructor(engine) {
     super(engine, 'simpleTrees');
-    this.requireDependencies(['world']);
+    this.requireDependencies(['world', 'player']);
     this.scene = engine.scene;
     this.worldSystem = engine.systems.world;
     this.assetManager = engine.assets;
@@ -156,15 +156,12 @@ export class SimpleTreeSystem extends System {
    * Update - spawn trees for visible chunks
    */
   _update(delta) {
-    const player = this.engine.systems.player?.localPlayer;
-    if (!player) {
-      // Log once to diagnose
-      if (!this._loggedNoPlayer) {
-        Logger.warn("SimpleTreeSystem: No player found yet, skipping tree spawning");
-        this._loggedNoPlayer = true;
-      }
-      return;
+    const playerSystem = this.engine.systems.player;
+    if (!playerSystem || !playerSystem.localPlayer) {
+      return; // Silently skip until player is ready
     }
+
+    const player = playerSystem.localPlayer;
 
     // Log first successful update
     if (!this._loggedFirstUpdate) {
@@ -236,10 +233,9 @@ export class SimpleTreeSystem extends System {
       treesSpawned++;
     }
 
-    if (treesSpawned > 0) {
+    // Only log first few successful chunks
+    if (treesSpawned > 0 && this.chunksWithTrees.size <= 3) {
       Logger.info(`🌲 Spawned ${treesSpawned} trees in chunk ${chunkX},${chunkZ}`);
-    } else if (this.chunksWithTrees.size < 5) {
-      Logger.warn(`No trees spawned in chunk ${chunkX},${chunkZ}. Rejected: ${JSON.stringify(rejectedReasons)}`);
     }
   }
 
@@ -297,9 +293,9 @@ export class SimpleTreeSystem extends System {
     this.scene.add(tree);
     this.spawnedTrees.push(tree);
 
-    // Log first few trees for debugging
-    if (this.spawnedTrees.length <= 5) {
-      Logger.info(`Spawned tree #${this.spawnedTrees.length} at (${x.toFixed(0)}, ${y.toFixed(0)}, ${z.toFixed(0)}) with scale ${scale.toFixed(1)}`);
+    // Log only first tree for debugging
+    if (this.spawnedTrees.length === 1) {
+      Logger.info(`🌲 First tree spawned at (${x.toFixed(0)}, ${y.toFixed(0)}, ${z.toFixed(0)}) with scale ${scale.toFixed(1)}`);
     }
   }
 

@@ -281,8 +281,6 @@ export class SunSystem extends System {
 
       // Update visibility
       this.updateVisibility();
-
-      Logger.debug(`SunSystem updated: timeOfDay=${this.timeOfDay.toFixed(4)}, position=(${this.sunPosition.x.toFixed(1)}, ${this.sunPosition.y.toFixed(1)}, ${this.sunPosition.z.toFixed(1)})`);
     } catch (error) {
       Logger.error('SunSystem update failed:', error);
     }

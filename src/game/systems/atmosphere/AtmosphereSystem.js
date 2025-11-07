@@ -144,11 +144,8 @@ export class AtmosphereSystem extends System {
    */
   update(delta, elapsed) {
     try {
-      Logger.debug(`AtmosphereSystem.update called with delta=${delta}, elapsed=${elapsed}`);
-
       // Check for zero delta
       if (delta === 0) {
-        Logger.warn('AtmosphereSystem received delta=0, time will not advance');
         return;
       }
 
