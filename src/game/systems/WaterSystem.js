@@ -1,13 +1,12 @@
 // FILE: src/game/systems/WaterSystem.js
-// Using THREE.js Official Ocean Example - Proven, Maintained Code
+// Restored from working main branch implementation
 
 import * as THREE from "three";
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
 
 /**
- * Water System using flat colored plane - Ultra Simple, Zero Errors
- * Based on original Magic Carpet (1994) approach
+ * Simple Water System - Restored from working main branch
  */
 export class WaterSystem extends System {
   constructor(engine) {
@@ -15,85 +14,74 @@ export class WaterSystem extends System {
     this.scene = engine.scene;
     this.camera = engine.camera;
     this.waterLevel = 0;
-    this.water = null;
+    this.oceanMesh = null;
+    this.oceanMaterial = null;
   }
 
   async _initialize() {
-    Logger.info("🌊 Initializing Simple Water System...");
+    Logger.info("🌊 Initializing Water System...");
 
-    // Calculate water level based on world terrain
+    // Get water level from world system
     if (this.engine.systems.world) {
-      const baseLevel = this.engine.systems.world.minHeight || 0;
-      this.waterLevel = baseLevel + 25;
-      Logger.info(`Water level set to ${this.waterLevel.toFixed(2)}`);
+      this.waterLevel = this.engine.systems.world.waterLevel || 0;
+      Logger.info(`Water level: ${this.waterLevel}`);
     } else {
       this.waterLevel = 0;
     }
 
-    this.createSimpleWater();
+    // Create ocean
+    this.createOcean();
 
     Logger.info("🌊 Water System initialized ✅");
   }
 
-  createSimpleWater() {
-    // Ultra-simple flat plane - like Magic Carpet 1994
-    // No textures, no shaders, no complexity = no errors
-    const geometry = new THREE.PlaneGeometry(15000, 15000);
-    geometry.rotateX(-Math.PI / 2);
+  createOcean() {
+    // Water color - proven working value from main branch
+    const waterColor = new THREE.Color(0x0077be);
 
-    // Simple solid color material
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x1177bb,    // Ocean blue
-      metalness: 0.9,     // Shiny water
-      roughness: 0.1,     // Smooth surface
+    // Create ocean material - simple and effective
+    this.oceanMaterial = new THREE.MeshStandardMaterial({
+      color: waterColor,
       transparent: true,
-      opacity: 0.85,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -4,
-      polygonOffsetUnits: -4
+      opacity: 0.7,
+      metalness: 0.1,
+      roughness: 0.3,
     });
 
-    this.water = new THREE.Mesh(geometry, material);
-    this.water.position.set(0, this.waterLevel, 0);
-    this.water.receiveShadow = true;
+    // Create large ocean plane
+    const oceanSize = 15000;
+    const oceanGeometry = new THREE.PlaneGeometry(oceanSize, oceanSize, 8, 8);
+    oceanGeometry.rotateX(-Math.PI / 2);
 
-    this.scene.add(this.water);
+    this.oceanMesh = new THREE.Mesh(oceanGeometry, this.oceanMaterial);
+    this.oceanMesh.position.y = this.waterLevel;
+    this.oceanMesh.receiveShadow = true;
 
-    Logger.info("Simple flat water created");
+    this.scene.add(this.oceanMesh);
+
+    Logger.info("Ocean created");
   }
 
   _update(deltaTime) {
-    // Keep water centered on camera for infinite world
-    if (this.camera && this.water) {
-      this.water.position.x = this.camera.position.x;
-      this.water.position.z = this.camera.position.z;
+    // Keep ocean centered on camera for infinite world
+    if (this.camera && this.oceanMesh) {
+      this.oceanMesh.position.x = this.camera.position.x;
+      this.oceanMesh.position.z = this.camera.position.z;
     }
   }
 
   destroy() {
-    if (this.water) {
-      this.scene.remove(this.water);
-      if (this.water.geometry) this.water.geometry.dispose();
-      if (this.water.material) this.water.material.dispose();
-      this.water = null;
+    if (this.oceanMesh) {
+      this.scene.remove(this.oceanMesh);
+      if (this.oceanMesh.geometry) this.oceanMesh.geometry.dispose();
+      if (this.oceanMaterial) this.oceanMaterial.dispose();
+      this.oceanMesh = null;
+      this.oceanMaterial = null;
     }
   }
 
   // Public API
   getWaterLevel() {
     return this.waterLevel;
-  }
-
-  setWaterLevel(level) {
-    this.waterLevel = level;
-    if (this.water) {
-      this.water.position.y = level;
-    }
-  }
-
-  isUnderwater(position) {
-    return position.y < this.waterLevel;
   }
 }
