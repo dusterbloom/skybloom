@@ -26,6 +26,7 @@ import { PerformanceBenchmarkSystem } from "../systems/PerformanceBenchmarkSyste
 import { CarpetTrailSystem } from "../systems/CarpetTrailSystem";
 import { LandmarkSystem } from "../systems/LandmarkSystem";
 import { MinimapSystem } from "../systems/MinimapSystem";
+import { AmbientLifeSystem } from "../systems/AmbientLifeSystem";
 import { IntroScreen } from "../ui/screens/IntroScreen";
 import { useGameState, GameStates } from '../state/gameState.js';
 import { Logger } from '../../utils/Logger.js';
@@ -161,6 +162,7 @@ export class Engine {
       .register(new PlayerCameraSystem(this))
       .register(new PlayerSystem(this))
       .register(new AtmosphereSystem(this))
+      .register(new AmbientLifeSystem(this))
       .register(new UISystem(this))
       .register(new CarpetTrailSystem(this))
       .register(new LandmarkSystem(this));
@@ -203,6 +205,7 @@ export class Engine {
       "playerCamera", // Camera after input and physics
       "player", // Orchestrator after sub-systems
       "atmosphere", // Atmosphere system manages its own sun/moon/star subsystems
+      "ambientLife", // Birds and butterflies for cozy world feel
       "ui", // UI needs player for HUD elements
       "carpetTrail", // Trail system needs player
       "landmarks",   // Landmarks need world and player

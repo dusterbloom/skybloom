@@ -61,8 +61,8 @@ export class SunSystem extends System {
     this.sunLight.shadow.camera.top = this.config.SHADOW_CAMERA_SIZE;
     this.sunLight.shadow.camera.bottom = -this.config.SHADOW_CAMERA_SIZE;
 
-    // Create ambient light
-    this.ambientLight = new THREE.AmbientLight(0x404060, this.config.AMBIENT_INTENSITY);
+    // Create ambient light - warmer color for cozy feel
+    this.ambientLight = new THREE.AmbientLight(0x8899aa, this.config.AMBIENT_INTENSITY);
 
     this.scene.add(this.sunLight);
     this.scene.add(this.ambientLight);

@@ -76,7 +76,7 @@ export class AtmosphereSystem extends System {
 
       Logger.debug("Creating StarSystem...");
       this.starSystem = new StarSystem(this);
-      // this.cloudSystem = new CloudSystem(this);
+      this.cloudSystem = new CloudSystem(this);
 
       Logger.debug("Initializing subsystems...");
       // Initialize subsystems
@@ -85,7 +85,7 @@ export class AtmosphereSystem extends System {
         this.sunSystem.initialize(),
         this.moonSystem.initialize(),
         this.starSystem.initialize(),
-        // this.cloudSystem.initialize()
+        this.cloudSystem.initialize()
       ]);
 
       Logger.info("AtmosphereSystem initialized successfully");
@@ -215,7 +215,9 @@ export class AtmosphereSystem extends System {
         Logger.error('StarSystem is null!');
       }
 
-      // this.cloudSystem.update(delta);
+      if (this.cloudSystem && typeof this.cloudSystem.update === 'function') {
+        this.cloudSystem.update(delta, elapsed);
+      }
     } catch (error) {
       Logger.error('AtmosphereSystem._update failed:', error);
       throw error; // Re-throw to see in console

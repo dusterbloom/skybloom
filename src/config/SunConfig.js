@@ -6,10 +6,10 @@ export const SUN_CONFIG = {
   RENDER_ORDER: 99,
   RENDER_LAYER: 10, // For water reflections
 
-  // Lighting properties
-  DEFAULT_COLOR: 0xffff00,
-  DEFAULT_INTENSITY: 1.2,
-  AMBIENT_INTENSITY: 0.7,
+  // Lighting properties - warmer for cozy feel
+  DEFAULT_COLOR: 0xffd580,  // Warm golden sun instead of pure yellow
+  DEFAULT_INTENSITY: 1.4,    // Slightly brighter for cheerier world
+  AMBIENT_INTENSITY: 1.0,    // Increased ambient for softer shadows
 
   // Positioning and movement
   SUN_DISTANCE: 15000,

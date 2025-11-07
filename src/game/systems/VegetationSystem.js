@@ -43,18 +43,18 @@ export class VegetationSystem extends System {
     this.lastDensityAdjustment = 0; // Time of last density adjustment
     this.densityAdjustmentInterval = 5000; // Adjust every 5 seconds if needed
     
-    // Vegetation parameters - enhanced for biome-specific distribution
+    // Vegetation parameters - enhanced for lush, cozy world
     this.treeTypes = [
       {
         name: "pine",
         minHeight: 20,
         maxHeight: 200,
         avoidWater: true,
-        baseDensity: 1.0,
+        baseDensity: 2.0,  // Doubled for more trees
         biomes: {
-          mountains: { densityMult: 1.5, clusterRadius: 150, minTemp: 0, maxTemp: 0.7 },
-          forest: { densityMult: 1.2, clusterRadius: 100, minTemp: 0, maxTemp: 0.5 },
-          plains: { densityMult: 0.3, clusterRadius: 60, minTemp: 0, maxTemp: 0.6 }
+          mountains: { densityMult: 2.5, clusterRadius: 150, minTemp: 0, maxTemp: 0.7 },
+          forest: { densityMult: 2.0, clusterRadius: 100, minTemp: 0, maxTemp: 0.5 },
+          plains: { densityMult: 0.8, clusterRadius: 60, minTemp: 0, maxTemp: 0.6 }
         }
       },
       {
@@ -62,11 +62,11 @@ export class VegetationSystem extends System {
         minHeight: 10,
         maxHeight: 100,
         avoidWater: true,
-        baseDensity: 0.8,
+        baseDensity: 1.8,  // Increased for lush forests
         biomes: {
-          forest: { densityMult: 1.8, clusterRadius: 120, minTemp: 0.3, maxTemp: 0.8 },
-          plains: { densityMult: 0.7, clusterRadius: 80, minTemp: 0.3, maxTemp: 0.9 },
-          mountains: { densityMult: 0.2, clusterRadius: 50, minTemp: 0.3, maxTemp: 0.7 }
+          forest: { densityMult: 3.0, clusterRadius: 120, minTemp: 0.3, maxTemp: 0.8 },
+          plains: { densityMult: 1.5, clusterRadius: 80, minTemp: 0.3, maxTemp: 0.9 },
+          mountains: { densityMult: 0.5, clusterRadius: 50, minTemp: 0.3, maxTemp: 0.7 }
         }
       },
       {
@@ -74,16 +74,16 @@ export class VegetationSystem extends System {
         minHeight: 5,
         maxHeight: 30,
         avoidWater: false,
-        baseDensity: 0.5,
+        baseDensity: 1.2,  // More palms near beaches
         biomes: {
-          plains: { densityMult: 0.8, clusterRadius: 70, minTemp: 0.7, maxTemp: 1.0 },
-          forest: { densityMult: 0.4, clusterRadius: 40, minTemp: 0.7, maxTemp: 1.0 }
+          plains: { densityMult: 1.5, clusterRadius: 70, minTemp: 0.7, maxTemp: 1.0 },
+          forest: { densityMult: 0.8, clusterRadius: 40, minTemp: 0.7, maxTemp: 1.0 }
         }
       }
     ];
-    
-    // Distance parameters - varying by tree type and location
-    this.treeDistanceBase = 25; // Base minimum distance between trees
+
+    // Distance parameters - closer trees for lusher feel
+    this.treeDistanceBase = 18; // Reduced from 25 for denser vegetation
     this.clusterNoiseScale = 0.001; // Large scale noise for cluster creation
     this.chunksWithTrees = new Set(); // Track which chunks have trees
   }

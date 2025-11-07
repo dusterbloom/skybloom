@@ -35,14 +35,14 @@ export class WorldSystem extends System {
     this._frustumMatrix = new THREE.Matrix4();
     this._cameraViewProjectionMatrix = new THREE.Matrix4();
 
-    // Terrain parameters
+    // Terrain parameters - adjusted for cozy, rolling landscapes
     this.terrainParams = {
-      baseScale: 0.0015,
-      detailScale: 0.01,
-      mountainScale: 0.002,
+      baseScale: 0.0012,      // Slightly broader base features
+      detailScale: 0.008,     // Reduced detail for smoother look
+      mountainScale: 0.0015,  // Broader, gentler mountains
       baseHeight: 60,
-      mountainHeight: 180,
-      detailHeight: 15
+      mountainHeight: 140,    // Reduced from 180 for gentler peaks
+      detailHeight: 10        // Reduced from 15 for less sharp detail
     };
 
     // Initialize noise generator
@@ -126,7 +126,7 @@ export class WorldSystem extends System {
     return total / maxValue;
   }
 
-  // --- ridgedNoise method remains unchanged ---
+  // --- ridgedNoise method - smoothed for cozy curves ---
   ridgedNoise(x, z, frequency, octaves = 5) {
     let result = 0;
     let amplitude = 1.0;
@@ -138,7 +138,8 @@ export class WorldSystem extends System {
         z * freq + this.seed * (i * 3.7 + 2)
       ));
       noiseValue = 1.0 - noiseValue;
-      const powerValue = i < 2 ? 1.5 : 1.1;
+      // Reduced power for gentler, rounder peaks (was 1.5 / 1.1, now 1.1 / 0.9)
+      const powerValue = i < 2 ? 1.1 : 0.9;
       noiseValue = Math.pow(noiseValue, powerValue);
       noiseValue *= weight;
       const weightScale = 0.7 + 0.2 * Math.sin(i * 1.5);

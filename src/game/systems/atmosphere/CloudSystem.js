@@ -17,10 +17,10 @@ export class CloudSystem {
     // Cloud collection
     this.clouds = [];
     
-    // Configuration
-    this.cloudCount = 50;
-    this.cloudSpread = 2000; // How far clouds spread from player
-    this.cloudHeight = 800; // Base height of cloud layer
+    // Configuration - Enhanced for cozy world
+    this.cloudCount = 100; // More clouds for a livelier sky
+    this.cloudSpread = 3000; // Spread clouds wider
+    this.cloudHeight = 600; // Lower clouds for more presence
   }
   
   /**
