@@ -599,7 +599,12 @@ export class VegetationSystem extends System {
     for (const tree of newTrees) {
       this.addTreeInstance(tree);
     }
-    
+
+    // Debug logging
+    if (newTrees.length > 0) {
+      Logger.info(`Generated ${newTrees.length} trees for chunk ${chunkKey}`);
+    }
+
     // Mark this chunk as processed
     this.chunksWithTrees.add(chunkKey);
   }
