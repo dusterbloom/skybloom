@@ -47,7 +47,7 @@ export class CloudSystem {
           const material = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            opacity: 0.4,  // Subtle clouds
+            opacity: 0.6,  // More visible clouds
             blending: THREE.NormalBlending,  // Normal blending instead of additive
             depthWrite: false
           });
@@ -75,7 +75,7 @@ export class CloudSystem {
           const material = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            opacity: 0.4,  // Subtle clouds
+            opacity: 0.6,  // More visible clouds
             blending: THREE.NormalBlending,  // Normal blending
             depthWrite: false
           });

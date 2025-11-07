@@ -497,9 +497,9 @@ export class SkyboxSystem extends System {
       fogDensity = 0.0003 + t * 0.0003; // Getting denser toward night
     }
 
-    // Apply fog settings to scene
+    // Apply fog settings to scene (but keep minimum density for atmosphere)
     this.scene.fog.color.copy(fogColor);
-    this.scene.fog.density = fogDensity;
+    this.scene.fog.density = Math.max(fogDensity, 0.00015); // Minimum fog for atmospheric depth
   }
 
   updateShaderUniforms() {

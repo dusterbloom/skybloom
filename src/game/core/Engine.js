@@ -92,8 +92,8 @@ export class Engine {
     // Create main scene and camera FIRST (before managers that depend on them)
     this.scene = new THREE.Scene();
 
-    // Add lightweight horizon fog for atmospheric depth
-    this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.0003); // Sky blue fog, density 0.0003
+    // Add atmospheric fog for depth and distance
+    this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.00015); // Sky blue fog, increased visibility
 
     this.camera = new THREE.PerspectiveCamera(
       75,
@@ -101,6 +101,9 @@ export class Engine {
       1.0,   // Increased from 0.1 for much better depth precision
       5000   // Reduced from 10000 - ratio now 5000:1 instead of 100000:1
     );
+
+    // Enable rendering of layer 10 for sun/moon visibility
+    this.camera.layers.enable(10);
 
     // Create core managers (after camera is available)
     this.input = new InputManager();

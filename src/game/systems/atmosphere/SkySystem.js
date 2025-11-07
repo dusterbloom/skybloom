@@ -44,7 +44,7 @@ export class SkySystem {
     }
 
     // Initialize scene fog
-    this.scene.fog = new THREE.FogExp2(0x88ccff, 0.00003);
+    this.scene.fog = new THREE.FogExp2(0x88ccff, 0.00015);
 
     Logger.info("SkySystem initialization complete");
   }

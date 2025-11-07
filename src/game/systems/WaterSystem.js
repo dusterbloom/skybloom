@@ -54,7 +54,8 @@ export class WaterSystem extends System {
     oceanGeometry.rotateX(-Math.PI / 2);
 
     this.oceanMesh = new THREE.Mesh(oceanGeometry, this.oceanMaterial);
-    this.oceanMesh.position.y = this.waterLevel;
+    // Lower water slightly to prevent z-fighting with shoreline
+    this.oceanMesh.position.y = this.waterLevel - 0.2;
     this.oceanMesh.receiveShadow = true;
 
     this.scene.add(this.oceanMesh);
