@@ -97,8 +97,8 @@ export class Engine {
     this.camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
-      0.1,
-      10000  // Increased far plane distance to better render distant terrain
+      1.0,   // Increased from 0.1 for much better depth precision
+      5000   // Reduced from 10000 - ratio now 5000:1 instead of 100000:1
     );
 
     // Create core managers (after camera is available)
