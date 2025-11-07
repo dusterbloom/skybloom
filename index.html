@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Magical Vibe Carpet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, height=device-height">
+  <title>Vibe Carpet</title>
   <style>
     body {
       margin: 0;
@@ -11,8 +11,8 @@
       overflow: hidden;
       width: 100vw;
       height: 100vh;
-      background: #120052;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0e3857;
+      font-family: "Helvetica Neue", Helvetica, sans-serif;
     }
     #loading {
       position: absolute;
@@ -21,27 +21,87 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      color: white;
-      background: linear-gradient(45deg, #120052, #7b2cbf);
+      color: #FFFFFF;
+      background: url("/assets/bg.png") no-repeat center center;
+      background-size: cover;
       z-index: 1000;
     }
     canvas {
       display: block;
     }
+
+    /* Enhanced CSS Water System */
+    #css-water-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .css-water-layer {
+      position: absolute;
+      bottom: 0;
+      left: -10%;
+      width: 120%;
+      background: linear-gradient(45deg,
+        rgba(0, 102, 170, 0.8) 0%,
+        rgba(0, 136, 204, 0.9) 30%,
+        rgba(0, 170, 255, 0.7) 70%,
+        rgba(0, 68, 136, 0.8) 100%);
+      animation: css-water-wave 4s ease-in-out infinite;
+      transform-origin: center bottom;
+    }
+
+    .css-water-layer:nth-child(2) {
+      animation-delay: 1s;
+      opacity: 0.6;
+      transform: scaleX(1.1);
+    }
+
+    .css-water-layer:nth-child(3) {
+      animation-delay: 2s;
+      opacity: 0.4;
+      transform: scaleX(1.2);
+    }
+
+    @keyframes css-water-wave {
+      0%, 100% {
+        transform: translateY(0px) rotateX(0deg);
+        filter: hue-rotate(0deg) brightness(1);
+      }
+      25% {
+        transform: translateY(-10px) rotateX(1deg);
+        filter: hue-rotate(5deg) brightness(1.1);
+      }
+      50% {
+        transform: translateY(-20px) rotateX(0deg);
+        filter: hue-rotate(10deg) brightness(1.2);
+      }
+      75% {
+        transform: translateY(-10px) rotateX(-1deg);
+        filter: hue-rotate(5deg) brightness(1.1);
+      }
+    }
   </style>
 </head>
 <body>
   <div id="loading">
-    <div>
-      <h1>Magical Vibe Carpet</h1>
-      <div id="progress-bar" style="width: 300px; height: 20px; background: #7b2cbf44; border-radius: 10px; overflow: hidden;">
-        <div id="progress" style="width: 0%; height: 100%; background: #e0aaff; transition: width 0.3s;"></div>
+    <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+      <img src="/assets/crescent.png" style="width: 140px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));">
+      <h1 style="font-size: 42px; font-weight: bold; color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); margin-bottom: 20px;">Vibe Carpet</h1>
+      <div id="progress-bar" style="width: 300px; height: 20px; background: rgba(0, 80, 150, 0.5); border-radius: 10px; overflow: hidden; margin-bottom: 20px;">
+        <div id="progress" style="width: 0%; height: 100%; background: #C87137; transition: width 0.3s;"></div>
       </div>
-      <p id="loading-text">Preparing your carpet ride...</p>
+      <p id="loading-text" style="color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);">Preparing your carpet ride...</p>
     </div>
   </div>
   <div id="ui-container"></div>
   <canvas id="game-canvas"></canvas>
   <script type="module" src="/src/main.js"></script>
+ 
 </body>
 </html>

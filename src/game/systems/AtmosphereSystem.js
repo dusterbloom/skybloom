@@ -1,220 +1,333 @@
 import * as THREE from "three";
+import { Sky } from "three/examples/jsm/objects/Sky.js";
+import { StarsParticleSystem } from "./StarsParticleSystem";
 
 export class AtmosphereSystem {
   constructor(engine) {
     this.engine = engine;
     this.scene = engine.scene;
     this.worldSystem = engine.systems.world;
-    
-    // FIXED: Significantly reduced cloud count and improved their appearance
+
+    // LOG: AtmosphereSystem constructed
+    Logger.info("[CloudDebug] AtmosphereSystem constructor called");
+
+    // Initialize components
+    this.starSystem = null; // Will be initialized in initialize()
+    this.sky = null; // ThreeJS Sky object
+
+    // === Enhanced Cloud Swarm Parameters ===
     this.clouds = [];
-    this.cloudCount = this.engine.isMobile ? 15 : 30; // Further reduced for better performance
-    this.cloudSpread = 1200; // Smaller cloud area
-    this.cloudHeight = 300;  // Height of cloud layer
-    
-    // Birds (disabled on mobile for performance)
+    this.cloudCount = 200; // Increased for denser sky
+    this.cloudSpread = 4000; // Increased spread for infinite world
+    this.cloudHeight = 600; // Height of cloud layer (center)
+    this.cloudMinHeight = 400; // Min height for clouds
+    this.cloudMaxHeight = 800; // Max height for clouds
+    this.cloudMinScale = 800; // Min cloud size
+    this.cloudMaxScale = 1400; // Max cloud size
+    this.cloudMinSpeed = 2; // Min horizontal speed
+    this.cloudMaxSpeed = 10; // Max horizontal speed
+    this.cloudMinRotation = -0.05; // Min rotation speed (radians/sec)
+    this.cloudMaxRotation = 0.05; // Max rotation speed (radians/sec)
+    this.cloudMinVerticalFactor = 1; // Min vertical bobbing
+    this.cloudMaxVerticalFactor = 7; // Max vertical bobbing
+    // === End Enhanced Cloud Swarm Parameters ===
+
+    // Birds
     this.birds = [];
-    this.birdCount = this.engine.isMobile ? 0 : 10; // Reduced birds
+    this.birdCount = 30;
     this.birdFlocks = [];
-    this.enableBirds = !this.engine.isMobile; // Only enable on non-mobile
-    
+
+    // Time tracking
+    this.elapsed = 0;
+
     // Day/night cycle
-    this.dayDuration = 600; // 10 minutes per day cycle
-    this.timeOfDay = 0.3;   // Start at morning (0 = midnight, 0.5 = noon, 1 = midnight)
+    this.dayDuration = 86400 / 60; // 10 minutes per day cycle
+
+    // DEBUGGING: Force to night time
+    // Keep this forced value for testing night sky stars
+    const now = new Date();
+    const secondsInDay = 86400;
+    const currentSeconds =
+      now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+    // this.timeOfDay = currentSeconds / secondsInDay; // sync to user time
+    this.timeOfDay = 40000 / 86400; // afternoon
+    Logger.info("Synced Time of Day:", this.timeOfDay);
+
     this.sunPosition = new THREE.Vector3();
     this.sunLight = null;
   }
-  
+
   async initialize() {
-    console.log("Initializing AtmosphereSystem...");
-    
-    // Create enhanced sky
+    Logger.info("Initializing AtmosphereSystem...");
+    // LOG: AtmosphereSystem initialize called
+    Logger.info("[CloudDebug] AtmosphereSystem initialize called");
+
+    // Create and initialize star system
+    Logger.info("AtmosphereSystem: Creating star field...");
+    this.starSystem = new StarsParticleSystem(this.scene, this.engine.camera);
+    Logger.info("AtmosphereSystem: Initializing star field...");
+    await this.starSystem.initialize();
+    Logger.info("AtmosphereSystem: Star field initialized");
+
+    // --- NEW CODE: Reduce the number of stars by drawing only 50% ---
+    if (this.starSystem.starField && this.starSystem.starField.geometry) {
+      const count =
+        this.starSystem.starField.geometry.attributes.position.count;
+      this.starSystem.starField.geometry.setDrawRange(
+        0,
+        Math.floor(count * 0.2)
+      );
+    }
+    if (
+      this.starSystem.horizonStarField &&
+      this.starSystem.horizonStarField.geometry
+    ) {
+      const count =
+        this.starSystem.horizonStarField.geometry.attributes.position.count;
+      this.starSystem.horizonStarField.geometry.setDrawRange(
+        0,
+        Math.floor(count * 0.2)
+      );
+    }
+
+    // Create ThreeJS Sky (sun creation now handled by SunSystem)
     this.createSky();
-    
-    // Create clouds with better appearance
-    this.createClouds();
-    
-    // Create birds if enabled
-    if (this.enableBirds) {
-      this.createBirds();
-    }
-    
-    console.log("AtmosphereSystem initialized");
-  }
-  
-  createSky() {
-    // Clear any existing sky first
-    if (this.sky) {
-      this.scene.remove(this.sky);
-      this.sky.geometry.dispose();
-      this.sky.material.dispose();
-    }
-  
-    // Simplified sky for performance
-    const skyGeometry = new THREE.SphereGeometry(8000, this.engine.isMobile ? 16 : 32, this.engine.isMobile ? 8 : 16);
-    
-    // Use an even simpler material for mobile
-    if (this.engine.isMobile) {
-      // Extremely simple sky for mobile - just a basic color
-      const skyMaterial = new THREE.MeshBasicMaterial({
-        color: 0x87CEEB,
-        side: THREE.BackSide,
-        fog: false
-      });
-      this.sky = new THREE.Mesh(skyGeometry, skyMaterial);
-    } else {
-      // Simplified shader for desktop
-      const skyMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-          topColor: { value: new THREE.Color(0x3388ff) },
-          bottomColor: { value: new THREE.Color(0xaaddff) },
-          offset: { value: 400 },
-          exponent: { value: 0.7 }
-        },
-        vertexShader: `
-          varying vec3 vWorldPosition;
-          void main() {
-            vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-            vWorldPosition = worldPosition.xyz;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: `
-          uniform vec3 topColor;
-          uniform vec3 bottomColor;
-          uniform float offset;
-          uniform float exponent;
-          varying vec3 vWorldPosition;
-          void main() {
-            float h = normalize(vWorldPosition + offset).y;
-            gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
-          }
-        `,
-        side: THREE.BackSide,
-        fog: false
-      });
-      this.sky = new THREE.Mesh(skyGeometry, skyMaterial);
-    }
-    
-    // Make sure sky follows camera
-    this.sky.onBeforeRender = () => {
-      if (this.engine.camera) {
-        this.sky.position.copy(this.engine.camera.position);
-      }
-    };
-    
-    this.scene.add(this.sky);
-    
-    // Use a more gentle fog
-    this.scene.fog = new THREE.FogExp2(0xaaddff, this.engine.isMobile ? 0.0003 : 0.0002);
+
+    // Create clouds
+    this.createVolumetricClouds();
+
+    // Create birds
+    this.createBirds();
+
+    Logger.info("AtmosphereSystem initialized");
   }
 
-  // FIXED: Improved cloud particle with better appearance
-  createCloudParticle() {
-    // Use more complex geometries for better looking clouds
-    const geometry = new THREE.SphereGeometry(20, this.engine.isMobile ? 6 : 10, this.engine.isMobile ? 4 : 8);
-    
-    // FIXED: Use standardMaterial for better shading but with optimized settings
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.8,
-      roughness: 1,
-      metalness: 0.1,
-      fog: true // Important for distance fading
-    });
-    
-    return new THREE.Mesh(geometry, material);
-  }
-  
-  // FIXED: Improved cloud group for better appearance
-  createCloudGroup() {
-    // Create a cloud consisting of multiple particles
-    const cloud = new THREE.Group();
-    
-    // Number of particles in this cloud - reduced for performance
-    const particleCount = this.engine.isMobile ? 2 : (3 + Math.floor(Math.random() * 3));
-    
-    for (let i = 0; i < particleCount; i++) {
-      const particle = this.createCloudParticle();
-      
-      // Random position within cloud
-      particle.position.set(
-        (Math.random() - 0.5) * 60,
-        (Math.random() - 0.5) * 15,
-        (Math.random() - 0.5) * 60
-      );
-      
-      // Random scale
-      const scale = 0.6 + Math.random() * 0.6;
-      particle.scale.set(scale, scale * 0.6, scale); // Flatter clouds
-      
-      cloud.add(particle);
+  // Sun light creation removed - now handled by unified SunSystem
+
+  // Create advanced sky using ThreeJS Sky
+  createSky() {
+    // Remove the old sky if it exists
+    if (this.sky) {
+      this.scene.remove(this.sky);
     }
+
+    // Add Sky
+    this.sky = new Sky();
+    this.sky.scale.setScalar(30000);
+    this.scene.add(this.sky);
+
+    // Set up the uniforms
+    const uniforms = this.sky.material.uniforms;
+    uniforms['turbidity'].value = 8;
+    uniforms['rayleigh'].value = 1;
+    uniforms['mieCoefficient'].value = 0.025;
+    uniforms['mieDirectionalG'].value = 0.999;
+
+    // Set sky position
+    this.sky.position.set(0, 0, 0);
+
+    // Set tone mapping exposure
+    this.engine.renderer.toneMappingExposure = 0.6;
+
+    // Set the scene fog
+    this.scene.fog = new THREE.FogExp2(0x88ccff, 0.00003);
+
+    // Create night sky components (moon)
+    this.createNightSky();
+
+    // Create clouds
+    this.createVolumetricClouds();
+
+    Logger.info('Sky created with proper world-space positioning');
+  }
+
+// Try these changes to the createCloudSpriteMaterial method
+createCloudSpriteMaterial() {
+  // Use a simple white texture as fallback since particles.png isn't found
+  const textureLoader = new THREE.TextureLoader();
+  // Try different potential paths
+  const cloudTexture = textureLoader.load('/assets/textures/particles.png', 
+    undefined, 
+    undefined, 
+    (err) => {
+      Logger.warn('Error loading texture, using blank texture');
+      // Create a simple white texture as fallback
+      const canvas = document.createElement('canvas');
+      canvas.width = 32;
+      canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, 32, 32);
+      return new THREE.CanvasTexture(canvas);
+    }
+  );
+  
+  // Use a simple SpriteMaterial for now 
+  return new THREE.SpriteMaterial({
+    map: cloudTexture,
+    transparent: true,
+    opacity: 0.7,
+    color: 0xffffff
+  });
+}
+
+createVolumetricClouds() {
+  Logger.info('Creating procedural clouds...');
+  this.clouds = [];
+  
+  const cloudCount = 100; // Original cloud count
+
+  for (let i = 0; i < cloudCount; i++) {
+    const cloudMaterial = this.createCloudSpriteMaterial();
+    const cloud = new THREE.Sprite(cloudMaterial);
+
+    // Add specific layer for water reflections
+    cloud.layers.enable(2); // Water reflections layer
     
-    // Set cloud properties
+    // Make clouds MUCH larger for visibility
+    const scale = 800 + Math.random() * 600;
+    cloud.scale.set(scale, scale, 1);
+    
+    // Position clouds closer to player
+    const player = this.engine.systems.player?.localPlayer;
+    const playerPos = player ? player.position : new THREE.Vector3(0, 0, 0);
+    const radius = 1000 + Math.random() * 3000; // Varied distance
+    const theta = Math.random() * Math.PI * 2;
+
+        
+   
+    cloud.position.set(
+      playerPos.x + radius * Math.cos(theta),
+      400 + Math.random() * 400,  // Height between 400-800
+      playerPos.z + radius * Math.sin(theta)
+    );
+    
     cloud.userData = {
-      speed: 0.1 + Math.random() * 0.2, // REDUCED speed
-      rotationSpeed: (Math.random() - 0.5) * 0.005 // REDUCED rotation
+      rotationSpeed: 0,
+      horizontalSpeed: (Math.random() - 0.5) * 10,
+      verticalFactor: Math.random() * 5,
+      timeOffset: Math.random() * 1000
     };
     
-    return cloud;
+    this.scene.add(cloud);
+    // LOG: Cloud added to scene
+    Logger.info(`[CloudDebug] Cloud ${i} added at (${cloud.position.x.toFixed(1)}, ${cloud.position.y.toFixed(1)}, ${cloud.position.z.toFixed(1)})`);
+    this.clouds.push(cloud);
   }
-  
-  createClouds() {
-    // Create clouds distributed around player
-    for (let i = 0; i < this.cloudCount; i++) {
-      const cloud = this.createCloudGroup();
-      
-      // Random position in sky
-      const angle = Math.random() * Math.PI * 2;
-      const distance = Math.random() * this.cloudSpread;
-      
-      cloud.position.set(
-        Math.cos(angle) * distance,
-        this.cloudHeight + (Math.random() - 0.5) * 50,
-        Math.sin(angle) * distance
-      );
-      
-      this.clouds.push(cloud);
-      this.scene.add(cloud);
-    }
+  Logger.info(`Created ${cloudCount} clouds`);
+}
+  updateVolumetricClouds(delta) {
+    if (!this.clouds || this.clouds.length === 0) return;
+
+    const player = this.engine.systems.player?.localPlayer;
+    if (!player) return;
+
+    const time = this.elapsed;
+    const spread = this.cloudSpread;
+
+    // Update each cloud
+    this.clouds.forEach((cloud, index) => {
+      // Update shader time uniform
+      if (
+        cloud.material &&
+        cloud.material.uniforms &&
+        cloud.material.uniforms.uTime
+      ) {
+        cloud.material.uniforms.uTime.value = time + cloud.userData.timeOffset;
+      }
+
+      // Enhanced: Update cloud rotation (z-axis for sprite)
+      cloud.rotation.z += cloud.userData.rotationSpeed * delta;
+
+      // Enhanced: Update cloud position
+      cloud.position.x += cloud.userData.horizontalSpeed * delta;
+      cloud.position.z += cloud.userData.horizontalSpeed * 0.5 * delta;
+
+      // Enhanced: Add vertical bobbing
+      cloud.position.y +=
+        Math.sin(time * 0.001 + cloud.userData.timeOffset) *
+        cloud.userData.verticalFactor *
+        delta;
+
+      // Enhanced: Infinite wrapping using spread parameter
+      const distX = cloud.position.x - player.position.x;
+      const distZ = cloud.position.z - player.position.z;
+      const distSq = distX * distX + distZ * distZ;
+
+      // If cloud is too far, move it to the opposite side of the play area
+      if (distSq > spread * spread) {
+        const angle = Math.atan2(distZ, distX) + Math.PI;
+        const radius = spread * (0.5 + Math.random() * 0.5);
+        cloud.position.x = player.position.x + radius * Math.cos(angle);
+        cloud.position.z = player.position.z + radius * Math.sin(angle);
+        // Optionally randomize height and timeOffset for more variety
+        cloud.position.y = this.cloudMinHeight + Math.random() * (this.cloudMaxHeight - this.cloudMinHeight);
+        cloud.userData.timeOffset = Math.random() * 1000;
+      }
+    });
   }
-  
-  // Bird methods remain the same
+  // Sun sphere creation removed - now handled by unified SunSystem
+
+  createNightSky() {
+    const textureLoader = new THREE.TextureLoader();
+
+    // Load the actual moon texture file
+    const moonTexture = textureLoader.load("/assets/textures/moon.jpg");
+
+    // Create a moon: a properly lit sphere with the moon texture.
+    const moonGeometry = new THREE.SphereGeometry(300, 32, 32);
+
+    // SIMPLIFIED MATERIAL FOR MAXIMUM VISIBILITY
+    const moonMaterial = new THREE.MeshBasicMaterial({
+      map: moonTexture,
+      fog: false, // Disable fog effects on the moon
+      side: THREE.FrontSide, // Only render front faces
+    });
+
+    this.moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+    this.moonMesh.renderOrder = 100; // Render moon after most other objects
+    this.scene.add(this.moonMesh);
+
+    // Add a moonlight to illuminate the scene when the moon is visible
+    this.moonLight = new THREE.DirectionalLight(0xdedeff, 0.2);
+    this.moonLight.position.set(0, 1, 0);
+    this.moonMesh.add(this.moonLight);
+  }
+
   createBirdModel() {
     // Create a simple bird model
     const bird = new THREE.Group();
-    
+
     // Bird body
     const bodyGeometry = new THREE.ConeGeometry(1, 4, 4);
     bodyGeometry.rotateX(Math.PI / 2);
     const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    
+
     // Bird wings
     const wingGeometry = new THREE.PlaneGeometry(6, 2);
-    const wingMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0x666666, 
-      side: THREE.DoubleSide 
+    const wingMaterial = new THREE.MeshBasicMaterial({
+      color: 0x666666,
+      side: THREE.DoubleSide,
     });
     const wings = new THREE.Mesh(wingGeometry, wingMaterial);
     wings.rotation.y = Math.PI / 2;
     wings.position.y = 0.5;
-    
+
     bird.add(body);
     bird.add(wings);
-    
+
     // Animation properties
     bird.userData = {
       wingFlapSpeed: 0.2 + Math.random() * 0.3,
       wingFlapAmount: 0.3 + Math.random() * 0.2,
-      wingFlapPhase: Math.random() * Math.PI * 2
+      wingFlapPhase: Math.random() * Math.PI * 2,
     };
-    
+
     return bird;
   }
-  
+
   createBirdFlock(count, center, spread) {
     const flock = {
       birds: [],
@@ -228,57 +341,51 @@ export class AtmosphereSystem {
       circlingRadius: 50 + Math.random() * 100,
       circlingHeight: center.y,
       circlingPhase: Math.random() * Math.PI * 2,
-      circlingSpeed: 0.2 + Math.random() * 0.3
+      circlingSpeed: 0.2 + Math.random() * 0.3,
     };
-    
+
     for (let i = 0; i < count; i++) {
       const bird = this.createBirdModel();
-      
+
       // Position within flock
       bird.position.set(
         center.x + (Math.random() - 0.5) * spread,
         center.y + (Math.random() - 0.5) * spread * 0.5,
         center.z + (Math.random() - 0.5) * spread
       );
-      
+
       // Random scale
       const scale = 0.5 + Math.random() * 0.5;
       bird.scale.set(scale, scale, scale);
-      
+
       // Individual bird behavior
       bird.userData.flockOffset = new THREE.Vector3(
         (Math.random() - 0.5) * spread * 0.5,
         (Math.random() - 0.5) * spread * 0.2,
         (Math.random() - 0.5) * spread * 0.5
       );
-      
+
       bird.userData.flapPhase = Math.random() * Math.PI * 2;
       bird.userData.flapSpeed = 0.1 + Math.random() * 0.4;
-      
+
       this.scene.add(bird);
       this.birds.push(bird);
       flock.birds.push(bird);
     }
-    
+
     return flock;
   }
-  
+
   createBirds() {
-    // Skip bird creation on mobile devices
-    if (!this.enableBirds) {
-      console.log("Birds disabled for performance");
-      return;
-    }
-    
-    // Create fewer flocks of birds
-    const flockCount = 2; // Fixed lower count
-    
+    // Create several flocks of birds
+    const flockCount = 3 + Math.floor(Math.random() * 3);
+
     for (let i = 0; i < flockCount; i++) {
-      const birdCount = 3 + Math.floor(Math.random() * 4); // Fewer birds per flock
-      
+      const birdCount = 5 + Math.floor(Math.random() * 10);
+
       // Position flock near player but at varying heights
       const player = this.engine.systems.player?.localPlayer;
-      const center = player 
+      const center = player
         ? new THREE.Vector3(
             player.position.x + (Math.random() - 0.5) * 500,
             100 + Math.random() * 200,
@@ -289,758 +396,269 @@ export class AtmosphereSystem {
             100 + Math.random() * 200,
             (Math.random() - 0.5) * 500
           );
-      
+
       const flock = this.createBirdFlock(birdCount, center, 30);
       this.birdFlocks.push(flock);
     }
   }
-  
+
   updateSkyColors() {
     // Update sky colors based on time of day
-    let topColor, bottomColor, fogColor, lightIntensity, lightColor;
-    
+    // Note: Sun lighting is now handled by unified SunSystem
+    let topColor, bottomColor, fogColor;
+
     if (this.timeOfDay < 0.25) {
       // Night to sunrise transition
-      const t = this.timeOfDay / 0.25;
-      topColor = new THREE.Color(0x000022).lerp(new THREE.Color(0x0077ff), t);
-      bottomColor = new THREE.Color(0x000022).lerp(new THREE.Color(0xff9933), t);
-      fogColor = new THREE.Color(0x000022).lerp(new THREE.Color(0xff9933), t);
-      lightIntensity = t;
-      lightColor = new THREE.Color(0xffffcc);
+      topColor = new THREE.Color(0x000005);
+      bottomColor = new THREE.Color(0x000010);
+      fogColor = new THREE.Color(0x000010);
     } else if (this.timeOfDay < 0.5) {
       // Sunrise to noon
       const t = (this.timeOfDay - 0.25) / 0.25;
       topColor = new THREE.Color(0x0077ff);
-      bottomColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x89CFF0), t);
-      fogColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x89CFF0), t);
-      lightIntensity = 1.0;
-      lightColor = new THREE.Color(0xffffcc);
+      bottomColor = new THREE.Color(0xff9933).lerp(
+        new THREE.Color(0x89cff0),
+        t
+      );
+      fogColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x89cff0), t);
     } else if (this.timeOfDay < 0.75) {
       // Noon to sunset
       const t = (this.timeOfDay - 0.5) / 0.25;
       topColor = new THREE.Color(0x0077ff);
-      bottomColor = new THREE.Color(0x89CFF0).lerp(new THREE.Color(0xff9933), t);
-      fogColor = new THREE.Color(0x89CFF0).lerp(new THREE.Color(0xff9933), t);
-      lightIntensity = 1.0;
-      lightColor = new THREE.Color(0xffffcc);
+      bottomColor = new THREE.Color(0x89cff0).lerp(
+        new THREE.Color(0xff9933),
+        t
+      );
+      fogColor = new THREE.Color(0x89cff0).lerp(new THREE.Color(0xff9933), t);
     } else {
       // Sunset to night
       const t = (this.timeOfDay - 0.75) / 0.25;
       topColor = new THREE.Color(0x0077ff).lerp(new THREE.Color(0x000022), t);
-      bottomColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x000022), t);
+      bottomColor = new THREE.Color(0xff9933).lerp(
+        new THREE.Color(0x000022),
+        t
+      );
       fogColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x000022), t);
-      lightIntensity = 1.0 - t;
-      lightColor = new THREE.Color(0xffffcc);
     }
-    
-    // Apply colors
-    if (this.sky) {
-      // Check if we're using the shader-based sky or basic material sky
-      if (this.sky.material.uniforms && this.sky.material.uniforms.topColor) {
-        // Shader-based sky (desktop)
-        this.sky.material.uniforms.topColor.value = topColor;
-        this.sky.material.uniforms.bottomColor.value = bottomColor;
-      } else if (this.sky.material.color) {
-        // Basic material sky (mobile)
-        // Use the bottomColor for the sky color on mobile
-        this.sky.material.color = bottomColor;
-      }
-    }
-    
+
     // Update fog
     if (this.scene.fog) {
       this.scene.fog.color = fogColor;
     }
-    
-    // Update sun light
-    if (this.sunLight) {
-      this.sunLight.intensity = lightIntensity;
-      this.sunLight.color = lightColor;
-      
-      // Update sun position
-      const sunAngle = this.timeOfDay * Math.PI * 2;
-      this.sunPosition.set(
-        Math.cos(sunAngle) * 500,
-        Math.sin(sunAngle) * 500,
-        0
-      );
-      
-      this.sunLight.position.copy(this.sunPosition);
-    }
+
+    // Note: Sun lighting and positioning now handled by SunSystem
   }
-  
-  // FIXED: Better cloud update logic
+
   updateClouds(delta) {
     const player = this.engine.systems.player?.localPlayer;
     if (!player) return;
-    
+
     // Move clouds relative to player
     this.clouds.forEach((cloud, index) => {
-      // Move cloud at a slower rate
+      // Move cloud
       cloud.position.x += cloud.userData.speed * delta * 5;
-      
-      // Rotate cloud slightly - reduced rotation speed
+
+      // Rotate cloud slightly
       cloud.rotation.y += cloud.userData.rotationSpeed * delta;
-      
+
       // If cloud is too far, reposition it
       const distanceX = cloud.position.x - player.position.x;
       const distanceZ = cloud.position.z - player.position.z;
       const distance = Math.sqrt(distanceX * distanceX + distanceZ * distanceZ);
-      
+
       if (distance > this.cloudSpread * 1.5) {
-        // Move cloud to opposite side but keep height consistent
+        // Move cloud to opposite side
         const angle = Math.atan2(distanceZ, distanceX) + Math.PI;
-        const newDistance = this.cloudSpread * 0.8; // More consistent distance
-        
+        const newDistance = this.cloudSpread * 0.5;
+
         cloud.position.x = player.position.x + Math.cos(angle) * newDistance;
         cloud.position.z = player.position.z + Math.sin(angle) * newDistance;
-        // Keep current height but add small variation
-        cloud.position.y = this.cloudHeight + (Math.random() - 0.5) * 30;
       }
-      
-      // Apply slow wave motion to clouds for more natural appearance
-      cloud.position.y += Math.sin(this.engine.elapsed * 0.1 + index * 0.5) * 0.05;
     });
   }
-  
+
   updateBirds(delta) {
-    if (!this.enableBirds) return;
-    
     const player = this.engine.systems.player?.localPlayer;
     if (!player) return;
-    
+
     // Update each flock
-    this.birdFlocks.forEach(flock => {
+    this.birdFlocks.forEach((flock) => {
       // Update flock circling behavior
       flock.circlingPhase += flock.circlingSpeed * delta;
-      
+
       // Calculate flock center position
-      const circleX = flock.circlingCenter.x + Math.cos(flock.circlingPhase) * flock.circlingRadius;
-      const circleZ = flock.circlingCenter.z + Math.sin(flock.circlingPhase) * flock.circlingRadius;
-      
+      const circleX =
+        flock.circlingCenter.x +
+        Math.cos(flock.circlingPhase) * flock.circlingRadius;
+      const circleZ =
+        flock.circlingCenter.z +
+        Math.sin(flock.circlingPhase) * flock.circlingRadius;
+
       // Gradually move circling center to follow player
-      flock.circlingCenter.x += (player.position.x - flock.circlingCenter.x) * 0.001;
-      flock.circlingCenter.z += (player.position.z - flock.circlingCenter.z) * 0.001;
-      
+      flock.circlingCenter.x +=
+        (player.position.x - flock.circlingCenter.x) * 0.001;
+      flock.circlingCenter.z +=
+        (player.position.z - flock.circlingCenter.z) * 0.001;
+
       // Update flock center
       flock.center.x = circleX;
       flock.center.z = circleZ;
-      
+
       // Update each bird in flock
-      flock.birds.forEach(bird => {
+      flock.birds.forEach((bird) => {
         // Move bird toward flock center plus its offset
         const targetX = flock.center.x + bird.userData.flockOffset.x;
         const targetY = flock.center.y + bird.userData.flockOffset.y;
         const targetZ = flock.center.z + bird.userData.flockOffset.z;
-        
+
         bird.position.x += (targetX - bird.position.x) * 0.05;
         bird.position.y += (targetY - bird.position.y) * 0.05;
         bird.position.z += (targetZ - bird.position.z) * 0.05;
-        
+
         // Calculate direction of movement
         const direction = new THREE.Vector3(
           targetX - bird.position.x,
           targetY - bird.position.y,
           targetZ - bird.position.z
         ).normalize();
-        
+
         // Point bird in direction of movement
         if (direction.length() > 0.1) {
           const lookAt = new THREE.Vector3();
           lookAt.copy(bird.position).add(direction);
           bird.lookAt(lookAt);
         }
-        
+
         // Flap wings
         bird.userData.flapPhase += bird.userData.flapSpeed;
-        const wingRotation = Math.sin(bird.userData.flapPhase) * bird.userData.flapSpeed * 10;
-        
-        if (bird.children[1]) { // Wings
+        const wingRotation =
+          Math.sin(bird.userData.flapPhase) * bird.userData.flapSpeed * 10;
+
+        if (bird.children[1]) {
+          // Wings
           bird.children[1].rotation.x = wingRotation;
         }
       });
     });
   }
+
+  // Calculate how much of night time we're in (0 = day, 1 = night)
+  getNightFactor() {
+    // Night is roughly between 0.75-0.25 timeOfDay (sunset to sunrise)
+    if (this.timeOfDay > 0.75 || this.timeOfDay < 0.25) {
+      // Calculate how deep into night we are
+      if (this.timeOfDay > 0.75) {
+        // After sunset, approaching midnight
+        return (this.timeOfDay - 0.75) / 0.25;
+      } else {
+        // After midnight, approaching sunrise
+        return 1.0 - this.timeOfDay / 0.25;
+      }
+    }
+    return 0; // Daytime
+  }
   
-  update(delta) {
+  // Set time to a specific hour and minute
+  setTime(hour, minute) {
+    // Convert hour and minute to a value between 0 and 1
+    // where 0 is midnight and 0.5 is noon
+    this.timeOfDay = (hour + minute / 60) / 24;
+    console.log(`Time set to ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} (${this.timeOfDay.toFixed(4)})`); 
+  }
+
+  // Update stars visibility based on time of day
+  updateStarsVisibility(nightFactor) {
+    if (!this.starSystem) return;
+
+    const starField = this.starSystem.starField;
+    const horizonStarField = this.starSystem.horizonStarField;
+
+    // Compute a flicker effect (the frequency and amplitude can be adjusted)
+    const flickerRegular = 0.05 * Math.sin(this.elapsed * 10);
+    const flickerHorizon = 0.05 * Math.sin(this.elapsed * 10 + Math.PI / 2);
+
+    if (starField) {
+      starField.visible = nightFactor > 0.1; // Visible only when dark enough
+      if (starField.material) {
+        const baseOpacity = 0.5 + nightFactor * 0.5;
+        starField.material.opacity = baseOpacity + flickerRegular;
+      }
+    }
+
+    if (horizonStarField) {
+      horizonStarField.visible = nightFactor > 0.08;
+      if (horizonStarField.material) {
+        const baseOpacity = Math.min(1.0, 0.6 + nightFactor * 0.4);
+        horizonStarField.material.opacity = baseOpacity + flickerHorizon;
+      }
+    }
+  }
+
+  update(delta, elapsed) {
+    // Update elapsed time
+    this.elapsed = elapsed;
+
+    // FIXED TIME OF DAY FOR TESTING - Set to noon for maximum visibility
+    // this.timeOfDay = 0.5; // Noon
+    
     // Update time of day
     this.timeOfDay += delta / this.dayDuration;
     if (this.timeOfDay >= 1.0) this.timeOfDay -= 1.0;
-    
-    // Update sky colors (less frequently on mobile)
-    if (!this.engine.isMobile || Math.floor(this.engine.elapsed) % 3 === 0) {
-      this.updateSkyColors();
+
+    // Update sky colors
+    this.updateSkyColors();
+
+    // Calculate night time factor (0 during day, 1 during night)
+    const nightTimeFactor = this.getNightFactor();
+
+    // DO NOT make sky follow camera - it should stay fixed at world origin
+    // Keeping sky at origin allows proper world-space positioning of sun
+    if (this.sky && this.sky.position.length() > 0) {
+      this.sky.position.set(0, 0, 0);
     }
-    
-    // Make sure sky follows camera
-    if (this.sky && this.engine.camera) {
-      this.sky.position.copy(this.engine.camera.position);
-    }
-    
-    // Update clouds
+
+    // Update the basic clouds (if still used)
     this.updateClouds(delta);
-    
-    // Update birds only if enabled
-    if (this.enableBirds) {
-      this.updateBirds(delta);
+
+    // Update the volumetric clouds
+    this.updateVolumetricClouds(delta);
+
+    // Update birds
+    this.updateBirds(delta);
+
+    // Update the particle stars system
+    this.starSystem.update();
+
+    // Update stars visibility based on time of day
+    this.updateStarsVisibility(nightTimeFactor);
+
+    // Update moon position and visibility
+    if (this.moonMesh) {
+      // Calculate moon angle (opposite to sun)
+      const moonAngle = ((this.timeOfDay + 0.5) % 1.0) * Math.PI * 2; // Offset by 0.5 to be opposite the sun
+
+      // Position moon in the sky opposite to the sun
+      this.moonMesh.position.set(
+        6000 * Math.cos(moonAngle),
+        3000 * Math.sin(moonAngle),
+        6000 * Math.sin(moonAngle * 0.5)
+      );
+
+      // Use the night factor to decide visibility:
+      const nightFactor = this.getNightFactor();
+      this.moonMesh.visible = nightFactor > 0.05;
+
+      // Always face camera
+      if (this.engine.camera) {
+        const cameraPosition = this.engine.camera.position.clone();
+        this.moonMesh.lookAt(cameraPosition);
+      }
+
+      // Adjust moonlight intensity
+      if (this.moonLight) {
+        this.moonLight.intensity = 0.3; // Force intensity for testing
+      }
     }
-  }
+    // Sun positioning and lighting removed - now handled by unified SunSystem
 }
-
-
-// import * as THREE from "three";
-
-// export class AtmosphereSystem {
-//   constructor(engine) {
-//     this.engine = engine;
-//     this.scene = engine.scene;
-//     this.worldSystem = engine.systems.world;
-    
-//     // Clouds (simplified for better performance)
-//     this.clouds = [];
-//     this.cloudCount = this.engine.isMobile ? 25 : 50; // Drastically reduced for mobile
-//     this.cloudSpread = 1500; // Smaller cloud area
-//     this.cloudHeight = 300;  // Height of cloud layer
-    
-//     // Birds (disabled on mobile for performance)
-//     this.birds = [];
-//     this.birdCount = this.engine.isMobile ? 0 : 15; // None on mobile, reduced on desktop
-//     this.birdFlocks = [];
-//     this.enableBirds = !this.engine.isMobile; // Only enable on non-mobile
-    
-//     // Day/night cycle
-//     this.dayDuration = 600; // 10 minutes per day cycle
-//     this.timeOfDay = 0.3;   // Start at morning (0 = midnight, 0.5 = noon, 1 = midnight)
-//     this.sunPosition = new THREE.Vector3();
-//     this.sunLight = null;
-//   }
-  
-//   async initialize() {
-//     console.log("Initializing AtmosphereSystem...");
-    
-//     // Create enhanced sky
-//     this.createSky();
-    
-//     // Create clouds
-//     this.createClouds();
-    
-//     // Create birds
-//     this.createBirds();
-    
-//     console.log("AtmosphereSystem initialized");
-//   }
-  
-
-//   createSky() {
-//     // Clear any existing sky first
-//     if (this.sky) {
-//       this.scene.remove(this.sky);
-//       this.sky.geometry.dispose();
-//       this.sky.material.dispose();
-//     }
-  
-//     // Simplified sky for performance
-//     const skyGeometry = new THREE.SphereGeometry(8000, this.engine.isMobile ? 16 : 24, this.engine.isMobile ? 8 : 12);
-    
-//     // Use an even simpler material - MeshBasicMaterial instead of ShaderMaterial for mobile
-//     if (this.engine.isMobile) {
-//       // Extremely simple sky for mobile - just a basic color
-//       const skyMaterial = new THREE.MeshBasicMaterial({
-//         color: 0x87CEEB,
-//         side: THREE.BackSide,
-//         fog: false
-//       });
-//       this.sky = new THREE.Mesh(skyGeometry, skyMaterial);
-//     } else {
-//       // Simplified shader for desktop
-//       const skyMaterial = new THREE.ShaderMaterial({
-//         uniforms: {
-//           topColor: { value: new THREE.Color(0x3388ff) },
-//           bottomColor: { value: new THREE.Color(0xaaddff) },
-//           offset: { value: 400 },
-//           exponent: { value: 0.7 }
-//         },
-//         vertexShader: `
-//           varying vec3 vWorldPosition;
-//           void main() {
-//             vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-//             vWorldPosition = worldPosition.xyz;
-//             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-//           }
-//         `,
-//         fragmentShader: `
-//           uniform vec3 topColor;
-//           uniform vec3 bottomColor;
-//           uniform float offset;
-//           uniform float exponent;
-//           varying vec3 vWorldPosition;
-//           void main() {
-//             float h = normalize(vWorldPosition + offset).y;
-//             gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h, 0.0), exponent), 0.0)), 1.0);
-//           }
-//         `,
-//         side: THREE.BackSide,
-//         fog: false // Disable fog for sky dome
-//       });
-//       this.sky = new THREE.Mesh(skyGeometry, skyMaterial);
-//     }
-    
-//     // Make sure sky follows camera, but only update position when needed
-//     this.sky.onBeforeRender = () => {
-//       if (this.engine.camera && Math.random() < 0.1) { // Only update 10% of the time
-//         this.sky.position.copy(this.engine.camera.position);
-//       }
-//     };
-    
-//     this.scene.add(this.sky);
-    
-//     // Use a more gentle fog that won't create sharp visual boundaries
-//     // Reduce fog density on mobile
-//     this.scene.fog = new THREE.FogExp2(0xaaddff, this.engine.isMobile ? 0.0005 : 0.0003);
-//   }
-  
-
-// createCloudParticle() {
-// // Create a simpler cloud particle for better performance
-// const geometry = new THREE.SphereGeometry(15, this.engine.isMobile ? 4 : 6, this.engine.isMobile ? 4 : 6);
-
-// // Use MeshBasicMaterial instead of MeshStandardMaterial for better performance
-// const material = new THREE.MeshBasicMaterial({
-// color: 0xffffff, 
-// transparent: true,
-// opacity: 0.7
-// });
-
-// return new THREE.Mesh(geometry, material);
-// }
-
-// // Also update this method for better sky colors throughout the day
-//   updateSkyColors() {
-//     // Update sky colors based on time of day
-//     let topColor, bottomColor, fogColor, lightIntensity, lightColor;
-    
-//     if (this.timeOfDay < 0.25) {
-//       // Night to sunrise transition
-//       const t = this.timeOfDay / 0.25;
-//       topColor = new THREE.Color(0x001133).lerp(new THREE.Color(0x3388ff), t);
-//       bottomColor = new THREE.Color(0x002244).lerp(new THREE.Color(0xffcc88), t);
-//       fogColor = new THREE.Color(0x001133).lerp(new THREE.Color(0xffcc88), t);
-//       lightIntensity = t * 0.8;
-//       lightColor = new THREE.Color(0xffffdd);
-//     } else if (this.timeOfDay < 0.5) {
-//       // Sunrise to noon
-//       const t = (this.timeOfDay - 0.25) / 0.25;
-//       topColor = new THREE.Color(0x3388ff);
-//       bottomColor = new THREE.Color(0xffcc88).lerp(new THREE.Color(0xaaddff), t);
-//       fogColor = new THREE.Color(0xffcc88).lerp(new THREE.Color(0xaaddff), t);
-//       lightIntensity = 0.8 + t * 0.2;
-//       lightColor = new THREE.Color(0xffffcc).lerp(new THREE.Color(0xffffff), t);
-//     } else if (this.timeOfDay < 0.75) {
-//       // Noon to sunset
-//       const t = (this.timeOfDay - 0.5) / 0.25;
-//       topColor = new THREE.Color(0x3388ff);
-//       bottomColor = new THREE.Color(0xaaddff).lerp(new THREE.Color(0xff9966), t);
-//       fogColor = new THREE.Color(0xaaddff).lerp(new THREE.Color(0xff9966), t);
-//       lightIntensity = 1.0;
-//       lightColor = new THREE.Color(0xffffff).lerp(new THREE.Color(0xffcc99), t);
-//     } else {
-//       // Sunset to night
-//       const t = (this.timeOfDay - 0.75) / 0.25;
-//       topColor = new THREE.Color(0x3388ff).lerp(new THREE.Color(0x001133), t);
-//       bottomColor = new THREE.Color(0xff9966).lerp(new THREE.Color(0x002244), t);
-//       fogColor = new THREE.Color(0xff9966).lerp(new THREE.Color(0x001133), t);
-//       lightIntensity = 1.0 - t * 0.8;
-//       lightColor = new THREE.Color(0xffcc99).lerp(new THREE.Color(0xaaaacc), t);
-//     }
-    
-//     // Apply colors
-//     if (this.sky) {
-//       // Check if we're using the shader-based sky or basic material sky
-//       if (this.sky.material.uniforms && this.sky.material.uniforms.topColor) {
-//         // Shader-based sky (desktop)
-//         this.sky.material.uniforms.topColor.value = topColor;
-//         this.sky.material.uniforms.bottomColor.value = bottomColor;
-//       } else if (this.sky.material.color) {
-//         // Basic material sky (mobile)
-//         // Use the bottomColor for the sky color on mobile
-//         this.sky.material.color = bottomColor;
-//       }
-//     }
-    
-//     // Update fog
-//     if (this.scene.fog) {
-//       this.scene.fog.color = fogColor;
-//     }
-    
-//     // Update sun light
-//     if (this.sunLight) {
-//       this.sunLight.intensity = lightIntensity;
-//       this.sunLight.color = lightColor;
-      
-//       // Update sun position
-//       const sunAngle = this.timeOfDay * Math.PI * 2;
-//       this.sunPosition.set(
-//         Math.cos(sunAngle) * 500,
-//         Math.sin(sunAngle) * 500,
-//         0
-//       );
-      
-//       this.sunLight.position.copy(this.sunPosition);
-//     }
-//   }
-  
-//   createCloudParticle() {
-//     // Create a simple cloud particle
-//     const geometry = new THREE.SphereGeometry(15, 8, 8);
-//     const material = new THREE.MeshStandardMaterial({
-//       color: 0xffffff,
-//       transparent: true,
-//       opacity: 0.8,
-//       roughness: 1,
-//       metalness: 0
-//     });
-    
-//     return new THREE.Mesh(geometry, material);
-//   }
-  
-//   createCloudGroup() {
-//     // Create a cloud consisting of multiple particles
-//     const cloud = new THREE.Group();
-    
-//     // Number of particles in this cloud
-//     const particleCount = 3 + Math.floor(Math.random() * 5);
-    
-//     for (let i = 0; i < particleCount; i++) {
-//       const particle = this.createCloudParticle();
-      
-//       // Random position within cloud
-//       particle.position.set(
-//         (Math.random() - 0.5) * 30,
-//         (Math.random() - 0.5) * 15,
-//         (Math.random() - 0.5) * 30
-//       );
-      
-//       // Random scale
-//       const scale = 0.5 + Math.random() * 0.5;
-//       particle.scale.set(scale, scale, scale);
-      
-//       cloud.add(particle);
-//     }
-    
-//     // Set cloud properties
-//     cloud.userData = {
-//       speed: 0.2 + Math.random() * 0.3,
-//       rotationSpeed: (Math.random() - 0.5) * 0.01
-//     };
-    
-//     return cloud;
-//   }
-  
-//   createClouds() {
-//     // Create clouds distributed around player
-//     for (let i = 0; i < this.cloudCount; i++) {
-//       const cloud = this.createCloudGroup();
-      
-//       // Random position in sky
-//       const angle = Math.random() * Math.PI * 2;
-//       const distance = Math.random() * this.cloudSpread;
-      
-//       cloud.position.set(
-//         Math.cos(angle) * distance,
-//         this.cloudHeight + (Math.random() - 0.5) * 50,
-//         Math.sin(angle) * distance
-//       );
-      
-//       this.clouds.push(cloud);
-//       this.scene.add(cloud);
-//     }
-//   }
-  
-//   createBirdModel() {
-//     // Create a simple bird model
-//     const bird = new THREE.Group();
-    
-//     // Bird body
-//     const bodyGeometry = new THREE.ConeGeometry(1, 4, 4);
-//     bodyGeometry.rotateX(Math.PI / 2);
-//     const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
-//     const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    
-//     // Bird wings
-//     const wingGeometry = new THREE.PlaneGeometry(6, 2);
-//     const wingMaterial = new THREE.MeshBasicMaterial({ 
-//       color: 0x666666, 
-//       side: THREE.DoubleSide 
-//     });
-//     const wings = new THREE.Mesh(wingGeometry, wingMaterial);
-//     wings.rotation.y = Math.PI / 2;
-//     wings.position.y = 0.5;
-    
-//     bird.add(body);
-//     bird.add(wings);
-    
-//     // Animation properties
-//     bird.userData = {
-//       wingFlapSpeed: 0.2 + Math.random() * 0.3,
-//       wingFlapAmount: 0.3 + Math.random() * 0.2,
-//       wingFlapPhase: Math.random() * Math.PI * 2
-//     };
-    
-//     return bird;
-//   }
-  
-//   createBirdFlock(count, center, spread) {
-//     const flock = {
-//       birds: [],
-//       center: center.clone(),
-//       velocity: new THREE.Vector3(
-//         (Math.random() - 0.5) * 20,
-//         0,
-//         (Math.random() - 0.5) * 20
-//       ),
-//       circlingCenter: center.clone(),
-//       circlingRadius: 50 + Math.random() * 100,
-//       circlingHeight: center.y,
-//       circlingPhase: Math.random() * Math.PI * 2,
-//       circlingSpeed: 0.2 + Math.random() * 0.3
-//     };
-    
-//     for (let i = 0; i < count; i++) {
-//       const bird = this.createBirdModel();
-      
-//       // Position within flock
-//       bird.position.set(
-//         center.x + (Math.random() - 0.5) * spread,
-//         center.y + (Math.random() - 0.5) * spread * 0.5,
-//         center.z + (Math.random() - 0.5) * spread
-//       );
-      
-//       // Random scale
-//       const scale = 0.5 + Math.random() * 0.5;
-//       bird.scale.set(scale, scale, scale);
-      
-//       // Individual bird behavior
-//       bird.userData.flockOffset = new THREE.Vector3(
-//         (Math.random() - 0.5) * spread * 0.5,
-//         (Math.random() - 0.5) * spread * 0.2,
-//         (Math.random() - 0.5) * spread * 0.5
-//       );
-      
-//       bird.userData.flapPhase = Math.random() * Math.PI * 2;
-//       bird.userData.flapSpeed = 0.1 + Math.random() * 0.4;
-      
-//       this.scene.add(bird);
-//       this.birds.push(bird);
-//       flock.birds.push(bird);
-//     }
-    
-//     return flock;
-//   }
-  
-//   createBirds() {
-//     // Skip bird creation on mobile devices
-//     if (!this.enableBirds) {
-//       console.log("Birds disabled for performance");
-//       return;
-//     }
-    
-//     // Create fewer flocks of birds
-//     const flockCount = 2; // Fixed lower count
-    
-//     for (let i = 0; i < flockCount; i++) {
-//       const birdCount = 3 + Math.floor(Math.random() * 4); // Fewer birds per flock
-      
-//       // Position flock near player but at varying heights
-//       const player = this.engine.systems.player?.localPlayer;
-//       const center = player 
-//         ? new THREE.Vector3(
-//             player.position.x + (Math.random() - 0.5) * 500,
-//             100 + Math.random() * 200,
-//             player.position.z + (Math.random() - 0.5) * 500
-//           )
-//         : new THREE.Vector3(
-//             (Math.random() - 0.5) * 500,
-//             100 + Math.random() * 200,
-//             (Math.random() - 0.5) * 500
-//           );
-      
-//       const flock = this.createBirdFlock(birdCount, center, 30);
-//       this.birdFlocks.push(flock);
-//     }
-//   }
-  
-//   updateSkyColors() {
-//     // Update sky colors based on time of day
-//     let topColor, bottomColor, fogColor, lightIntensity, lightColor;
-    
-//     if (this.timeOfDay < 0.25) {
-//       // Night to sunrise transition
-//       const t = this.timeOfDay / 0.25;
-//       topColor = new THREE.Color(0x000022).lerp(new THREE.Color(0x0077ff), t);
-//       bottomColor = new THREE.Color(0x000022).lerp(new THREE.Color(0xff9933), t);
-//       fogColor = new THREE.Color(0x000022).lerp(new THREE.Color(0xff9933), t);
-//       lightIntensity = t;
-//       lightColor = new THREE.Color(0xffffcc);
-//     } else if (this.timeOfDay < 0.5) {
-//       // Sunrise to noon
-//       const t = (this.timeOfDay - 0.25) / 0.25;
-//       topColor = new THREE.Color(0x0077ff);
-//       bottomColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x89CFF0), t);
-//       fogColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x89CFF0), t);
-//       lightIntensity = 1.0;
-//       lightColor = new THREE.Color(0xffffcc);
-//     } else if (this.timeOfDay < 0.75) {
-//       // Noon to sunset
-//       const t = (this.timeOfDay - 0.5) / 0.25;
-//       topColor = new THREE.Color(0x0077ff);
-//       bottomColor = new THREE.Color(0x89CFF0).lerp(new THREE.Color(0xff9933), t);
-//       fogColor = new THREE.Color(0x89CFF0).lerp(new THREE.Color(0xff9933), t);
-//       lightIntensity = 1.0;
-//       lightColor = new THREE.Color(0xffffcc);
-//     } else {
-//       // Sunset to night
-//       const t = (this.timeOfDay - 0.75) / 0.25;
-//       topColor = new THREE.Color(0x0077ff).lerp(new THREE.Color(0x000022), t);
-//       bottomColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x000022), t);
-//       fogColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x000022), t);
-//       lightIntensity = 1.0 - t;
-//       lightColor = new THREE.Color(0xffffcc);
-//     }
-    
-//     // Apply colors
-//     if (this.sky) {
-//       this.sky.material.uniforms.topColor.value = topColor;
-//       this.sky.material.uniforms.bottomColor.value = bottomColor;
-//     }
-    
-//     // Update fog
-//     if (this.scene.fog) {
-//       this.scene.fog.color = fogColor;
-//     }
-    
-//     // Update sun light
-//     if (this.sunLight) {
-//       this.sunLight.intensity = lightIntensity;
-//       this.sunLight.color = lightColor;
-      
-//       // Update sun position
-//       const sunAngle = this.timeOfDay * Math.PI * 2;
-//       this.sunPosition.set(
-//         Math.cos(sunAngle) * 500,
-//         Math.sin(sunAngle) * 500,
-//         0
-//       );
-      
-//       this.sunLight.position.copy(this.sunPosition);
-//     }
-//   }
-  
-//   updateClouds(delta) {
-//     const player = this.engine.systems.player?.localPlayer;
-//     if (!player) return;
-    
-//     // Move clouds relative to player
-//     this.clouds.forEach((cloud, index) => {
-//       // Move cloud
-//       cloud.position.x += cloud.userData.speed * delta * 5;
-      
-//       // Rotate cloud slightly
-//       cloud.rotation.y += cloud.userData.rotationSpeed * delta;
-      
-//       // If cloud is too far, reposition it
-//       const distanceX = cloud.position.x - player.position.x;
-//       const distanceZ = cloud.position.z - player.position.z;
-//       const distance = Math.sqrt(distanceX * distanceX + distanceZ * distanceZ);
-      
-//       if (distance > this.cloudSpread * 1.5) {
-//         // Move cloud to opposite side
-//         const angle = Math.atan2(distanceZ, distanceX) + Math.PI;
-//         const newDistance = this.cloudSpread * 0.5;
-        
-//         cloud.position.x = player.position.x + Math.cos(angle) * newDistance;
-//         cloud.position.z = player.position.z + Math.sin(angle) * newDistance;
-//       }
-//     });
-//   }
-  
-//   updateBirds(delta) {
-//     const player = this.engine.systems.player?.localPlayer;
-//     if (!player) return;
-    
-//     // Update each flock
-//     this.birdFlocks.forEach(flock => {
-//       // Update flock circling behavior
-//       flock.circlingPhase += flock.circlingSpeed * delta;
-      
-//       // Calculate flock center position
-//       const circleX = flock.circlingCenter.x + Math.cos(flock.circlingPhase) * flock.circlingRadius;
-//       const circleZ = flock.circlingCenter.z + Math.sin(flock.circlingPhase) * flock.circlingRadius;
-      
-//       // Gradually move circling center to follow player
-//       flock.circlingCenter.x += (player.position.x - flock.circlingCenter.x) * 0.001;
-//       flock.circlingCenter.z += (player.position.z - flock.circlingCenter.z) * 0.001;
-      
-//       // Update flock center
-//       flock.center.x = circleX;
-//       flock.center.z = circleZ;
-      
-//       // Update each bird in flock
-//       flock.birds.forEach(bird => {
-//         // Move bird toward flock center plus its offset
-//         const targetX = flock.center.x + bird.userData.flockOffset.x;
-//         const targetY = flock.center.y + bird.userData.flockOffset.y;
-//         const targetZ = flock.center.z + bird.userData.flockOffset.z;
-        
-//         bird.position.x += (targetX - bird.position.x) * 0.05;
-//         bird.position.y += (targetY - bird.position.y) * 0.05;
-//         bird.position.z += (targetZ - bird.position.z) * 0.05;
-        
-//         // Calculate direction of movement
-//         const direction = new THREE.Vector3(
-//           targetX - bird.position.x,
-//           targetY - bird.position.y,
-//           targetZ - bird.position.z
-//         ).normalize();
-        
-//         // Point bird in direction of movement
-//         if (direction.length() > 0.1) {
-//           const lookAt = new THREE.Vector3();
-//           lookAt.copy(bird.position).add(direction);
-//           bird.lookAt(lookAt);
-//         }
-        
-//         // Flap wings
-//         bird.userData.flapPhase += bird.userData.flapSpeed;
-//         const wingRotation = Math.sin(bird.userData.flapPhase) * bird.userData.flapSpeed * 10;
-        
-//         if (bird.children[1]) { // Wings
-//           bird.children[1].rotation.x = wingRotation;
-//         }
-//       });
-//     });
-//   }
-  
-//   update(delta) {
-//     // Update time of day
-//     this.timeOfDay += delta / this.dayDuration;
-//     if (this.timeOfDay >= 1.0) this.timeOfDay -= 1.0;
-    
-//     // Update sky colors (less frequently on mobile)
-//     if (!this.engine.isMobile || Math.floor(this.engine.elapsed) % 3 === 0) {
-//       this.updateSkyColors();
-//     }
-    
-//     // Make sure sky follows camera - update less frequently
-//     if (this.sky && this.engine.camera && Math.random() < 0.1) {
-//       this.sky.position.copy(this.engine.camera.position);
-//     }
-    
-//     // Update clouds
-//     this.updateClouds(delta);
-    
-//     // Update birds only if enabled
-//     if (this.enableBirds) {
-//       this.updateBirds(delta);
-//     }
-//   }
-// }
+}

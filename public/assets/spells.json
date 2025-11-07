@@ -1,0 +1,80 @@
+[
+  {
+    "name": "Wind Glide",
+    "manaCost": 10,
+    "cooldown": 30,
+    "effect": {
+      "type": "speed_boost",
+      "duration": 10,
+      "value": 1.5
+    },
+    "unlockCondition": {
+      "type": "mana",
+      "value": 100
+    },
+    "vfx": {
+      "type": "aura",
+      "color": "cyan"
+    },
+    "integration": ["PlayerPhysics"]
+  },
+  {
+    "name": "Aether Shield",
+    "manaCost": 15,
+    "cooldown": 60,
+    "effect": {
+      "type": "invulnerability",
+      "duration": 5,
+      "value": true
+    },
+    "unlockCondition": {
+      "type": "mana",
+      "value": 200
+    },
+    "vfx": {
+      "type": "shield",
+      "color": "blue"
+    },
+    "integration": ["PlayerSystem"]
+  },
+  {
+    "name": "Mana Reveal",
+    "manaCost": 5,
+    "cooldown": 45,
+    "effect": {
+      "type": "scan",
+      "duration": 0,
+      "value": {
+        "radius": 500
+      }
+    },
+    "unlockCondition": {
+      "type": "landmarks",
+      "value": 3
+    },
+    "vfx": {
+      "type": "scan",
+      "color": "green"
+    },
+    "integration": ["WorldSystem", "LandmarkSystem"]
+  },
+  {
+    "name": "Essence Surge",
+    "manaCost": 20,
+    "cooldown": 120,
+    "effect": {
+      "type": "mana_multiplier",
+      "duration": 20,
+      "value": 2
+    },
+    "unlockCondition": {
+      "type": "mana",
+      "value": 500
+    },
+    "vfx": {
+      "type": "aura",
+      "color": "purple"
+    },
+    "integration": ["PlayerSystem"]
+  }
+]

@@ -1,0 +1,69 @@
+[
+  {
+    "id": "collect_mana_50",
+    "name": "Collect 50 Mana",
+    "description": "Gather mana orbs scattered across the world to power your magical journey.",
+    "objectives": [
+      {
+        "type": "collectMana",
+        "target": 50,
+        "current": 0
+      }
+    ],
+    "rewards": {
+      "mana": 20,
+      "unlockSpell": true
+    },
+    "status": "pending"
+  },
+  {
+    "id": "visit_landmarks_3",
+    "name": "Visit 3 Landmarks",
+    "description": "Discover ancient ruins, magical circles, and crystal formations in the world.",
+    "objectives": [
+      {
+        "type": "visitLandmarks",
+        "target": 3,
+        "current": 0
+      }
+    ],
+    "rewards": {
+      "mana": 30
+    },
+    "status": "pending"
+  },
+  {
+    "id": "cast_wind_glide",
+    "name": "Cast Wind Glide Once",
+    "description": "Use the Wind Glide spell to experience faster exploration.",
+    "objectives": [
+      {
+        "type": "castSpell",
+        "spellId": "wind_glide",
+        "target": 1,
+        "current": 0
+      }
+    ],
+    "rewards": {
+      "mana": 10,
+      "unlockSpell": true
+    },
+    "status": "pending"
+  },
+  {
+    "id": "explore_1km",
+    "name": "Explore 1km",
+    "description": "Travel a total distance of 1 kilometer through the magical world.",
+    "objectives": [
+      {
+        "type": "exploreDistance",
+        "target": 1000,
+        "current": 0
+      }
+    ],
+    "rewards": {
+      "mana": 25
+    },
+    "status": "pending"
+  }
+]

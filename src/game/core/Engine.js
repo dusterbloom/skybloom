@@ -1,22 +1,64 @@
 // Updated imports to include new systems
 import * as THREE from "three";
+import { deviceCapabilities } from "./utils/DeviceCapabilities";
 import Stats from "three/examples/jsm/libs/stats.module";
 import { InputManager } from "./InputManager";
 import { AssetManager } from "./AssetManager";
+import { PerformanceMonitor } from "./PerformanceMonitor";
+import { Settings } from "./settings/Settings";
+import { MobileLODManager } from "./MobileLODManager";
 import { NetworkManager } from "../systems/NetworkManager";
+import { QuestManager } from "../systems/QuestManager";
 import { WorldSystem } from "../systems/WorldSystem";
 import { PlayerSystem } from "../systems/PlayerSystem";
+import { PlayerStateManager } from "../systems/player/PlayerStateManager.js";
+import { PlayerInputSystem } from "../systems/player/PlayerInputSystem.js";
+import { PlayerCameraSystem } from "../systems/player/PlayerCameraSystem.js";
 import { UISystem } from "../systems/UISystem";
 // Import new systems
 import { VegetationSystem } from "../systems/VegetationSystem";
-import { AtmosphereSystem } from "../systems/AtmosphereSystem";
+import { PlayerPhysics } from "../systems/player/PlayerPhysics.js";
+import { AtmosphereSystem } from "../systems/atmosphere/AtmosphereSystem";
 import { WaterSystem } from "../systems/WaterSystem";
+import { SeaFloorSystem } from "../systems/SeaFloorSystem";
+import { UnderwaterEffectsSystem } from "../systems/UnderwaterEffectsSystem";
+import { SkyboxSystem } from "../systems/atmosphere/SkyboxSystem";
+import { PerformanceBenchmarkSystem } from "../systems/PerformanceBenchmarkSystem";
 import { CarpetTrailSystem } from "../systems/CarpetTrailSystem";
 import { LandmarkSystem } from "../systems/LandmarkSystem";
 import { MinimapSystem } from "../systems/MinimapSystem";
-import { MaterialSystemIntegration } from "../systems/materials/MaterialSystemIntegration";
-import { PhysicsSystem } from "../systems/physics/PhysicsSystem";
-import { MobileUI } from "../ui/MobileUI";
+import { IntroScreen } from "../ui/screens/IntroScreen";
+import { useGameState, GameStates } from '../state/gameState.js';
+import { Logger } from '../../utils/Logger.js';
+import { createTestRunner } from '../systems/tests';
+import { SystemManager } from './SystemManager.js';
+import { RendererManager } from './RendererManager.js';
+import { QualityManager } from './QualityManager.js';
+import { EventBus } from './EventBus.js';
+
+// Import mobile and physics systems from main (optional imports)
+let MaterialSystemIntegration, PhysicsSystem, MobileUI;
+
+async function loadOptionalModules() {
+  try {
+    const materialModule = await import("../systems/materials/MaterialSystemIntegration.js");
+    MaterialSystemIntegration = materialModule.MaterialSystemIntegration;
+  } catch (e) {
+    // MaterialSystemIntegration not available
+  }
+  try {
+    const physicsModule = await import("../systems/physics/PhysicsSystem.js");
+    PhysicsSystem = physicsModule.PhysicsSystem;
+  } catch (e) {
+    // PhysicsSystem not available
+  }
+  try {
+    const mobileModule = await import("../ui/MobileUI.js");
+    MobileUI = mobileModule.MobileUI;
+  } catch (e) {
+    // MobileUI not available
+  }
+}
 
 export class Engine {
   constructor() {
@@ -24,72 +66,49 @@ export class Engine {
     this.clock = new THREE.Clock();
     this.delta = 0;
     this.elapsed = 0;
-    this.systems = {};
     this.isRunning = false;
-    this.detectDeviceCapabilities();
-
-    // Initialize quality manager with mobile optimizations
-    this.qualityManager = {
-      targetFPS: 60,
-      currentFPS: 60,
-      sampleSize: 20,
-      fpsHistory: [],
-      resolutionScale: 1.0,
-      minResolutionScale: 0.5,
-      updateInterval: 1.0, // seconds
-      timeSinceLastUpdate: 0,
-      materialQuality: this.isMobile ? 'low' : (this.isTablet ? 'medium' : 'high'),
-      lastMaterialQualityUpdate: 0,
-      materialQualityUpdateInterval: 5.0,
-      batterySavingMode: false,
-      uiAnimationLevel: this.isMobile ? 'low' : 'high',
-      highQualityMode: false // New flag for toggling higher quality
-    };
 
     this.isVisible = true;
 
     this.maxDeltaTime = 1/15; // Cap at 15 FPS equivalent
-    this.devicePixelRatio = Math.min(window.devicePixelRatio, 2);
 
-    // Create core managers
-    this.input = new InputManager();
-    this.assets = new AssetManager();
+    // Minimap toggle flag - set to false to disable at startup
+    this.minimapEnabled = true;
+    this.gameStarted = false; // Flag to track if the game has started
+    this._frameCounter = 0;
 
-    // Create renderer
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: !this.isMobile, // Disable antialiasing on mobile
-      powerPreference: "high-performance",
-    });
-    this.renderer.setClearColor(0x88ccff);
-    this.renderer.setPixelRatio(this.devicePixelRatio);
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
-    
-    // Optimized renderer configuration
-    this.renderer.powerPreference = "high-performance";
-    this.renderer.logarithmicDepthBuffer = false;  // Disable for performance
-    
-    // Device-specific optimizations
-    if (this.isMobile) {
-      this.renderer.precision = "mediump";  // Use medium precision on mobile
-      this.renderer.shadowMap.enabled = false;  // Disable on mobile
-      this.renderer.shadowMap.autoUpdate = false;  // Disable dynamic shadows
-    } else {
-      this.renderer.shadowMap.enabled = true;
-      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    }
+    // Create performance monitor
+    this.performanceMonitor = new PerformanceMonitor();
 
-    // Create main scene and camera
+    // Create settings but do NOT add it to systems list
+    this.settings = new Settings();
+    this.eventBus = new EventBus();
+
+    // Use centralized device capabilities
+    this.deviceCapabilities = deviceCapabilities;
+    this.isMobile = this.deviceCapabilities.isMobile;
+
+    // Create main scene and camera FIRST (before managers that depend on them)
     this.scene = new THREE.Scene();
+
+    // Add lightweight horizon fog for atmospheric depth
+    this.scene.fog = new THREE.FogExp2(0x87CEEB, 0.0003); // Sky blue fog, density 0.0003
+
     this.camera = new THREE.PerspectiveCamera(
       75,
       window.innerWidth / window.innerHeight,
       0.1,
-      2000
+      10000  // Increased far plane distance to better render distant terrain
     );
+
+    // Create core managers (after camera is available)
+    this.input = new InputManager();
+    this.assets = new AssetManager();
+    this.systemManager = new SystemManager(this);
+    this.systems = this.systemManager.systems;
+    this.rendererManager = new RendererManager(this, this.canvas);
+    this.qualityManager = new QualityManager(this);
+    this.qualityManager.rendererManager = this.rendererManager;
 
     // Performance monitoring in development
     if (import.meta.env.DEV) {
@@ -99,37 +118,134 @@ export class Engine {
 
     // Event listeners
     window.addEventListener("resize", this.onResize.bind(this));
-    
+
     // Handle visibility changes
     document.addEventListener("visibilitychange", this.onVisibilityChange.bind(this));
+
+    // Add test system in development mode
+    if (import.meta.env.DEV) {
+      this._testRunner = null;
+    }
   }
 
   async initialize() {
+    // Load optional modules first
+    await loadOptionalModules();
+
     // Initialize all core systems
     await this.assets.initialize();
 
-    // Create systems in correct order (dependencies first)
-    this.systems.materials = new MaterialSystemIntegration(this);
-    this.systems.network = new NetworkManager(this);
-    this.systems.physics = new PhysicsSystem(this);
-    this.systems.world = new WorldSystem(this);
-    this.systems.water = new WaterSystem(this);
-    this.systems.vegetation = new VegetationSystem(this);
-    this.systems.atmosphere = new AtmosphereSystem(this);
-    this.systems.player = new PlayerSystem(this);
-    this.systems.ui = new UISystem(this);
-    
-    // Initialize mobile UI if on mobile device
-    if (this.isMobile) {
-      this.systems.mobileUI = new MobileUI(this);
-      
+    // Register systems to SystemManager
+    let sm = this.systemManager;
+
+    // Register material and physics systems if available (from main branch)
+    if (MaterialSystemIntegration) {
+      sm = sm.register(new MaterialSystemIntegration(this));
+    }
+    if (PhysicsSystem) {
+      sm = sm.register(new PhysicsSystem(this));
+    }
+
+    sm = sm.register(new NetworkManager(this));
+    sm = sm.register(new MobileLODManager(this));
+    sm = sm.register(new WorldSystem(this));
+    sm = sm.register(new WaterSystem(this));
+    sm = sm.register(new SkyboxSystem(this));
+    sm = sm.register(new SeaFloorSystem(this));
+    sm = sm.register(new UnderwaterEffectsSystem(this));
+    sm = sm.register(new PerformanceBenchmarkSystem(this));
+    sm = sm.register(new VegetationSystem(this));
+    sm = sm.register(new PlayerStateManager(this))
+      .register(new PlayerPhysics(this))
+      .register(new PlayerInputSystem(this))
+      .register(new PlayerCameraSystem(this))
+      .register(new PlayerSystem(this))
+      .register(new AtmosphereSystem(this))
+      .register(new UISystem(this))
+      .register(new CarpetTrailSystem(this))
+      .register(new LandmarkSystem(this));
+
+    // Conditionally register MinimapSystem based on flag
+    if (this.minimapEnabled !== false) {
+      sm = sm.register(new MinimapSystem(this));
+    }
+
+    sm = sm.register(new QuestManager(this));
+
+    // Initialize mobile UI if on mobile device and available
+    if (this.isMobile && MobileUI) {
+      this.mobileUI = new MobileUI(this);
+      // Note: MobileUI might not follow the System pattern, so handle separately
+    }
+
+    // Define initialization order (some systems depend on others)
+    const initOrder = [
+      "materials", // Material system from main
+      "network",
+      "physics", // Physics system from main
+      "mobileLOD", // Initialize LOD manager first to prepare for other systems
+      "skybox", // Skybox should be initialized early for proper lighting
+      "world", // Base terrain must be initialized first
+      "seaFloor", // Sea floor needs world system
+      "water", // Water system should be initialized after terrain
+      "underwaterEffects", // Underwater effects after water
+      "performanceBenchmark", // Performance benchmarking system
+      "vegetation", // Vegetation needs terrain to place trees
+      "playerState",
+      "playerPhysics", // Physics after playerState for localPlayer access
+      "playerInput", // Input after physics
+      "playerCamera", // Camera after input and physics
+      "player", // Orchestrator after sub-systems
+      "atmosphere", // Atmosphere system manages its own sun/moon/star subsystems
+      "ui", // UI needs player for HUD elements
+      "carpetTrail", // Trail system needs player
+      "landmarks",   // Landmarks need world and player
+      "minimap",    // Minimap needs world and player info
+      "questManager"
+    ];
+
+    this.systemManager.setUpdateOrder(initOrder);
+
+    // Initialize systems in order
+    await this.systemManager.initialize();
+
+    // Setup renderer
+    this.rendererManager.setup();
+
+    // Apply initial quality settings
+    this.rendererManager.applyQualitySettings(this.isMobile ? 1 : 2);
+
+    // Set up event handling
+    this.input.initialize();
+
+    // Configure input system to provide player state to UI
+    if (this.input && this.systemManager.get('player')) {
+      // Add a small delay to ensure player system is ready
+      setTimeout(() => {
+        try {
+          this.input.setPlayerStateProvider(() => {
+            const playerSystem = this.systemManager.get('player');
+            return playerSystem ? playerSystem.getLocalPlayerState() : null;
+          });
+          Logger.info('Player state provider configured successfully');
+        } catch (error) {
+          Logger.warn('Error setting player state provider:', error);
+        }
+      }, 100); // 100ms delay
+    }
+
+    // Initialize mobile UI if available
+    if (this.mobileUI && typeof this.mobileUI.initialize === 'function') {
+      this.mobileUI.initialize();
+      Logger.info('Mobile UI initialized');
+
       // Hide spell buttons in mobile view
       setTimeout(() => {
         const spellButtons = document.querySelectorAll('#ui-container .spell-slot, [id^="spell-button"]');
         spellButtons.forEach(button => {
           if (button) button.style.display = 'none';
         });
-        
+
         // Hide any other UI elements that might be present
         const extraButtons = document.querySelectorAll('#ui-container > div:not(#health-bar):not(#battery-toggle)');
         extraButtons.forEach(element => {
@@ -139,64 +255,19 @@ export class Engine {
         });
       }, 500);
     }
-    this.systems.carpetTrail = new CarpetTrailSystem(this);
-    this.systems.landmarks = new LandmarkSystem(this);
-    this.systems.minimap = new MinimapSystem(this);
 
-    // Define initialization order (some systems depend on others)
-    const initOrder = [
-      "materials",
-      "network",
-      "physics", // Physics system should be initialized before world
-      "world", // Base terrain must be initialized first
-      "water", // Water depends on world terrain
-      "vegetation", // Vegetation needs terrain to place trees
-      "atmosphere", // Atmosphere enhances the sky and adds clouds
-      "player", // Player needs terrain for physics
-      "ui", // UI needs player for HUD elements
-      "carpetTrail", // Trail system needs player
-      "landmarks",   // Landmarks need world and player
-      "minimap",    // Minimap needs world and player info
-    ];
-
-    // Initialize systems in order
-    for (const systemName of initOrder) {
-      const system = this.systems[systemName];
-      if (system) {
-        await system.initialize();
-        console.log(`System initialized: ${systemName}`);
-      }
-    }
-    
-    // Initialize mobile UI if available
-    if (this.systems.mobileUI) {
-      this.systems.mobileUI.initialize();
-      console.log('Mobile UI initialized');
-    }
-
-    // Set up event handling
-    this.input.initialize();
-    
-    // Configure input system to provide player state to UI
-    if (this.input && this.systems.player) {
-      // Add a small delay to ensure player system is ready
-      setTimeout(() => {
-        try {
-          this.input.setPlayerStateProvider(() => {
-            return this.systems.player.getLocalPlayerState();
-          });
-          console.log('Player state provider configured successfully');
-        } catch (error) {
-          console.warn('Error setting player state provider:', error);
-        }
-      }, 100); // 100ms delay
-    }
-    
     // Set CSS variables for UI animations based on device capabilities
     document.documentElement.style.setProperty(
-      '--ui-animation-speed', 
+      '--ui-animation-speed',
       this.qualityManager.uiAnimationLevel === 'high' ? '1' : '0.5'
     );
+
+    // Bind minimap toggle to 'M' key
+    this.input.on('keydown', (event) => {
+      if (event.code === 'KeyM' && useGameState.getState().currentState === GameStates.PLAYING) {
+        this.toggleMinimap();
+      }
+    });
 
     // Hide loading screen
     document.getElementById("loading").style.display = "none";
@@ -204,350 +275,192 @@ export class Engine {
     // Start game loop
     this.isRunning = true;
     this.animate();
-    
-    // No auto-movement on mobile - user controls movement with buttons
-    if (this.isMobile && this.input && this.input.keys) {
-      // Ensure keys are not auto-pressed
-      this.input.keys['KeyW'] = false;
-      
-      console.log('Mobile controls initialized - user must press buttons to move');
+
+    // Initialize intro screen
+    this.introScreen = new IntroScreen(this);
+
+    // Set callback for when play button is clicked
+    this.introScreen.onPlay(async () => {
+      this.gameStarted = true;
+
+       // Start any required gameplay systems here
+       const player = this.systemManager.get('player');
+       if (player) {
+        if (typeof player.enable === 'function') {
+          player.enable();
+        }
+      }
+
+       const playerInput = this.systemManager.get('playerInput');
+       if (this.input.isTouchDevice && playerInput && typeof playerInput.showMobileControls === 'function') {
+        playerInput.showMobileControls();
+      }
+
+       // Request pointer lock for desktop gameplay
+       if (!this.input.isTouchDevice) {
+        this.input.requestPointerLock();
+      }
+
+      const network = this.systemManager.get('network');
+      if (network) {
+        network.connect();
+      }
+
+      // Set game state to PLAYING to enable UI updates including minimap
+      useGameState.getState().setGameState(GameStates.PLAYING);
+    });
+
+    // Show intro screen and transition to INTRO state
+    this.introScreen.show();
+    useGameState.getState().setGameState(GameStates.INTRO);
+
+    // Initialize test system in development mode
+    if (import.meta.env.DEV) {
+      this._testRunner = createTestRunner(this);
+
+      // Expose test runner to console
+      window.runSystemTests = async () => {
+        const results = await this._testRunner.runTests();
+        return results;
+      };
     }
 
-    console.log("Engine initialized successfully");
+    // Add listener to canvas for pointer lock request
+    this.canvas.addEventListener('click', () => {
+      // Only request lock if the game is playing and lock isn't already active
+      if (useGameState.getState().currentState === GameStates.PLAYING && !this.input.pointerLocked) {
+          this.input.requestPointerLock();
+      }
+    });
+
+    Logger.info("Engine initialized successfully");
   }
 
-  animate() {
+  animate(timestamp) {
     if (!this.isRunning) return;
 
     requestAnimationFrame(this.animate.bind(this));
 
-    // Skip updates if tab is not visible
-    if (!this.isVisible) return;
+    // Skip updates if tab is not visible or game not started
+    if (!this.isVisible || !this.gameStarted) return;
 
     // Calculate delta time and cap it to prevent huge jumps
     this.delta = Math.min(this.clock.getDelta(), this.maxDeltaTime);
     this.elapsed = this.clock.getElapsedTime();
-    
-    // Update quality settings based on performance
-    this.updateQuality(this.delta);
 
-    // Update systems in correct order
-    const updateOrder = [
-      "materials",
-      "network",
-      "physics", // Update physics before world and player
-      "world",
-      "water",
-      "vegetation",
-      "atmosphere",
-      "player",
-      "carpetTrail", // Update trail after player movement
-      "landmarks",   // Update landmarks
-      "ui",
-      "minimap",    // Update minimap last to capture all world changes
-    ];
+    // Update quality
+    this.qualityManager.update(this.delta);
 
     // Update systems
-    for (const systemName of updateOrder) {
-      const system = this.systems[systemName];
-      if (system && typeof system.update === "function") {
-        // Special case for physics system that needs the world reference
-        if (systemName === "physics") {
-          system.update(this.delta, this.systems.world, this.elapsed);
-        } else {
-          system.update(this.delta, this.elapsed);
-        }
+    this.systemManager.update(this.delta, this.elapsed);
+
+    // Update performance monitor with delta for accurate FPS
+    this.performanceMonitor.update(this.rendererManager.renderer, this, this.delta);
+
+    // Render
+    this.rendererManager.render(this.scene, this.camera);
+
+    // Check if performance requires adjusting quality settings (only occasional checks)
+    if (this.isMobile && this._frameCounter % 120 === 0) {
+      const report = this.performanceMonitor.generateReport();
+      if (this.qualityManager.updateFromPerformance(report)) {
+        // Logger.info('Performance-based quality adjustments applied');
       }
     }
-    
+
     // Update mobile UI if available
-    if (this.systems.mobileUI && this.systems.player && this.systems.player.localPlayer) {
-      this.systems.mobileUI.update(this.delta, this.systems.player.localPlayer);
+    if (this.mobileUI && typeof this.mobileUI.update === 'function') {
+      const player = this.systemManager.get('player');
+      if (player && player.localPlayer) {
+        this.mobileUI.update(this.delta, player.localPlayer);
+      }
     }
 
-    // Render scene
-    this.renderer.render(this.scene, this.camera);
+    // Update frame counter
+    this._frameCounter++;
 
-    // Update stats if available
+    // Update stats if available (dev only)
     if (this.stats) this.stats.update();
-    
-    // Update memory usage stats every 30 frames if in dev mode
-    if (import.meta.env.DEV && (this.frameCounter = this.frameCounter || 0) && this.frameCounter++ % 30 === 0) {
-      this.updateMemoryStats();
-    }
   }
 
-  detectDeviceCapabilities() {
-    // Enhanced device detection
-    const userAgent = navigator.userAgent.toLowerCase();
-    this.isMobile = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/.test(userAgent) || 
-                     'ontouchstart' in window || 
-                     navigator.maxTouchPoints > 0);
-    this.isTablet = this.isMobile && Math.min(window.innerWidth, window.innerHeight) > 600;
-    
-    console.log('Device Detection:', {
-      isMobile: this.isMobile,
-      isTablet: this.isTablet,
-      pixelRatio: window.devicePixelRatio,
-      screenSize: `${window.innerWidth}x${window.innerHeight}`
-    });
-    
-    // Apply tablet-specific optimizations if needed
-    if (this.isTablet) {
-      // Key optimization 1: Reduce device pixel ratio
-      this.devicePixelRatio = Math.min(window.devicePixelRatio, 1);
-      
-      // Key optimization 2: Reduce renderer quality
-      this.reduceRendererQuality = true;
-      
-      // Key optimization 3: Reduce terrain resolution
-      this.terrainResolution = 64; // Lower than desktop
-      
-      // Key optimization 4: Limit view distance
-      this.viewDistance = 500;
-      
-      console.log('Applied tablet performance optimizations');
-    } else if (this.isMobile) {
-      // Even more aggressive optimizations for phones
-      this.devicePixelRatio = 1;
-      this.reduceRendererQuality = true;
-      this.terrainResolution = 48; 
-      this.viewDistance = 300;
-      console.log('Applied mobile performance optimizations');
-    } else {
-      // Desktop settings (unchanged)
-      this.devicePixelRatio = Math.min(window.devicePixelRatio, 2);
-      this.reduceRendererQuality = false;
-      this.terrainResolution = 128;
-      this.viewDistance = 2000;
-    }
-  }
-  
   onResize() {
-    // Update camera
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
+    this.rendererManager.updateResolution();
+  }
 
-    // Update renderer with current resolution scale
-    this.updateRendererResolution();
-  }
-  
-  // Adaptive resolution scaling methods
-  // Enable/disable battery saving mode
-  setBatterySavingMode(enabled) {
-    console.log(`Engine battery saving mode: ${enabled ? 'enabled' : 'disabled'}`);
-    
-    // Update quality manager
-    this.qualityManager.batterySavingMode = enabled;
-    this.qualityManager.targetFPS = enabled ? 30 : 60;
-    
-    // Update input systems
-    if (this.input && typeof this.input.setBatterySavingMode === 'function') {
-      this.input.setBatterySavingMode(enabled);
-    }
-    
-    // Apply renderer optimizations for battery saving
-    if (enabled) {
-      // Reduce shadow quality
-      this.renderer.shadowMap.type = THREE.BasicShadowMap;
-      
-      // Disable expensive post-processing
-      if (this.systems.postprocessing) {
-        this.systems.postprocessing.disableEffects(['bloom', 'ssao', 'dof']);
-      }
-    } else {
-      // Restore shadow quality based on device
-      this.renderer.shadowMap.type = this.isMobile ? 
-        THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
-      
-      // Re-enable post-processing effects if available
-      if (this.systems.postprocessing) {
-        this.systems.postprocessing.restoreEffects();
-      }
-    }
-  }
-  
-  updateQuality(delta) {
-    const { qualityManager } = this;
-    
-    // Calculate current FPS
-    const fps = 1 / delta;
-    qualityManager.fpsHistory.push(fps);
-    
-    // Keep history to sample size
-    if (qualityManager.fpsHistory.length > qualityManager.sampleSize) {
-      qualityManager.fpsHistory.shift();
-    }
-    
-    // Only update periodically, less often in battery saving mode
-    qualityManager.timeSinceLastUpdate += delta;
-    const updateInterval = qualityManager.batterySavingMode ? 
-      qualityManager.updateInterval * 2 : qualityManager.updateInterval;
-      
-    if (qualityManager.timeSinceLastUpdate < updateInterval) return;
-    
-    // Reset timer
-    qualityManager.timeSinceLastUpdate = 0;
-    
-    // Calculate average FPS
-    const avgFPS = qualityManager.fpsHistory.reduce((a, b) => a + b, 0) / 
-                  qualityManager.fpsHistory.length;
-    qualityManager.currentFPS = avgFPS;
-
-    // Update material quality if needed
-    qualityManager.lastMaterialQualityUpdate += delta;
-    if (qualityManager.lastMaterialQualityUpdate >= qualityManager.materialQualityUpdateInterval) {
-      qualityManager.lastMaterialQualityUpdate = 0;
-      
-      // Determine appropriate quality level based on performance
-      let targetQuality = 'medium';
-      if (avgFPS < 30) {
-        targetQuality = 'low';
-      } else if (avgFPS > 55 && !this.isMobile) {
-        targetQuality = 'high';
-      }
-      
-      // Update material quality if changed
-      if (targetQuality !== qualityManager.materialQuality) {
-        qualityManager.materialQuality = targetQuality;
-        if (this.systems.materials) {
-          this.systems.materials.reoptimizeMaterials();
-        }
-      }
-    }
-    
-    // Adjust resolution if FPS is too low
-    if (avgFPS < qualityManager.targetFPS * 0.8) {
-      // Reduce resolution by 10%
-      qualityManager.resolutionScale = Math.max(
-        qualityManager.minResolutionScale,
-        qualityManager.resolutionScale * 0.9
-      );
-      
-      // Apply new resolution
-      this.updateRendererResolution();
-      console.log(`Performance: Decreasing resolution to ${qualityManager.resolutionScale.toFixed(2)}`);
-    } 
-    // Increase resolution if FPS is high enough
-    else if (avgFPS > qualityManager.targetFPS * 1.1 && qualityManager.resolutionScale < 1.0) {
-      // Increase resolution by 5%
-      qualityManager.resolutionScale = Math.min(
-        1.0,
-        qualityManager.resolutionScale * 1.05
-      );
-      
-      // Apply new resolution
-      this.updateRendererResolution();
-      console.log(`Performance: Increasing resolution to ${qualityManager.resolutionScale.toFixed(2)}`);
-    }
-  }
-  
-  updateRendererResolution() {
-    const width = window.innerWidth * this.qualityManager.resolutionScale;
-    const height = window.innerHeight * this.qualityManager.resolutionScale;
-    
-    this.renderer.setSize(width, height, false);
-    this.renderer.domElement.style.width = '100%';
-    this.renderer.domElement.style.height = '100%';
-  }
-  
   onVisibilityChange() {
     this.isVisible = document.visibilityState === 'visible';
-    
-    if (this.isVisible) {
-      // Reset clock to prevent large delta time spikes
-      this.clock.start();
-      
-      // Reset or repair critical systems when tab regains focus
-      this.resetSystems();
-      
-      console.log('Game visibility restored');
-    } else {
-      console.log('Game visibility lost');
+    this.systemManager.handleVisibilityChange(this.isVisible);
+    this.rendererManager.handleVisibilityChange(this.isVisible);
+    this.qualityManager.handleVisibilityChange(this.isVisible);
+  }
+
+  destroy() {
+    this.systemManager.destroy();
+    this.rendererManager.destroy();
+    this.qualityManager.destroy();
+    this.input.destroy();
+    this.assets.destroy();
+    if (this.introScreen) this.introScreen.destroy();
+    if (this.mobileUI && typeof this.mobileUI.destroy === 'function') {
+      this.mobileUI.destroy();
+    }
+    if (this.stats) document.body.removeChild(this.stats.dom);
+    this.isRunning = false;
+  }
+
+  // Toggle minimap (from main branch)
+  toggleMinimap() {
+    const minimap = this.systemManager.get('minimap');
+    if (minimap && typeof minimap.toggle === 'function') {
+      minimap.toggle();
     }
   }
-  
-  updateMemoryStats() {
-    // Skip in non-dev environments
-    if (!import.meta.env.DEV) return;
-    
-    // Display memory statistics
-    if (window.performance && window.performance.memory) {
-      const memory = window.performance.memory;
-      console.log(`Memory Usage: ${(memory.usedJSHeapSize / 1048576).toFixed(2)}MB / ${(memory.jsHeapSizeLimit / 1048576).toFixed(2)}MB`);
-    }
-    
-    // Log renderer info
-    const rendererInfo = this.renderer.info;
-    console.log(`Renderer: ${rendererInfo.render.triangles} triangles, ${rendererInfo.render.calls} calls, ${rendererInfo.memory.geometries} geometries, ${rendererInfo.memory.textures} textures`);
-  }
-  
-  resetSystems() {
-    // Reset material system
-    if (this.systems.materials) {
-      this.systems.materials.materialManager.resetMaterials();
-    }
-    
-    // Reset trail system which is causing errors
-    if (this.systems.carpetTrail) {
-      this.systems.carpetTrail.resetTrail();
-    }
-    
-    // Allow other systems to handle visibility changes if they implement the method
-    for (const systemName in this.systems) {
-      const system = this.systems[systemName];
-      if (system && typeof system.handleVisibilityChange === 'function') {
-        system.handleVisibilityChange(true);
-      }
-    }
-  }
-  
-  // Toggle high quality mode
+
+  // Toggle high quality mode (from main branch)
   toggleHighQualityMode() {
-    this.qualityManager.highQualityMode = !this.qualityManager.highQualityMode;
-    
-    console.log(`High quality mode: ${this.qualityManager.highQualityMode ? 'enabled' : 'disabled'}`);
-    
+    const highQualityMode = !this.qualityManager.highQualityMode;
+    this.qualityManager.highQualityMode = highQualityMode;
+
+    Logger.info(`High quality mode: ${highQualityMode ? 'enabled' : 'disabled'}`);
+
     // Update all systems that might be affected by quality changes
-    if (this.systems.carpetTrail) {
+    const carpetTrail = this.systemManager.get('carpetTrail');
+    if (carpetTrail) {
       // Enable/disable trail effects based on quality mode
-      this.systems.carpetTrail.enableRibbonTrail = !this.isMobile || this.qualityManager.highQualityMode;
-      this.systems.carpetTrail.enableSteamParticles = !this.isMobile || this.qualityManager.highQualityMode;
-      
+      carpetTrail.enableRibbonTrail = !this.isMobile || highQualityMode;
+      carpetTrail.enableSteamParticles = !this.isMobile || highQualityMode;
+
       // Adjust particle counts
-      if (this.qualityManager.highQualityMode) {
-        this.systems.carpetTrail.maxParticles = this.isMobile ? 50 : 150;
-        this.systems.carpetTrail.maxMotionLines = this.isMobile ? 4 : 10;
+      if (highQualityMode) {
+        carpetTrail.maxParticles = this.isMobile ? 50 : 150;
+        carpetTrail.maxMotionLines = this.isMobile ? 4 : 10;
       } else {
-        this.systems.carpetTrail.maxParticles = this.isMobile ? 25 : 75;
-        this.systems.carpetTrail.maxMotionLines = this.isMobile ? 2 : 6;
+        carpetTrail.maxParticles = this.isMobile ? 25 : 75;
+        carpetTrail.maxMotionLines = this.isMobile ? 2 : 6;
       }
     }
-    
+
     // Update atmosphere system
-    if (this.systems.atmosphere) {
+    const atmosphere = this.systemManager.get('atmosphere');
+    if (atmosphere) {
       // Enable/disable birds based on quality mode
-      this.systems.atmosphere.enableBirds = !this.isMobile || this.qualityManager.highQualityMode;
-      
+      atmosphere.enableBirds = !this.isMobile || highQualityMode;
+
       // Adjust cloud count
-      this.systems.atmosphere.cloudCount = this.qualityManager.highQualityMode ? 
-        (this.isMobile ? 40 : 80) : 
+      atmosphere.cloudCount = highQualityMode ?
+        (this.isMobile ? 40 : 80) :
         (this.isMobile ? 25 : 50);
     }
-    
+
     // Update vegetation system view distance
-    if (this.systems.vegetation) {
-      this.systems.vegetation.vegetationDistance = this.qualityManager.highQualityMode ? 
-        (this.isMobile ? 2 : 3) : 
+    const vegetation = this.systemManager.get('vegetation');
+    if (vegetation) {
+      vegetation.vegetationDistance = highQualityMode ?
+        (this.isMobile ? 2 : 3) :
         (this.isMobile ? 1 : 2);
     }
-    
-    // Update world system
-    if (this.systems.world) {
-      // Could adjust terrain detail here if needed
-    }
-    
+
     // Return current state
-    return this.qualityManager.highQualityMode;
+    return highQualityMode;
   }
 }

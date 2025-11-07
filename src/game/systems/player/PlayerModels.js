@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Logger } from '../../../utils/Logger.js';
 
 export class PlayerModels {
   constructor(playerSystem) {
@@ -19,14 +20,14 @@ export class PlayerModels {
     // In a real implementation, you would use the loaded models from assets
     // For simplicity, we'll create simple meshes
     
-    // Create different carpet materials for players
+    // Create different carpet materials for players with brighter colors
     this.carpetMaterials = [
-      new THREE.MeshStandardMaterial({ color: 0xff5555, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0x55ff55, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0x5555ff, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0xffff55, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0xff55ff, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0x55ffff, roughness: 0.7, metalness: 0.3 })
+      new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.7, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({ color: 0x33ff33, roughness: 0.7, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({ color: 0x3333ff, roughness: 0.7, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({ color: 0xffff33, roughness: 0.7, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({ color: 0xff33ff, roughness: 0.7, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({ color: 0x33ffff, roughness: 0.7, metalness: 0.3 })
     ];
     
     // Create a simple carpet model
@@ -40,16 +41,67 @@ export class PlayerModels {
     // Set up shadows
     this.carpetModels.forEach(model => {
       model.castShadow = true;
-      model.receiveShadow = true;
+      model.receiveShadow = false;  // Prevent self-shadowing
     });
     
-    console.log(`Created ${this.carpetModels.length} carpet models`);
+    Logger.info(`Created ${this.carpetModels.length} carpet models`);
   }
   
-  createCarpetModel() {
-    // Get a random carpet model
-    const carpetIndex = Math.floor(Math.random() * this.carpetModels.length);
+  createCarpetModel(playerId) {
+    if (this.carpetModels.length === 0) {
+      // Fallback: create a default carpet model if none available
+      Logger.warn('PlayerModels.createCarpetModel: No carpet models available, creating default');
+      
+      // Create default material
+      const defaultMaterial = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.7, metalness: 0.3 });
+      const defaultGeometry = new THREE.BoxGeometry(5, 0.5, 8);
+      const defaultModel = new THREE.Mesh(defaultGeometry, defaultMaterial);
+      defaultModel.castShadow = true;
+      defaultModel.receiveShadow = false;
+      
+      // Add floating marker
+      const markerGeometry = new THREE.SphereGeometry(1, 8, 8);
+      const markerMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff6600,
+        transparent: true,
+        opacity: 0.8
+      });
+      const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+      marker.position.y = 3;
+      defaultModel.add(marker);
+      
+      return defaultModel;
+    }
+    
+    // Use player ID to determine carpet color consistently
+    let carpetIndex = 0;
+    
+    if (playerId) {
+      // Hash the player ID to get a consistent color
+      let hash = 0;
+      for (let i = 0; i < playerId.length; i++) {
+        hash = ((hash << 5) - hash) + playerId.charCodeAt(i);
+        hash |= 0; // Convert to 32bit integer
+      }
+      carpetIndex = Math.abs(hash) % this.carpetModels.length;
+    } else {
+      // Random for local testing
+      carpetIndex = Math.floor(Math.random() * this.carpetModels.length);
+    }
+    
     const carpetModel = this.carpetModels[carpetIndex].clone();
+    
+    // Add a floating marker above the carpet for better visibility
+    const markerGeometry = new THREE.SphereGeometry(1, 8, 8);
+    const markerMaterial = new THREE.MeshBasicMaterial({
+      color: this.carpetMaterials[carpetIndex].color,
+      transparent: true,
+      opacity: 0.8
+    });
+    
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    marker.position.y = 3; // Position above carpet
+    carpetModel.add(marker);
     
     return carpetModel;
   }
@@ -253,7 +305,18 @@ export class PlayerModels {
   }
   
   updateModels() {
-    this.playerSystem.players.forEach(player => {
+    const playerState = this.playerSystem.engine.systemManager.get('playerState');
+    if (!playerState || !playerState.players) {
+      Logger.warn('PlayerModels.updateModels: playerState or players is undefined');
+      return;
+    }
+    
+    // Logger.debug('PlayerModels.updateModels: Updating', playerState.players.size, 'players');
+    playerState.players.forEach(player => {
+      if (!player.model) {
+        Logger.warn('PlayerModels.updateModels: Player missing model:', player.id);
+        return;
+      }
       // Update model position
       player.model.position.copy(player.position);
       

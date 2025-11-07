@@ -1,4 +1,9 @@
-import { Engine } from './game/core/Engine';
+import { Engine } from './game/core/Engine.js';
+import { Logger } from './utils/Logger.js';
+import { setupPerformanceTools } from './PerformanceTools.js';
+
+// Update font style for the entire app
+document.documentElement.style.setProperty('--app-font', '"Helvetica Neue", Helvetica, sans-serif');
 
 // Debug info for mobile detection
 function logDeviceInfo() {
@@ -17,9 +22,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Create and initialize game engine
     const engine = new Engine();
-    await engine.initialize();
     
-    console.log('Magical Vibe Carpet initialized successfully!');
+    // Expose engine globally for debugging and performance monitoring only in development
+    if (import.meta.env.DEV) {
+      window.gameEngine = engine;
+    }
+    
+    await engine.initialize();
+    setupPerformanceTools();
+
+    console.log('Vibe Carpet initialized successfully!');
+    console.log('Use window.getPerformanceReport() to view performance metrics');
   } catch (error) {
     console.error('Error initializing game:', error);
     document.getElementById('loading-text').textContent = 'Error loading game. Please refresh.';

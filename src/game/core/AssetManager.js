@@ -9,6 +9,9 @@ export class AssetManager {
     this.materials = {};
     this.audio = {};
     this.shaders = {};
+    this.loadingPromises = new Map();
+    this.retryAttempts = new Map();
+    this.maxRetries = 2;
     
     // Create fallback assets
     this.createFallbackAssets();
@@ -188,64 +191,83 @@ export class AssetManager {
   }
   
   loadTextures() {
-    const textureFiles = [
-      { name: 'carpet', path: '/assets/textures/carpet.jpg' },
-      { name: 'terrain', path: '/assets/textures/terrain.jpg' },
-      { name: 'sky', path: '/assets/textures/sky.jpg' },
-      { name: 'particles', path: '/assets/textures/particles.png' }
-    ];
-    
-    textureFiles.forEach(({ name, path }) => {
-      this.textureLoader.load(path, (texture) => {
-        texture.encoding = THREE.sRGBEncoding;
-        this.textures[name] = texture;
+      const textureFiles = [
+        { name: 'carpet', path: '/assets/textures/carpet.jpg' },
+        { name: 'terrain', path: '/assets/textures/terrain.jpg' },
+        { name: 'sky', path: '/assets/textures/sky.jpg' },
+        { name: 'particles', path: '/assets/textures/particles.png' }
+      ];
+      
+      textureFiles.forEach(async ({ name, path }) => {
+        try {
+          const response = await fetch(path);
+          const size = response.headers.get('content-length') || 0;
+          console.log(`Asset check for ${path}: size ${size} bytes`);
+          if (parseInt(size) < 100) {
+            console.warn(`Empty asset detected for ${path}, using fallback`);
+            // Use fallback already created
+            return;
+          }
+          this.textureLoader.load(path, (texture) => {
+            texture.colorSpace = THREE.SRGBColorSpace;
+            this.textures[name] = texture;
+          });
+        } catch (error) {
+          console.error(`Failed to check asset ${path}:`, error);
+        }
       });
-    });
-  }
+    }
   
   loadModels() {
-    const modelFiles = [
-      { name: 'carpet', path: '/assets/models/carpet.glb' },
-      { name: 'mana', path: '/assets/models/mana.glb' }
-    ];
-    
-    modelFiles.forEach(({ name, path }) => {
-      this.gltfLoader.load(path, (gltf) => {
-        this.models[name] = gltf;
+      const modelFiles = [
+        { name: 'carpet', path: '/assets/models/carpet.glb' },
+        { name: 'mana', path: '/assets/models/mana.glb' }
+      ];
+      
+      modelFiles.forEach(async ({ name, path }) => {
+        try {
+          const response = await fetch(path);
+          const size = response.headers.get('content-length') || 0;
+          console.log(`Asset check for ${path}: size ${size} bytes`);
+          if (parseInt(size) < 100) {
+            console.warn(`Empty asset detected for ${path}, using fallback`);
+            // Use fallback already created
+            return;
+          }
+          this.gltfLoader.load(path, (gltf) => {
+            this.models[name] = gltf;
+          });
+        } catch (error) {
+          console.error(`Failed to check asset ${path}:`, error);
+        }
       });
-    });
-  }
+    }
   
   loadAudio() {
-    const audioFiles = [
-      { name: 'background', path: '/assets/audio/background.mp3' },
-      { name: 'spell', path: '/assets/audio/spell.mp3' },
-      { name: 'collect', path: '/assets/audio/collect.mp3' }
-    ];
-    
-    audioFiles.forEach(({ name, path }) => {
-      try {
-        this.audioLoader.load(path, 
-          // onLoad callback
-          (buffer) => {
-            this.audio[name] = buffer;
-          },
-          // onProgress callback
-          (xhr) => {
-            // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-          },
-          // onError callback
-          (error) => {
-            console.warn(`Error loading audio ${name}: ${error}`);
-            this.audio[name] = null; // Set to null to avoid errors later
+      const audioFiles = [
+        { name: 'background', path: '/assets/audio/background.mp3' },
+        { name: 'spell', path: '/assets/audio/spell.mp3' },
+        { name: 'collect', path: '/assets/audio/collect.mp3' }
+      ];
+      
+      audioFiles.forEach(async ({ name, path }) => {
+        try {
+          const response = await fetch(path);
+          const size = response.headers.get('content-length') || 0;
+          console.log(`Asset check for ${path}: size ${size} bytes`);
+          if (parseInt(size) < 100) {
+            console.warn(`Empty asset detected for ${path}, using fallback`);
+            // Use fallback already created
+            return;
           }
-        );
-      } catch (error) {
-        console.warn(`Exception loading audio ${name}: ${error}`);
-        this.audio[name] = null; // Set to null to avoid errors later
-      }
-    });
-  }
+          this.audioLoader.load(path, (buffer) => {
+            this.audio[name] = buffer;
+          });
+        } catch (error) {
+          console.error(`Failed to check asset ${path}:`, error);
+        }
+      });
+    }
   
   loadShaders() {
     // This would typically load shader files, but for simplicity

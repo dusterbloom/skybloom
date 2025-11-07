@@ -1,200 +1,90 @@
 import * as THREE from 'three';
+import { System } from '../core/System.js';
+import { Logger } from '../../utils/Logger.js';
+import { Howl } from 'howler';
 import { PlayerPhysics } from './player/PlayerPhysics';
 import { PlayerSpells } from './player/PlayerSpells';
 import { PlayerInput } from './player/PlayerInput';
 import { PlayerModels } from './player/PlayerModels';
 
-export class PlayerSystem {
+export class PlayerSystem extends System {
   constructor(engine) {
-    this.engine = engine;
+    super(engine, 'player');
+    this.requireDependencies(['playerState', 'playerPhysics', 'playerInput', 'playerCamera', 'world']);
+    this.eventBus = engine.eventBus;
     this.scene = engine.scene;
-    this.players = new Map();
-    this.localPlayer = null;
     
     // World transition flag
     this.isTransitioning = false;
     this.transitionAlpha = 0;
     this.worldTransitionComplete = null;
-    this.worldSize = 10000; //
-    
-    // Initialize subsystems
-    this.physics = new PlayerPhysics(this);
+    this.worldSize = 2000;
+
+    // Keep spells and models internal
     this.spells = new PlayerSpells(this);
-    this.input = new PlayerInput(this);
     this.models = new PlayerModels(this);
   }
   
-  async initialize() {
-    // Initialize subsystems
-    await this.models.initialize();
+  async _initialize() {
+    // Wait for playerState to be ready
+    const playerState = this.engine.systemManager.get('playerState');
+    if (playerState.localPlayer) {
+      this.localPlayer = playerState.localPlayer;
+      Logger.info('PlayerSystem: Local player ready, creating model');
+      
+      // Initialize models before creating
+      await this.models.initialize();
+      
+      // Create model for local player
+      this.localPlayer.model = this.models.createCarpetModel(this.localPlayer.id);
+      this.scene.add(this.localPlayer.model);
+      Logger.info('PlayerSystem: Carpet model created and added to scene');
+    } else {
+      Logger.warn('PlayerSystem: No local player available during initialization');
+    }
+    
+    // Initialize internal subsystems
     await this.spells.initialize();
-    
-    // Listen for network events
-    this.engine.systems.network.on('connected', (data) => {
-      this.createLocalPlayer(data.id);
-    });
-    
-    this.engine.systems.network.on('player_join', (data) => {
-      this.createNetworkPlayer(data);
-    });
-    
-    this.engine.systems.network.on('player_leave', (data) => {
-      this.removePlayer(data.id);
-    });
-    
-    this.engine.systems.network.on('player_update', (data) => {
-      this.updateNetworkPlayer(data);
-    });
-    
-    // Auto-start forward movement on mobile
-   
-    
-    console.log("Player system initialized");
-  }
-  
-  createLocalPlayer(id) {
-    // Get a random carpet model
-    const carpetModel = this.models.createCarpetModel();
-    
-    // Create player object
-    const player = {
-      id,
-      isLocal: true,
-      model: carpetModel,
-      position: new THREE.Vector3(0, 50, 0), // Starting higher (adjusted from 50)
-      rotation: new THREE.Euler(0, 0, 0, 'YXZ'),
-      velocity: new THREE.Vector3(0, 0, 0),
-      acceleration: new THREE.Vector3(0, 0, 0),
-      bankAngle: 0,
-      throttle: 0, // Throttle control (0 to 1)
 
-      mana: 100,
-      health: 100,
-      maxHealth: 100,
-      maxSpeed: 700, // Reduced from 700 for better control
-      accelerationValue: 300, // Increased for better response (was 300)
-      decelerationValue: 40, // Increased for better response (was 300)
+    // Spell input handling
+    this.engine.input.on('keydown', (event) => {
+  if (!this.engine.systems.playerState?.localPlayer) return;
+      if (!this.engine.systems.playerState?.localPlayer) return;
 
-      rotationSpeed: 1, // Reduced from 3 for smoother turning
-      spells: [],
-      altitude: 150, // Track target altitude (increased from 50)
-      altitudeVelocity: 150, // Increased from 300,
-      currentSpell: 0
-    };
-    
-    // Add carpet model to scene
-    carpetModel.position.copy(player.position);
-    this.scene.add(carpetModel);
-    
-    // Store the player
-    this.players.set(id, player);
-    this.localPlayer = player;
-    
-    // Setup subsystems for local player
-    this.input.setupInput();
-    this.models.createCrosshair();
-    this.updateCamera();
-    
-    console.log(`Local player created with ID: ${id}`);
-  }
-
-  createNetworkPlayer(data) {
-    // Don't create duplicate players
-    if (this.players.has(data.id)) {
-      return;
-    }
-    
-    // Get a random carpet model
-    const carpetModel = this.models.createCarpetModel();
-    
-    // Create player object
-    const player = {
-      id: data.id,
-      isLocal: false,
-      model: carpetModel,
-      position: new THREE.Vector3(data.x || 0, data.y || 20, data.z || 0),
-      rotation: new THREE.Euler(0, 0, 0),
-      velocity: new THREE.Vector3(0, 0, 0),
-      mana: 0,
-      health: 100,
-      maxHealth: 100
-    };
-    
-    // Add carpet model to scene
-    carpetModel.position.copy(player.position);
-    this.scene.add(carpetModel);
-    
-    // Store the player
-    this.players.set(data.id, player);
-    
-    console.log(`Network player created with ID: ${data.id}`);
-  }
-  
-  removePlayer(id) {
-    const player = this.players.get(id);
-    if (player) {
-      // Remove model from scene
-      this.scene.remove(player.model);
-      
-      // Remove player from collection
-      this.players.delete(id);
-      
-      console.log(`Player removed with ID: ${id}`);
-    }
-  }
-  
-  updateNetworkPlayer(data) {
-    const player = this.players.get(data.id);
-    if (player && !player.isLocal) {
-      // NetworkManager now handles interpolation for smoother movement
-      // Just apply the already interpolated values directly
-      if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {
-        player.position.set(data.x, data.y, data.z);
+      switch (event.code) {
+        case 'Digit1':
+          this.spells.selectSpell(0);
+          break;
+        case 'Digit2':
+          this.spells.selectSpell(1);
+          break;
+        case 'Digit3':
+          this.spells.selectSpell(2);
+          break;
+        case 'Digit4':
+          this.spells.selectSpell(3);
+          break;
+        case 'KeyE':
+          this.spells.castSpell();
+          this.eventBus.emit('spellCast', { spellIndex: this.engine.systems.playerState?.localPlayer.currentSpell });
+          break;
       }
-      
-      // Apply already interpolated rotation
-      if (data.rotationY !== undefined) {
-        player.rotation.y = data.rotationY;
-      }
-      
-      // Update other properties
-      if (data.mana !== undefined) player.mana = data.mana;
-      if (data.health !== undefined) player.health = data.health;
-      
-      // Update model position
-      player.model.position.copy(player.position);
-      player.model.rotation.y = player.rotation.y;
-    }
+    });
+
+    Logger.info("Player system initialized");
   }
   
-  updateCamera() {
-    if (!this.localPlayer) return;
-    
-    // Define camera offset and target distances
-    const cameraOffset = new THREE.Vector3(0, 10, -25); // Adjusted: higher and further back
-    const lookAheadDistance = new THREE.Vector3(0, 5, 25); // Adjusted: look further ahead
-    
-    // Create quaternion from player's full rotation (pitch and yaw)
-    const quaternion = new THREE.Quaternion();
-    quaternion.setFromEuler(new THREE.Euler(
-        this.localPlayer.rotation.x,  // Include pitch
-        this.localPlayer.rotation.y,  // Include yaw
-        0,                           // No roll in camera
-        'YXZ'                        // Important: YXZ order for FPS-style controls
-    ));
-    
-    // Apply rotation to offset and look target
-    const rotatedOffset = cameraOffset.clone().applyQuaternion(quaternion);
-    const rotatedLookAhead = lookAheadDistance.clone().applyQuaternion(quaternion);
-    
-    // Position camera relative to player with smoothing
-    const targetCameraPos = this.localPlayer.position.clone().add(rotatedOffset);
-    this.engine.camera.position.lerp(targetCameraPos, 0.1); // Smooth camera movement
-    
-    // Look at point ahead of player
-    const lookTarget = this.localPlayer.position.clone().add(rotatedLookAhead);
-    this.engine.camera.lookAt(lookTarget);
-}
+  /**
+   * Enable the player system (called when the game starts)
+   */
+  enable() {
+    Logger.info('Player system enabled');
+  }
+  
+
+  
+  
+  
   
   updateTransition(delta) {
     // Update transition effect
@@ -230,17 +120,9 @@ export class PlayerSystem {
     }
   }
   
+  // Infinite World: Boundary check removed to allow unlimited travel
   checkWorldBoundaries() {
-    if (!this.localPlayer || this.isTransitioning) return;
-    
-    const worldSize = this.engine.systems.world.worldSize;
-    const halfSize = worldSize / 2 - 50; // Buffer from edge
-    const { x, z } = this.localPlayer.position;
-    
-    // Check if player is beyond boundaries
-    if (Math.abs(x) > halfSize || Math.abs(z) > halfSize) {
-      this.startWorldTransition();
-    }
+    // No-op: Infinite world, no boundaries enforced
   }
   
   startWorldTransition() {
@@ -281,168 +163,114 @@ export class PlayerSystem {
     };
   }
   
-  sendPlayerUpdate() {
-    if (!this.localPlayer) return;
-    
-    const { position, rotation, mana, health, velocity } = this.localPlayer;
-    
-    // Send additional data for improved network interpolation
-    this.engine.systems.network.sendPlayerUpdate({
-      x: position.x,
-      y: position.y,
-      z: position.z,
-      rotationY: rotation.y,
-      mana,
-      health,
-      // Send velocity for better prediction
-      velocityX: velocity.x,
-      velocityY: velocity.y,
-      velocityZ: velocity.z
-    });
-  }
   
-  // Get local player state for mobile UI
-  getLocalPlayerState() {
-    if (!this.localPlayer) {
-      console.log('No local player available yet');
-      return {
-        health: 100,
-        maxHealth: 100,
-        mana: 0,
-        currentSpell: 0,
-        speed: 0,
-        maxSpeed: 700,
-        altitude: 0,
-        position: new THREE.Vector3(0, 0, 0)
-      };
-    }
-    
-    return {
-      health: this.localPlayer.health,
-      maxHealth: this.localPlayer.maxHealth,
-      mana: this.localPlayer.mana || 0,
-      currentSpell: this.localPlayer.currentSpell || 0,
-      speed: this.localPlayer.velocity ? this.localPlayer.velocity.length() : 0,
-      maxSpeed: this.localPlayer.maxSpeed || 700,
-      altitude: this.localPlayer.position ? this.localPlayer.position.y : 0,
-      position: this.localPlayer.position ? this.localPlayer.position.clone() : new THREE.Vector3(0, 0, 0)
-    };
-  }
-  
-  // Set vertical movement for gesture control
-  setVerticalMovement(direction) {
-    if (!this.localPlayer) return;
-    
-    // Apply vertical movement in the range of -1 to 1
-    const clampedDirection = Math.max(-1, Math.min(1, direction));
-    
-    // Use the input system to apply this movement
-    if (this.input && this.input.verticalControl) {
-      this.input.verticalControl = clampedDirection;
-    }
-  }
-  
-  // Select spell for mobile UI
-  selectSpell(index) {
-    if (!this.localPlayer) return;
-    
-    // Ensure index is valid
-    if (index >= 0 && index < 3) {
-      this.localPlayer.currentSpell = index;
-      
-      // Update UI if needed
-      if (this.engine.systems.ui) {
-        this.engine.systems.ui.selectSpell(index);
-      }
-      
-      return true;
-    }
-    
-    return false;
-  }
-  
-  // Trigger special ability for double-tap gesture
-  triggerSpecialAbility() {
-    if (!this.localPlayer) return false;
-    
-    // Example: Quick boost
-    const direction = new THREE.Vector3(0, 0, -1).applyEuler(this.localPlayer.rotation);
-    this.localPlayer.velocity.addScaledVector(direction, 100);
-    
-    // Create boost effect
-    this.models.createBoostEffect(this.localPlayer.position, direction);
-    
-    // Apply cooldown logic here
-    return true;
-  }
-  
-  update(delta) {
-    if (!this.localPlayer) return;
-    
+  _update(delta, elapsed) {
+    // console.log('PlayerSystem._update: Starting at', Date.now(), 'isTransitioning:', this.isTransitioning);
     if (this.isTransitioning) {
       this.updateTransition(delta);
+      // console.log('PlayerSystem._update: Transitioning, skipping subsystem updates');
       return;
     }
-    
-    // Update subsystems with error handling
-    try {
-      // Only call handleInput if the method exists
-      if (this.input && typeof this.input.handleInput === 'function') {
-        this.input.handleInput(delta);
-      }
-      
-      if (this.physics && typeof this.physics.updatePhysics === 'function') {
-        this.physics.updatePhysics(delta);
-      }
-      
-      if (this.models && typeof this.models.updateModels === 'function') {
+
+    // Update internal subsystems
+    // console.log('PlayerSystem._update: models exists:', !!this.models);
+    if (this.models) {
+      try {
         this.models.updateModels();
+        // console.log('PlayerSystem._update: models.updateModels() completed successfully');
+      } catch (error) {
+        // console.error('PlayerSystem._update: Error in models.updateModels():', error);
       }
-      
-      if (this.spells && typeof this.spells.updateSpells === 'function') {
-        this.spells.updateSpells(delta);
-      }
-    } catch (error) {
-      console.warn('Error updating player subsystems:', error);
+    } else {
+      // console.warn('PlayerSystem._update: models is undefined');
     }
     
-    // Check for mana collection
+    // console.log('PlayerSystem._update: spells exists:', !!this.spells);
+    if (this.spells) {
+      this.spells.updateSpells(delta);
+    } else {
+      // console.warn('PlayerSystem._update: spells is undefined');
+    }
+
+    // Forward events and checks
     this.checkManaCollection();
-    
-    // Update camera to follow player
-    this.updateCamera();
-    
-    // Check world boundaries
+    this.checkLandmarkVisits();
     this.checkWorldBoundaries();
-    
-    // Send player updates to network
-    this.sendPlayerUpdate();
+    // console.log('PlayerSystem._update: Finished');
   }
+
+  
   
   checkManaCollection() {
-    if (!this.localPlayer) return;
-    
+    const playerState = this.engine.systems.get('playerState');
+    if (!playerState || !playerState.localPlayer) return;
+
+    const localPlayer = playerState.localPlayer;
+    if (!localPlayer) return;
+
     // Collection radius
     const radius = 5;
-    
+
+    // Load the mana collection sound
+    const manaSound = new Howl({
+      src: ['assets/audio/collect.mp3'],
+      volume: 0.5,
+    });
+
     // Check for mana node collection
-    const collectedNodes = this.engine.systems.world.checkManaCollection(
-      this.localPlayer.position,
+    const worldSystem = this.engine.systems.get('world');
+    if (!worldSystem) {
+      Logger.warn('PlayerSystem: World system not available for mana collection');
+      return;
+    }
+
+    const collectedNodes = worldSystem.checkManaCollection(
+      localPlayer.position,
       radius
     );
     
     // Process collected nodes
     collectedNodes.forEach(node => {
       // Add mana to player
-      this.localPlayer.mana += node.value;
+      localPlayer.mana += node.value;
+      localPlayer.totalMana += node.value;
+      this.eventBus.emit('manaCollected', { amount: node.value });
       
       // Update UI
-      if (this.engine.systems.ui) {
-        this.engine.systems.ui.updateManaDisplay(this.localPlayer.mana);
+      const ui = this.engine.systems.get('ui');
+      if (ui) {
+        ui.updateManaDisplay(localPlayer.mana);
       }
       
       // Create collection effect
       this.models.createManaCollectionEffect(node.position);
+      
+      // Play mana collection sound
+      // // manaSound.play(); // Audio disabled // Audio disabled
     });
+  }
+
+  checkLandmarkVisits() {
+    const playerState = this.engine.systems.get('playerState');
+    if (!playerState || !playerState.localPlayer) return;
+
+    const localPlayer = playerState.localPlayer;
+    const landmarkSystem = this.engine.systems.get('landmarks');
+    if (!landmarkSystem || !landmarkSystem.landmarks) return;
+
+    const landmarks = landmarkSystem.landmarks;
+    if (!landmarks) return;
+
+    const visitDistance = 50;
+    for (const [id, landmark] of landmarks) {
+      if (landmark.position && landmark.position.distanceTo(localPlayer.position) < visitDistance) {
+        if (!localPlayer.visitedLandmarks) localPlayer.visitedLandmarks = new Set();
+        if (!localPlayer.visitedLandmarks.has(id)) {
+          localPlayer.visitedLandmarks.add(id);
+          localPlayer.landmarksVisited = localPlayer.visitedLandmarks.size;
+          this.eventBus.emit('landmarkVisited', { landmarkId: id });
+        }
+      }
+    }
   }
 }
