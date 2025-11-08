@@ -47,9 +47,10 @@ export class CloudSystem {
           const material = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            opacity: 0.6,  // More visible clouds
+            opacity: 0.3,  // More transparent to not block sun
             blending: THREE.NormalBlending,  // Normal blending instead of additive
-            depthWrite: false
+            depthWrite: false,
+            depthTest: true  // Allow sun to show through
           });
           resolve(material);
         },
@@ -62,10 +63,11 @@ export class CloudSystem {
           canvas.height = 128;
           const ctx = canvas.getContext('2d');
 
-          // Draw a soft cloud shape
+          // Draw a soft cloud shape with very transparent edges
           const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-          gradient.addColorStop(0, 'rgba(240, 245, 255, 0.9)');
-          gradient.addColorStop(0.5, 'rgba(230, 240, 255, 0.5)');
+          gradient.addColorStop(0, 'rgba(240, 245, 255, 0.8)');
+          gradient.addColorStop(0.4, 'rgba(230, 240, 255, 0.4)');
+          gradient.addColorStop(0.7, 'rgba(220, 235, 255, 0.2)');
           gradient.addColorStop(1, 'rgba(220, 235, 255, 0)');
 
           ctx.fillStyle = gradient;
@@ -75,9 +77,10 @@ export class CloudSystem {
           const material = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            opacity: 0.6,  // More visible clouds
+            opacity: 0.3,  // More transparent to not block sun
             blending: THREE.NormalBlending,  // Normal blending
-            depthWrite: false
+            depthWrite: false,
+            depthTest: true  // Allow sun to show through
           });
 
           resolve(material);

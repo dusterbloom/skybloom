@@ -39,7 +39,7 @@ export class WaterSystem extends System {
     // Water color - proven working value from main branch
     const waterColor = new THREE.Color(0x0077be);
 
-    // Create ocean material - simple and effective
+    // Create ocean material with custom shader for waves
     this.oceanMaterial = new THREE.MeshStandardMaterial({
       color: waterColor,
       transparent: true,
@@ -48,9 +48,42 @@ export class WaterSystem extends System {
       roughness: 0.3,
     });
 
-    // Create large ocean plane
+    // Add custom shader for wave animation
+    this.oceanMaterial.onBeforeCompile = (shader) => {
+      // Add time uniform
+      shader.uniforms.uTime = { value: 0 };
+
+      // Store reference for updates
+      this.waterShader = shader;
+
+      // Add wave displacement in vertex shader
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+        uniform float uTime;
+
+        // Simple wave function
+        float wave(vec2 pos, float freq, float amp) {
+          return sin(pos.x * freq + uTime) * cos(pos.y * freq + uTime) * amp;
+        }
+
+        #include <begin_vertex>
+
+        // Apply multiple waves for realistic water movement
+        float waveHeight = 0.0;
+        waveHeight += wave(position.xz, 0.005, 3.0);
+        waveHeight += wave(position.xz, 0.01, 1.5);
+        waveHeight += wave(position.xz + vec2(100.0), 0.02, 0.8);
+
+        transformed.y += waveHeight;
+        `
+      );
+    };
+
+    // Create large ocean plane with more segments for smooth waves
     const oceanSize = 15000;
-    const oceanGeometry = new THREE.PlaneGeometry(oceanSize, oceanSize, 8, 8);
+    const segments = 128; // Much higher segment count for smooth shorelines
+    const oceanGeometry = new THREE.PlaneGeometry(oceanSize, oceanSize, segments, segments);
     oceanGeometry.rotateX(-Math.PI / 2);
 
     this.oceanMesh = new THREE.Mesh(oceanGeometry, this.oceanMaterial);
@@ -60,7 +93,7 @@ export class WaterSystem extends System {
 
     this.scene.add(this.oceanMesh);
 
-    Logger.info("Ocean created");
+    Logger.info("Ocean created with animated waves");
   }
 
   _update(deltaTime) {
@@ -68,6 +101,11 @@ export class WaterSystem extends System {
     if (this.camera && this.oceanMesh) {
       this.oceanMesh.position.x = this.camera.position.x;
       this.oceanMesh.position.z = this.camera.position.z;
+    }
+
+    // Update wave animation
+    if (this.waterShader && this.waterShader.uniforms.uTime) {
+      this.waterShader.uniforms.uTime.value += deltaTime * 0.5; // Slow wave speed
     }
   }
 
