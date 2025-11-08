@@ -85,22 +85,25 @@ export class StarSystem {
     const positions = [];
     const sizes = [];
     const colors = [];
-    
-    // Generate star positions, sizes, and colors
+
+    // Generate star positions, sizes, and colors for horizon
+    // Use same distance as regular stars but positioned near horizon
+    const starDistance = 15000;
     this.generateStarAttributes(
-      positions, 
-      sizes, 
-      colors, 
-      this.horizonStarCount, 
-      false
+      positions,
+      sizes,
+      colors,
+      this.horizonStarCount,
+      false,
+      starDistance
     );
-    
+
     // Set buffer attributes
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    
-    // Create star material - BRIGHTER for horizon stars
+
+    // Create star material - proper depth testing
     const starsMaterial = new THREE.PointsMaterial({
       size: 4, // Slightly smaller for horizon stars
       vertexColors: true,
@@ -108,13 +111,13 @@ export class StarSystem {
       opacity: 0.9,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      depthTest: false, // Render always on top
+      depthTest: true, // Enable depth testing so stars render behind terrain
       sizeAttenuation: false
     });
-    
+
     // Create horizon star field
     this.horizonStarField = new THREE.Points(geometry, starsMaterial);
-    this.horizonStarField.layers.set(10); // Same layer as sun/moon for consistent rendering
+    this.horizonStarField.renderOrder = -10; // Render early, behind other objects
     this.scene.add(this.horizonStarField);
   }
   
