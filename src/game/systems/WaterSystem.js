@@ -37,9 +37,9 @@ export class WaterSystem extends System {
   }
 
   createOcean() {
-    // Create water geometry
+    // Create water geometry with higher resolution for smoother shorelines
     const oceanSize = 10000;
-    const waterGeometry = new THREE.PlaneGeometry(oceanSize, oceanSize);
+    const waterGeometry = new THREE.PlaneGeometry(oceanSize, oceanSize, 64, 64);
 
     // Load water normal map texture
     const textureLoader = new THREE.TextureLoader();
@@ -73,8 +73,8 @@ export class WaterSystem extends System {
 
     // Rotate to horizontal plane
     this.water.rotation.x = -Math.PI / 2;
-    // Position water slightly above waterLevel to prevent terrain bleeding through
-    this.water.position.y = this.waterLevel + 0.3;
+    // Position water higher above waterLevel to prevent terrain bleeding through
+    this.water.position.y = this.waterLevel + 1.0;
 
     // Ensure water renders after terrain to prevent z-fighting
     this.water.renderOrder = 1;
