@@ -199,7 +199,8 @@ export class PlayerPhysics extends System {
       this.landmarkSystem = this.engine.systems.get('landmarks');
     }
 
-    let collisionDetected = false;
+    let collisionNormal = null;
+    let closestDistance = Infinity;
 
     // Check tree collisions
     if (this.treeSystem && this.treeSystem.spawnedTrees) {
@@ -213,19 +214,20 @@ export class PlayerPhysics extends System {
         const treeRadius = tree.scale.x * 0.5; // Half the scale as radius
         const collisionDistance = this.playerRadius + treeRadius;
 
-        if (distanceXZ < collisionDistance) {
+        if (distanceXZ < collisionDistance && distanceXZ < closestDistance) {
           // Check vertical distance too (player at similar height as tree)
           const dy = Math.abs(player.position.y - tree.position.y);
           if (dy < tree.scale.y) { // Within tree height
-            collisionDetected = true;
-            break;
+            closestDistance = distanceXZ;
+            // Calculate collision normal (direction from tree to player)
+            collisionNormal = new THREE.Vector3(dx, 0, dz).normalize();
           }
         }
       }
     }
 
     // Check landmark collisions
-    if (!collisionDetected && this.landmarkSystem && this.landmarkSystem.landmarks) {
+    if (this.landmarkSystem && this.landmarkSystem.landmarks) {
       for (const landmark of this.landmarkSystem.landmarks.values()) {
         const dx = player.position.x - landmark.position.x;
         const dz = player.position.z - landmark.position.z;
@@ -235,25 +237,37 @@ export class PlayerPhysics extends System {
         const landmarkRadius = landmark.size * 0.5;
         const collisionDistance = this.playerRadius + landmarkRadius;
 
-        if (distanceXZ < collisionDistance) {
+        if (distanceXZ < collisionDistance && distanceXZ < closestDistance) {
           // Check vertical distance (landmarks are on ground, player can fly over)
           const dy = player.position.y - landmark.position.y;
           if (dy < landmark.size * 0.8) { // Within landmark height
-            collisionDetected = true;
-            break;
+            closestDistance = distanceXZ;
+            // Calculate collision normal (direction from landmark to player)
+            collisionNormal = new THREE.Vector3(dx, 0, dz).normalize();
           }
         }
       }
     }
 
-    // Handle collision response
-    if (collisionDetected) {
-      // Push player back towards previous position
-      player.position.lerp(previousPosition, this.collisionPushback);
+    // Handle collision response with bounce
+    if (collisionNormal) {
+      // Move player back to previous position
+      player.position.copy(previousPosition);
 
-      // Dampen velocity to prevent bouncing through objects
-      player.velocity.multiplyScalar(0.3);
-      player.altitudeVelocity *= 0.3;
+      // Calculate reflection of velocity vector
+      // Formula: v' = v - 2(v·n)n where n is the collision normal
+      const dotProduct = player.velocity.dot(collisionNormal);
+
+      // Only reflect if moving toward the obstacle (dotProduct < 0 means moving away)
+      if (dotProduct < 0) {
+        // Reflect velocity with some energy loss (0.5 = 50% bounce)
+        const bounceStrength = 0.5;
+        this._tempVec1.copy(collisionNormal).multiplyScalar(2 * dotProduct);
+        player.velocity.sub(this._tempVec1).multiplyScalar(bounceStrength);
+      }
+
+      // Also dampen altitude velocity slightly during collision
+      player.altitudeVelocity *= 0.7;
     }
   }
 }
