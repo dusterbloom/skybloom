@@ -41,22 +41,25 @@ export class StarSystem {
     const positions = [];
     const sizes = [];
     const colors = [];
-    
+
     // Generate star positions, sizes, and colors
+    // Position stars on a large sphere around camera
+    const starDistance = 15000; // Very far away, beyond terrain render distance
     this.generateStarAttributes(
-      positions, 
-      sizes, 
-      colors, 
-      this.regularStarCount, 
-      true
+      positions,
+      sizes,
+      colors,
+      this.regularStarCount,
+      true,
+      starDistance
     );
-    
+
     // Set buffer attributes
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    
-    // Create star material - BRIGHTER for better visibility
+
+    // Create star material - proper depth testing
     const starsMaterial = new THREE.PointsMaterial({
       size: 5, // Larger stars
       vertexColors: true,
@@ -64,13 +67,13 @@ export class StarSystem {
       opacity: 1.0,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      depthTest: false, // Render always on top
+      depthTest: true, // Enable depth testing so stars render behind terrain
       sizeAttenuation: false
     });
-    
+
     // Create star field
     this.starField = new THREE.Points(geometry, starsMaterial);
-    this.starField.layers.set(10); // Same layer as sun/moon for consistent rendering
+    this.starField.renderOrder = -10; // Render early, behind other objects
     this.scene.add(this.starField);
   }
   
