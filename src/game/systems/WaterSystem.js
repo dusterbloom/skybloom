@@ -1,12 +1,13 @@
 // FILE: src/game/systems/WaterSystem.js
-// Restored from working main branch implementation
+// Enhanced with Three.js Water for realistic reflections
 
 import * as THREE from "three";
+import { Water } from 'three/examples/jsm/objects/Water.js';
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
 
 /**
- * Simple Water System - Restored from working main branch
+ * Water System - Enhanced with realistic reflections using Three.js Water
  */
 export class WaterSystem extends System {
   constructor(engine) {
@@ -14,8 +15,8 @@ export class WaterSystem extends System {
     this.scene = engine.scene;
     this.camera = engine.camera;
     this.waterLevel = 0;
-    this.oceanMesh = null;
-    this.oceanMaterial = null;
+    this.water = null;
+    this.sun = null;
   }
 
   async _initialize() {
@@ -36,80 +37,75 @@ export class WaterSystem extends System {
   }
 
   createOcean() {
-    // Water color - proven working value from main branch
-    const waterColor = new THREE.Color(0x0077be);
+    // Create water geometry
+    const oceanSize = 10000;
+    const waterGeometry = new THREE.PlaneGeometry(oceanSize, oceanSize);
 
-    // Create ocean material with custom shader for waves
-    this.oceanMaterial = new THREE.MeshStandardMaterial({
-      color: waterColor,
-      transparent: true,
-      opacity: 0.7,
-      metalness: 0.1,
-      roughness: 0.3,
+    // Load water normal map texture
+    const textureLoader = new THREE.TextureLoader();
+    const waterNormals = textureLoader.load('/textures/2waternormals.jpg', (texture) => {
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
     });
 
-    // Add custom shader for wave animation
-    this.oceanMaterial.onBeforeCompile = (shader) => {
-      // Add time uniform
-      shader.uniforms.uTime = { value: 0 };
+    // Get sun direction from atmosphere system (if available)
+    const sunSystem = this.engine.systems.get('sun');
+    let sunDirection = new THREE.Vector3(0.707, 0.707, 0);
 
-      // Store reference for updates
-      this.waterShader = shader;
+    if (sunSystem && sunSystem.getSunDirection) {
+      sunDirection = sunSystem.getSunDirection();
+    }
 
-      // Add wave displacement in vertex shader (optimized)
-      shader.vertexShader = shader.vertexShader.replace(
-        '#include <begin_vertex>',
-        `
-        uniform float uTime;
+    // Create Water instance with reflections
+    this.water = new Water(
+      waterGeometry,
+      {
+        textureWidth: 512,
+        textureHeight: 512,
+        waterNormals: waterNormals,
+        sunDirection: sunDirection,
+        sunColor: 0xffffff,
+        waterColor: 0x001e0f,
+        distortionScale: 3.7,
+        fog: this.scene.fog !== undefined,
+        alpha: 0.8
+      }
+    );
 
-        #include <begin_vertex>
+    // Rotate to horizontal plane
+    this.water.rotation.x = -Math.PI / 2;
+    this.water.position.y = this.waterLevel - 0.2;
 
-        // Optimized wave calculation with fewer operations
-        float waveHeight =
-          sin(position.x * 0.005 + uTime) * cos(position.z * 0.005 + uTime) * 3.0 +
-          sin(position.x * 0.01 + uTime * 1.3) * 1.5;
+    this.scene.add(this.water);
 
-        transformed.y += waveHeight;
-        `
-      );
-    };
-
-    // Create large ocean plane with optimized segment count
-    const oceanSize = 15000;
-    const segments = 32; // Balanced segment count for smooth shorelines without FPS drop
-    const oceanGeometry = new THREE.PlaneGeometry(oceanSize, oceanSize, segments, segments);
-    oceanGeometry.rotateX(-Math.PI / 2);
-
-    this.oceanMesh = new THREE.Mesh(oceanGeometry, this.oceanMaterial);
-    // Lower water slightly to prevent z-fighting with shoreline
-    this.oceanMesh.position.y = this.waterLevel - 0.2;
-    this.oceanMesh.receiveShadow = true;
-
-    this.scene.add(this.oceanMesh);
-
-    Logger.info("Ocean created with animated waves");
+    Logger.info("🌊 Ocean created with realistic reflections");
   }
 
   _update(deltaTime) {
+    if (!this.water) return;
+
     // Keep ocean centered on camera for infinite world
-    if (this.camera && this.oceanMesh) {
-      this.oceanMesh.position.x = this.camera.position.x;
-      this.oceanMesh.position.z = this.camera.position.z;
+    if (this.camera) {
+      this.water.position.x = this.camera.position.x;
+      this.water.position.z = this.camera.position.z;
     }
 
-    // Update wave animation
-    if (this.waterShader && this.waterShader.uniforms.uTime) {
-      this.waterShader.uniforms.uTime.value += deltaTime * 0.5; // Slow wave speed
+    // Update water animation (time uniform for wave normals)
+    this.water.material.uniforms['time'].value += deltaTime * 0.5;
+
+    // Update sun direction if atmosphere system available
+    const sunSystem = this.engine.systems.get('sun');
+    if (sunSystem && sunSystem.getSunDirection) {
+      const sunDir = sunSystem.getSunDirection();
+      this.water.material.uniforms['sunDirection'].value.copy(sunDir).normalize();
     }
   }
 
   destroy() {
-    if (this.oceanMesh) {
-      this.scene.remove(this.oceanMesh);
-      if (this.oceanMesh.geometry) this.oceanMesh.geometry.dispose();
-      if (this.oceanMaterial) this.oceanMaterial.dispose();
-      this.oceanMesh = null;
-      this.oceanMaterial = null;
+    if (this.water) {
+      this.scene.remove(this.water);
+      if (this.water.geometry) this.water.geometry.dispose();
+      if (this.water.material) this.water.material.dispose();
+      this.water = null;
     }
   }
 
