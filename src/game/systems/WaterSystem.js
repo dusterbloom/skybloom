@@ -56,33 +56,27 @@ export class WaterSystem extends System {
       // Store reference for updates
       this.waterShader = shader;
 
-      // Add wave displacement in vertex shader
+      // Add wave displacement in vertex shader (optimized)
       shader.vertexShader = shader.vertexShader.replace(
         '#include <begin_vertex>',
         `
         uniform float uTime;
 
-        // Simple wave function
-        float wave(vec2 pos, float freq, float amp) {
-          return sin(pos.x * freq + uTime) * cos(pos.y * freq + uTime) * amp;
-        }
-
         #include <begin_vertex>
 
-        // Apply multiple waves for realistic water movement
-        float waveHeight = 0.0;
-        waveHeight += wave(position.xz, 0.005, 3.0);
-        waveHeight += wave(position.xz, 0.01, 1.5);
-        waveHeight += wave(position.xz + vec2(100.0), 0.02, 0.8);
+        // Optimized wave calculation with fewer operations
+        float waveHeight =
+          sin(position.x * 0.005 + uTime) * cos(position.z * 0.005 + uTime) * 3.0 +
+          sin(position.x * 0.01 + uTime * 1.3) * 1.5;
 
         transformed.y += waveHeight;
         `
       );
     };
 
-    // Create large ocean plane with more segments for smooth waves
+    // Create large ocean plane with optimized segment count
     const oceanSize = 15000;
-    const segments = 128; // Much higher segment count for smooth shorelines
+    const segments = 32; // Balanced segment count for smooth shorelines without FPS drop
     const oceanGeometry = new THREE.PlaneGeometry(oceanSize, oceanSize, segments, segments);
     oceanGeometry.rotateX(-Math.PI / 2);
 

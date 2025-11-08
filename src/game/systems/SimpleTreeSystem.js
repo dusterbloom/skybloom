@@ -19,11 +19,14 @@ export class SimpleTreeSystem extends System {
     this.spawnedTrees = []; // Trees in the scene
     this.chunksWithTrees = new Set();
 
-    // Configuration - tuned for cozy, lush forest feel
-    this.treeDensity = 0.4; // Probability of tree per attempt (much higher for lush forests)
-    this.attemptsPerChunk = 250; // How many tries per chunk (more attempts = more trees)
-    this.minTreeDistance = 8; // Min distance between trees (tight natural clustering)
-    this.maxTreesPerChunk = 180; // Limit trees per chunk (dense forests)
+    // Configuration - tuned for forest clustering
+    this.clustersPerChunk = 3; // Number of forest clusters per chunk
+    this.treesPerCluster = 15; // Average trees per cluster (will vary)
+    this.clusterRadius = 40; // How spread out each cluster is
+    this.minTreeDistance = 4; // Min distance between trees in cluster (tight)
+    this.scatteredTreeDensity = 0.15; // Probability for scattered individual trees
+    this.scatteredTreeAttempts = 30; // Attempts for scattered trees
+    this.maxTreesPerChunk = 80; // Limit trees per chunk
 
     // Model paths - Kenney Nature Kit trees (CC0 License)
     this.modelPaths = [
@@ -196,7 +199,7 @@ export class SimpleTreeSystem extends System {
   }
 
   /**
-   * Spawn trees for a chunk
+   * Spawn trees for a chunk using cluster-based generation
    */
   spawnTreesForChunk(chunkX, chunkZ) {
     if (this.treeModels.length === 0) {
@@ -211,9 +214,51 @@ export class SimpleTreeSystem extends System {
     const minZ = chunkZ * chunkSize;
 
     let treesSpawned = 0;
-    let rejectedReasons = { water: 0, tooHigh: 0, steep: 0, tooClose: 0, density: 0 };
 
-    for (let i = 0; i < this.attemptsPerChunk && treesSpawned < this.maxTreesPerChunk; i++) {
+    // Generate forest clusters
+    for (let c = 0; c < this.clustersPerChunk && treesSpawned < this.maxTreesPerChunk; c++) {
+      // Random cluster center position in chunk
+      const clusterCenterX = minX + Math.random() * chunkSize;
+      const clusterCenterZ = minZ + Math.random() * chunkSize;
+      const clusterCenterHeight = this.worldSystem.getTerrainHeight(clusterCenterX, clusterCenterZ);
+
+      // Skip cluster if center is invalid (underwater or too high)
+      if (clusterCenterHeight < 5 || clusterCenterHeight > 300) continue;
+
+      const clusterSlope = this.worldSystem.calculateSlope(clusterCenterX, clusterCenterZ);
+      if (clusterSlope > 0.6) continue;
+
+      // Spawn trees around this cluster center
+      const treesInThisCluster = Math.floor(this.treesPerCluster * (0.7 + Math.random() * 0.6)); // 70-130% variation
+
+      for (let t = 0; t < treesInThisCluster && treesSpawned < this.maxTreesPerChunk; t++) {
+        // Use exponential distribution for natural clustering (more trees near center)
+        const distance = this.clusterRadius * Math.pow(Math.random(), 0.5);
+        const angle = Math.random() * Math.PI * 2;
+
+        const x = clusterCenterX + Math.cos(angle) * distance;
+        const z = clusterCenterZ + Math.sin(angle) * distance;
+
+        // Get terrain height at tree position
+        const height = this.worldSystem.getTerrainHeight(x, z);
+
+        // Basic validation
+        if (height < 5 || height > 300) continue;
+
+        const slope = this.worldSystem.calculateSlope(x, z);
+        if (slope > 0.6) continue;
+
+        // Check distance to nearby trees (reduced distance for clusters)
+        if (!this.isValidTreePosition(x, z)) continue;
+
+        // Spawn tree in cluster
+        this.spawnTree(x, height, z);
+        treesSpawned++;
+      }
+    }
+
+    // Add some scattered individual trees for variety
+    for (let i = 0; i < this.scatteredTreeAttempts && treesSpawned < this.maxTreesPerChunk; i++) {
       // Random position in chunk
       const x = minX + Math.random() * chunkSize;
       const z = minZ + Math.random() * chunkSize;
@@ -221,27 +266,26 @@ export class SimpleTreeSystem extends System {
       // Get terrain height
       const height = this.worldSystem.getTerrainHeight(x, z);
 
-      // Basic checks - MUCH more permissive height range
-      if (height < 5) { rejectedReasons.water++; continue; } // Not underwater
-      if (height > 300) { rejectedReasons.tooHigh++; continue; } // Not on extreme peaks
+      // Basic checks
+      if (height < 5 || height > 300) continue;
 
       const slope = this.worldSystem.calculateSlope(x, z);
-      if (slope > 0.6) { rejectedReasons.steep++; continue; } // Slightly less restrictive
+      if (slope > 0.6) continue;
 
       // Check distance to nearby trees
-      if (!this.isValidTreePosition(x, z)) { rejectedReasons.tooClose++; continue; }
+      if (!this.isValidTreePosition(x, z)) continue;
 
-      // Random chance
-      if (Math.random() > this.treeDensity) { rejectedReasons.density++; continue; }
+      // Lower probability for scattered trees
+      if (Math.random() > this.scatteredTreeDensity) continue;
 
-      // Spawn tree!
+      // Spawn scattered tree
       this.spawnTree(x, height, z);
       treesSpawned++;
     }
 
     // Only log first few successful chunks
     if (treesSpawned > 0 && this.chunksWithTrees.size <= 3) {
-      Logger.info(`🌲 Spawned ${treesSpawned} trees in chunk ${chunkX},${chunkZ}`);
+      Logger.info(`🌲 Spawned ${treesSpawned} trees in chunk ${chunkX},${chunkZ} (cluster-based)`);
     }
   }
 
