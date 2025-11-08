@@ -73,7 +73,18 @@ export class WaterSystem extends System {
 
     // Rotate to horizontal plane
     this.water.rotation.x = -Math.PI / 2;
-    this.water.position.y = this.waterLevel - 0.2;
+    // Position water slightly above waterLevel to prevent terrain bleeding through
+    this.water.position.y = this.waterLevel + 0.3;
+
+    // Ensure water renders after terrain to prevent z-fighting
+    this.water.renderOrder = 1;
+
+    // Add polygon offset to water material to prevent terrain bleeding
+    if (this.water.material) {
+      this.water.material.polygonOffset = true;
+      this.water.material.polygonOffsetFactor = 1;
+      this.water.material.polygonOffsetUnits = 1;
+    }
 
     this.scene.add(this.water);
 
