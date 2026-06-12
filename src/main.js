@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await engine.initialize();
     setupPerformanceTools();
 
-    console.log('Vibe Carpet initialized successfully!');
+    console.log('SkyBloom initialized successfully!');
     console.log('Use window.getPerformanceReport() to view performance metrics');
   } catch (error) {
     console.error('Error initializing game:', error);

@@ -163,7 +163,7 @@ MinimapSystem.js:39 Initializing MinimapSystem...
 MinimapSystem.js:52 MinimapSystem initialized
 Engine.js:114 System initialized: minimap
 Engine.js:128 Engine initialized successfully
-main.js:14 Magical Vibe Carpet initialized successfully!
+main.js:14 Magical SkyBloom initialized successfully!
 main.js:15 Use window.getPerformanceReport() to view performance metrics
 [Violation] 'requestAnimationFrame' handler took 151ms
 AssetManager.js:227 EncodingError: Unable to decode audio data

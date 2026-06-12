@@ -1,5 +1,5 @@
 """
-Vibe Carpet — external agent pilot over the WebSocket transport.
+SkyBloom — external agent pilot over the WebSocket transport.
 
 The GAME is the WebSocket client; this script is the server it connects to.
 

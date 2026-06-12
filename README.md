@@ -1,4 +1,4 @@
-# Vibe Carpet ✨
+# SkyBloom ✨
 
 A chill 3D flying-carpet game that plays entirely in your browser. Soar over an infinite procedurally generated world, chase mana through the air, discover glowing landmarks, cast wind magic, and climb above the clouds — vanilla JavaScript + Three.js, no game engine, no binaries.
 

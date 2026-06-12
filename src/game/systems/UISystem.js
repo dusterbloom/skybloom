@@ -73,6 +73,7 @@ export class UISystem extends System {
     // this.createSpellsUI();
     this.createMinimapContainer();
     this.createTimeControls();
+    this.createFlightSettings();
     
     // Subscribe to game state changes
     this.unsubscribeState = useGameState.subscribe(
@@ -200,6 +201,148 @@ export class UISystem extends System {
     this.elements.manaText = manaText;
   }
   
+  // ---------------------------------------------------------------------
+  // Flight settings — player-facing speed sliders. The physics reads
+  // player.maxSpeed / player.accelerationValue / physics.absoluteMaxSpeed
+  // every frame, so writes here apply live. Persisted per browser.
+  // ---------------------------------------------------------------------
+
+  static FLIGHT_DEFAULTS = { cruise: 210, rush: 420, punch: 400 };
+
+  loadFlightSettings() {
+    try {
+      const raw = localStorage.getItem('vc.flight');
+      if (raw) return { ...UISystem.FLIGHT_DEFAULTS, ...JSON.parse(raw) };
+    } catch (e) { /* corrupted/unavailable storage — use defaults */ }
+    return { ...UISystem.FLIGHT_DEFAULTS };
+  }
+
+  applyFlightSettings(settings) {
+    const player = this.engine.systems.get('playerState')?.localPlayer;
+    const physics = this.engine.systems.get('playerPhysics');
+    if (player) {
+      player.maxSpeed = settings.cruise;
+      player.accelerationValue = settings.punch;
+    }
+    if (physics) physics.absoluteMaxSpeed = settings.rush;
+    try { localStorage.setItem('vc.flight', JSON.stringify(settings)); } catch (e) { /* ignore */ }
+  }
+
+  createFlightSettings() {
+    const settings = this.loadFlightSettings();
+    this.applyFlightSettings(settings);
+
+    // Toggle chip under the mana pill
+    const toggle = document.createElement('button');
+    toggle.className = 'vc-chip';
+    toggle.textContent = 'speed';
+    toggle.style.position = 'absolute';
+    toggle.style.top = '52px';
+    toggle.style.right = '14px';
+    toggle.style.cursor = 'pointer';
+    toggle.style.pointerEvents = 'auto';
+    toggle.style.fontSize = '11px';
+    toggle.style.letterSpacing = '0.08em';
+    toggle.style.textTransform = 'uppercase';
+    toggle.style.color = 'var(--vc-ink-dim)';
+    this.container.appendChild(toggle);
+
+    const panel = document.createElement('div');
+    panel.className = 'vc-panel';
+    panel.style.position = 'absolute';
+    panel.style.top = '90px';
+    panel.style.right = '14px';
+    panel.style.width = '230px';
+    panel.style.padding = '12px 14px';
+    panel.style.display = 'none';
+    panel.style.pointerEvents = 'auto';
+    panel.style.zIndex = '1001';
+
+    const title = document.createElement('div');
+    title.className = 'vc-label';
+    title.textContent = 'Flight feel';
+    title.style.marginBottom = '10px';
+    panel.appendChild(title);
+
+    const sliders = [
+      { key: 'cruise', label: 'Cruise speed', min: 100, max: 250, hint: 'top speed in level flight' },
+      { key: 'rush', label: 'Rush ceiling', min: 240, max: 520, hint: 'dive/boost hard limit' },
+      { key: 'punch', label: 'Throttle punch', min: 150, max: 500, hint: 'how hard W accelerates' },
+    ];
+    const valueEls = {};
+
+    sliders.forEach(def => {
+      const row = document.createElement('div');
+      row.style.marginBottom = '10px';
+
+      const head = document.createElement('div');
+      head.style.display = 'flex';
+      head.style.justifyContent = 'space-between';
+      head.style.marginBottom = '3px';
+      const label = document.createElement('span');
+      label.className = 'vc-label';
+      label.textContent = def.label;
+      label.title = def.hint;
+      const value = document.createElement('span');
+      value.className = 'vc-num';
+      value.style.fontSize = '12px';
+      value.style.color = 'var(--vc-gold)';
+      value.textContent = settings[def.key];
+      valueEls[def.key] = value;
+      head.appendChild(label);
+      head.appendChild(value);
+      row.appendChild(head);
+
+      const input = document.createElement('input');
+      input.type = 'range';
+      input.min = def.min;
+      input.max = def.max;
+      input.step = 5;
+      input.value = settings[def.key];
+      input.style.width = '100%';
+      input.style.accentColor = 'var(--vc-gold)';
+      input.style.cursor = 'pointer';
+      input.addEventListener('input', () => {
+        settings[def.key] = Number(input.value);
+        // The rush ceiling should never sit below cruise — nudge it along
+        if (def.key === 'cruise' && settings.rush < settings.cruise + 20) {
+          settings.rush = settings.cruise + 20;
+          valueEls.rush.textContent = settings.rush;
+          const rushInput = panel.querySelector('input[data-key="rush"]');
+          if (rushInput) rushInput.value = settings.rush;
+        }
+        value.textContent = settings[def.key];
+        this.applyFlightSettings(settings);
+      });
+      input.dataset.key = def.key;
+      row.appendChild(input);
+      panel.appendChild(row);
+    });
+
+    const reset = document.createElement('button');
+    reset.className = 'vc-btn-ghost';
+    reset.textContent = 'Reset to default';
+    reset.style.width = '100%';
+    reset.style.padding = '6px';
+    reset.style.fontSize = '12px';
+    reset.addEventListener('click', () => {
+      Object.assign(settings, UISystem.FLIGHT_DEFAULTS);
+      sliders.forEach(def => {
+        valueEls[def.key].textContent = settings[def.key];
+        const input = panel.querySelector(`input[data-key="${def.key}"]`);
+        if (input) input.value = settings[def.key];
+      });
+      this.applyFlightSettings(settings);
+    });
+    panel.appendChild(reset);
+
+    this.container.appendChild(panel);
+    toggle.addEventListener('click', () => {
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
+    this.elements.flightPanel = panel;
+  }
+
   createHealthDisplay() {
     // Create health bar at bottom center
     const healthContainer = document.createElement('div');

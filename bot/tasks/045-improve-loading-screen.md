@@ -109,7 +109,7 @@ div id="progress-bar" style="width: 300px; height: 20px; background: rgba(200, 1
 document.documentElement.style.setProperty('--app-font', '"Helvetica Neue", Helvetica, sans-serif');
 
 // Update console log
-console.log('Vibe Carpet initialized successfully!');
+console.log('SkyBloom initialized successfully!');
 
 // NetworkManager.js Changes
 

@@ -203,6 +203,6 @@ MinimapSystem.js:52 MinimapSystem initialized
 Engine.js?t=1743356103756:114 System initialized: minimap
 VegetationSystem.js:971 Ignoring unrealistic FPS value: 0
 Engine.js?t=1743356103756:128 Engine initialized successfully
-main.js?t=1743356103756:14 Magical Vibe Carpet initialized successfully!
+main.js?t=1743356103756:14 Magical SkyBloom initialized successfully!
 main.js?t=1743356103756:15 Use window.getPerformanceReport() to view performance metrics
 VegetationSystem.js:996 Reducing vegetation density to 0.90 due to very low FPS (1.0 FPS, 319154 triangles)

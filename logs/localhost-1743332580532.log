@@ -193,7 +193,7 @@ MinimapSystem.js:39 Initializing MinimapSystem...
 MinimapSystem.js:52 MinimapSystem initialized
 Engine.js?t=1743332503358:114 System initialized: minimap
 Engine.js?t=1743332503358:128 Engine initialized successfully
-main.js?t=1743332503358:14 Magical Vibe Carpet initialized successfully!
+main.js?t=1743332503358:14 Magical SkyBloom initialized successfully!
 main.js?t=1743332503358:15 Use window.getPerformanceReport() to view performance metrics
 [Violation] 'requestAnimationFrame' handler took <N>ms
 [Violation] 'requestAnimationFrame' handler took <N>ms

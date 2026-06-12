@@ -93,7 +93,7 @@ export class IntroScreen {
     content.appendChild(kicker);
 
     const title = document.createElement('h1');
-    title.textContent = 'VIBE CARPET';
+    title.textContent = 'SkyBloom';
     title.style.margin = '0';
     title.style.fontWeight = '800';
     title.style.fontSize = 'clamp(40px, 7vw, 76px)';

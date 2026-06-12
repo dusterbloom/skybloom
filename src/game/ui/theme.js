@@ -1,4 +1,4 @@
-// Vibe Carpet UI theme — "Twilight Glass".
+// SkyBloom UI theme — "Twilight Glass".
 // One source of truth for menu/HUD styling: deep-indigo glass panels carrying
 // the world's own accent palette (beacon gold, mana cyan, trail magenta).
 // Inject once via ensureVibeTheme(); style with the .vc-* classes or the

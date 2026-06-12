@@ -95,7 +95,7 @@ Engine.js:323 System initialized: minimap
 gameState.js:44 Game State changing from LOADING to: INTRO
 Engine.js:366 Engine initialized successfully
 Engine.js:367 Device Info: Object
-main.js:21 Vibe Carpet initialized successfully!
+main.js:21 SkyBloom initialized successfully!
 main.js:22 Use window.getPerformanceReport() to view performance metrics
 IntroScreen.js:109 Start Journey clicked
 InputManager.js:390 Pointer lock acquired
