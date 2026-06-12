@@ -1,14 +1,14 @@
-# SkyBloom ✨
+# SkyBloom 
 
 A chill 3D flying-carpet game that plays entirely in your browser. Soar over an infinite procedurally generated world, chase mana through the air, discover glowing landmarks, cast wind magic, and climb above the clouds — vanilla JavaScript + Three.js, no game engine, no binaries.
 
-![SkyBloom screenshot](https://github.com/dusterbloom/magical-carpet/blob/main/screenshots/Screenshot%202026-06-12%20231859.png)
+![SkyBloom screenshot](https://github.com/dusterbloom/magical-carpet/blob/main/screenshots/image.png)
 
-## 🌟 What it feels like
+##  What it feels like
 
 You throttle up, the field of view stretches, procedural wind rises in your ears, and a gold-to-magenta ribbon twists behind your carpet as you bank between islands. Dive to trade altitude for speed, pull up and bleed it off, ride out to a beacon on the horizon at golden hour. That's the game.
 
-## 🚀 Features
+##  Features
 
 - **Infinite procedural world** — chunked simplex-noise terrain: oceans, beaches, forests, mountains, all streamed around you as you fly
 - **A real flight model** — banked turns, dive-to-gain-speed energy, speed-reactive camera FOV, frame-rate-independent physics, altitude ceiling at 2,200 (the cloud band starts at 600 — go through it)
@@ -20,7 +20,7 @@ You throttle up, the field of view stretches, procedural wind rises in your ears
 - **Mobile support** — touch joystick, auto-forward, adaptive quality scaling
 - **Multiplayer scaffold** — optional socket.io server for flying with friends (single-player works fully without it)
 
-## 🎮 Controls
+##  Controls
 
 | Input | Action |
 |---|---|
@@ -38,7 +38,7 @@ You throttle up, the field of view stretches, procedural wind rises in your ears
 
 Tip: nose down to dive — you'll exceed the normal speed cap while you fall. That speed is yours to spend on the pull-out.
 
-## 🛠️ Run it
+##  Run it
 
 Requires Node 18+.
 
@@ -60,7 +60,7 @@ For LAN play (phones, friends on your network), copy `.env.example` to `.env` �
 
 Other scripts: `npm run preview` (preview the production build).
 
-## 🧰 Built with
+##  Built with
 
 - [Three.js](https://threejs.org/) — rendering
 - [simplex-noise](https://github.com/jwagner/simplex-noise) — terrain generation
@@ -69,7 +69,7 @@ Other scripts: `npm run preview` (preview the production build).
 - [socket.io](https://socket.io/) — optional multiplayer
 - WebAudio API — procedural sound
 
-## 🏗️ Architecture
+##  Architecture
 
 A lightweight system architecture: every feature is a `System` registered by name with the engine and updated in a fixed order each frame (`engine.systems.get('world')` or `engine.systems.world` both resolve).
 
@@ -98,13 +98,13 @@ const { SimpleBot } = await import('/src/agents/SimpleBot.js');
 new SimpleBot().start();   // .stop() to take the controls back
 ```
 
-## 🗺️ Roadmap
+##  Roadmap
 
 - **P2P live races** — WebRTC (no central server) kart-style circuits woven through the procedural world
 - **Verified leaderboards** — deterministic re-simulation of replays so ranked human-vs-agent times are provable
 - **WebSocket agent transport** — drive the carpet from any language, not just the page
 
-## 🙌 Credits
+##  Credits
 
 Created with ❤️ by Dusterbloom
 
