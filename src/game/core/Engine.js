@@ -29,6 +29,8 @@ import { LandmarkSystem } from "../systems/LandmarkSystem";
 import { MinimapSystem } from "../systems/MinimapSystem";
 import { AmbientLifeSystem } from "../systems/AmbientLifeSystem";
 import { ProceduralAudioSystem } from "../systems/ProceduralAudioSystem";
+import { AgentAPISystem } from "../systems/AgentAPISystem";
+import { RaceSystem } from "../systems/RaceSystem";
 import { IntroScreen } from "../ui/screens/IntroScreen";
 import { useGameState, GameStates } from '../state/gameState.js';
 import { Logger } from '../../utils/Logger.js';
@@ -171,7 +173,9 @@ export class Engine {
       .register(new UISystem(this))
       .register(new ProceduralAudioSystem(this))
       .register(new CarpetTrailSystem(this))
-      .register(new LandmarkSystem(this));
+      .register(new LandmarkSystem(this))
+      .register(new AgentAPISystem(this))
+      .register(new RaceSystem(this));
 
     // Conditionally register MinimapSystem based on flag
     if (this.minimapEnabled !== false) {
@@ -207,9 +211,11 @@ export class Engine {
       "simpleTrees", // Simple model-based tree spawning
       "playerState",
       "playerPhysics", // Physics after playerState for localPlayer access
+      "agentAPI", // Agent observe/act ticks land on the virtual pad before input reads it
       "playerInput", // Input after physics
       "playerCamera", // Camera after input and physics
       "player", // Orchestrator after sub-systems
+      "race", // Gate detection on this frame's settled player position
       "atmosphere", // Atmosphere system manages its own sun/moon/star subsystems
       "ambientLife", // Birds and butterflies for cozy world feel
       "ui", // UI needs player for HUD elements

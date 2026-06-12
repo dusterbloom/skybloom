@@ -34,6 +34,12 @@ export class PlayerInputSystem extends System {
     this.touchAltitude = { up: false, down: false };
     this.mobileControlElements = [];
     this.joystick = null;
+    // Virtual controller: AI agents drive the carpet through the same merge points as the
+    // keyboard so physics parity holds. throttle/brake: 0..1; turn: -1..1 (positive = right,
+    // like KeyD); climb: -1..1 (positive = up, like Space). Only contributes while enabled.
+    this.virtualPad = { enabled: false, throttle: 0, brake: 0, turn: 0, climb: 0 };
+    // Which sources produced input this frame (RaceSystem reads this to tag replays human/agent/mixed)
+    this.inputSourcesThisFrame = { keyboard: false, virtual: false };
   }
 
   async _initialize() {
@@ -81,15 +87,30 @@ export class PlayerInputSystem extends System {
   }
 
   _update(delta) {
+    // Track which sources produced input this frame (read by RaceSystem every frame)
+    this.inputSourcesThisFrame.keyboard =
+      this.input.isKeyDown('KeyW') || this.input.isKeyDown('KeyS') ||
+      this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight') ||
+      this.input.isKeyDown('KeyA') || this.input.isKeyDown('KeyD') ||
+      this.input.isKeyDown('Space') ||
+      this.input.isKeyDown('ControlLeft') || this.input.isKeyDown('ControlRight');
+    this.inputSourcesThisFrame.virtual = this.virtualPad.enabled &&
+      (this.virtualPad.throttle > 0.05 || this.virtualPad.brake > 0.05 ||
+        Math.abs(this.virtualPad.turn) > 0.05 || Math.abs(this.virtualPad.climb) > 0.05);
+
     const player = this.playerState.localPlayer;
     if (!player) return;
 
-    // Banked turning: A/D and joystick X share the same yaw-rate path
+    // Banked turning: A/D, joystick X, and virtual pad turn share the same yaw-rate path
     let turnInput = 0;
     if (this.input.isKeyDown('KeyA')) turnInput -= 1;
     if (this.input.isKeyDown('KeyD')) turnInput += 1;
     if (this.joystick && this.joystick.active && Math.abs(this.joystick.position.x) > 0.1) {
       turnInput = THREE.MathUtils.clamp(turnInput + this.joystick.position.x, -1, 1);
+    }
+    if (this.virtualPad.enabled && this.virtualPad.turn !== 0) {
+      // Positive pad.turn = turn right, same sign convention as KeyD above
+      turnInput = THREE.MathUtils.clamp(turnInput + this.virtualPad.turn, -1, 1);
     }
 
     if (turnInput !== 0) {
@@ -116,15 +137,27 @@ export class PlayerInputSystem extends System {
       }
     }
 
-    // Throttle control
-    const isAccelerating = this.input.isKeyDown('KeyW');
-    const isBraking = this.input.isKeyDown('KeyS') || this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight');
+    // Throttle control (virtual pad merges into the same ramp: throttle ~ W, brake ~ S, brake > 0.6 ~ Shift)
+    const keyboardAccelerating = this.input.isKeyDown('KeyW');
+    const keyboardHardBraking = this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight');
+    const padAccelerating = this.virtualPad.enabled && this.virtualPad.throttle > 0.05;
+    const padHardBraking = this.virtualPad.enabled && this.virtualPad.brake > 0.6;
+    const isAccelerating = keyboardAccelerating || padAccelerating;
+    const isBraking = this.input.isKeyDown('KeyS') || keyboardHardBraking ||
+      (this.virtualPad.enabled && this.virtualPad.brake > 0.05);
 
     if (isAccelerating && !isBraking) {
-      this.currentThrottle = Math.min(1.0, this.currentThrottle + this.throttleSpeed * delta);
+      // W targets full throttle; pad-only throttle uses the same ramp with the pad value as ceiling
+      const throttleTarget = keyboardAccelerating ? 1.0 : this.virtualPad.throttle;
+      if (this.currentThrottle <= throttleTarget) {
+        this.currentThrottle = Math.min(throttleTarget, this.currentThrottle + this.throttleSpeed * delta);
+      } else {
+        // Pad commands less than current throttle: coast down to it (same rate as releasing W)
+        this.currentThrottle = Math.max(throttleTarget, this.currentThrottle - this.throttleSpeed * 0.3 * delta);
+      }
     } else if (isBraking) {
       // Shift = strong brake, S = gentle slowdown
-      const brakeStrength = (this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight')) ? 3.0 : 1.5;
+      const brakeStrength = (keyboardHardBraking || padHardBraking) ? 3.0 : 1.5;
       this.currentThrottle = Math.max(0.0, this.currentThrottle - this.throttleSpeed * brakeStrength * delta);
     } else {
       // Natural throttle decay when no keys pressed (coast down gently)
@@ -142,16 +175,20 @@ export class PlayerInputSystem extends System {
     const forwardDir = new THREE.Vector3(0, 0, 1).applyEuler(player.rotation).multiplyScalar(forwardForce);
     player.acceleration.add(forwardDir);
 
-    // Vertical movement (Space = up, Ctrl = down, Shift is now brake)
+    // Vertical movement (Space = up, Ctrl = down, Shift is now brake; pad climb merges in, clamped)
     let verticalForce = 0;
     let spacePressed = this.input.isKeyDown('Space');
     if (spacePressed) verticalForce += 1;
     if (this.input.isKeyDown('ControlLeft') || this.input.isKeyDown('ControlRight')) verticalForce -= 1;
     if (this.touchAltitude.up) verticalForce += 1;
     if (this.touchAltitude.down) verticalForce -= 1;
+    if (this.virtualPad.enabled && this.virtualPad.climb !== 0) {
+      verticalForce = THREE.MathUtils.clamp(verticalForce + this.virtualPad.climb, -1, 1);
+    }
 
     if (this.engine.systems.carpetTrail) {
-      this.engine.systems.carpetTrail.setSpaceBarState(spacePressed || this.touchAltitude.up);
+      const padBoosting = this.virtualPad.enabled && this.virtualPad.climb > 0.3;
+      this.engine.systems.carpetTrail.setSpaceBarState(spacePressed || this.touchAltitude.up || padBoosting);
     }
 
     if (verticalForce !== 0) {
@@ -190,6 +227,38 @@ export class PlayerInputSystem extends System {
       const forwardDir = new THREE.Vector3(0, 0, 1).applyEuler(player.rotation).multiplyScalar(motionForwardForce);
       player.acceleration.add(forwardDir);
     }
+  }
+
+  // Virtual controller API: lets AI agents fly through the same input semantics as the keyboard.
+  // Accepts a partial axis object ({ throttle, brake, turn, climb }); known axes are Number-coerced
+  // (non-finite -> 0) and clamped to their range, unknown keys are ignored. Enables the pad.
+  setVirtualPad(partial) {
+    const axisRanges = {
+      throttle: [0, 1], // like KeyW
+      brake: [0, 1],    // like KeyS; > 0.6 brakes hard, like Shift
+      turn: [-1, 1],    // positive = turn right, like KeyD
+      climb: [-1, 1]    // positive = up, like Space
+    };
+    for (const axis in axisRanges) {
+      if (partial && Object.prototype.hasOwnProperty.call(partial, axis)) {
+        const value = Number(partial[axis]);
+        this.virtualPad[axis] = Number.isFinite(value)
+          ? THREE.MathUtils.clamp(value, axisRanges[axis][0], axisRanges[axis][1])
+          : 0;
+      }
+    }
+    this.virtualPad.enabled = true;
+    return this.virtualPad;
+  }
+
+  // Zero all axes and disable the pad, returning full control to the keyboard instantly
+  clearVirtualPad() {
+    this.virtualPad.enabled = false;
+    this.virtualPad.throttle = 0;
+    this.virtualPad.brake = 0;
+    this.virtualPad.turn = 0;
+    this.virtualPad.climb = 0;
+    return this.virtualPad;
   }
 
   setControlsActive(active) {

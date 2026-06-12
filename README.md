@@ -80,11 +80,22 @@ A lightweight system architecture: every feature is a `System` registered by nam
 
 In development, the engine is exposed as `window.gameEngine` — the whole game can be driven programmatically (state reads, synthetic input), which doubles as a primitive agent API.
 
+## 🏁 Racing & the Agent API (experimental, `AgentAPI` branch)
+
+Press **R** in-game to start a seeded 12-gate time-trial — follow the beacon to the next ring. Times, splits, and replays are stored locally; load any replay as a translucent ghost and race it.
+
+AI agents are first-class players. A frozen `window.agentAPI` exposes `observe()` (20 Hz information-parity snapshots: only what the human screen shows) and `act()` (10 Hz, the same control axes through the same input ramps and physics as the keyboard). Replays are provenance-tagged `human` / `agent` / `mixed`, so leaderboards can compare fairly. Full protocol, fairness model, and a reference autopilot in [docs/AGENT_API.md](docs/AGENT_API.md) — or try it from DevTools:
+
+```js
+const { SimpleBot } = await import('/src/agents/SimpleBot.js');
+new SimpleBot().start();   // .stop() to take the controls back
+```
+
 ## 🗺️ Roadmap
 
-- **Ghost time-trials** — race recordings of your own (or shared) runs; multiplayer with zero servers
 - **P2P live races** — WebRTC (no central server) kart-style circuits woven through the procedural world
-- **Agent API** — formalize the programmatic interface so AI agents are first-class players: structured observations and actions over the same channel humans use. An open world for agents.
+- **Verified leaderboards** — deterministic re-simulation of replays so ranked human-vs-agent times are provable
+- **WebSocket agent transport** — drive the carpet from any language, not just the page
 
 ## 🙌 Credits
 
