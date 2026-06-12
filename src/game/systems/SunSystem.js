@@ -1,7 +1,16 @@
 import * as THREE from "three";
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
-import { SUN_CONFIG } from '../../config/SunConfig.js';
+import {
+  SUN_CONFIG,
+  SUN_KEYFRAMES,
+  AMBIENT_KEYFRAMES,
+  SUN_DISC_KEYFRAMES,
+  sampleKeyframes
+} from '../../config/SunConfig.js';
+
+// Scratch color for deriving the glow tint from the disc color (no per-frame allocs)
+const _glowWhite = new THREE.Color(0xffffff);
 
 // SunSystem - manages sun lighting and appearance
 export class SunSystem extends System {
@@ -118,19 +127,29 @@ export class SunSystem extends System {
     Logger.info('SunSystem: Sun mesh with glow effect created');
   }
 
+  /**
+   * Update the sun system.
+   * NOTE: this class used to define update() twice - the second definition
+   * silently won and skipped updateSunAppearance() and the yearProgress sync.
+   * Consolidated here into a single method: time sync from AtmosphereSystem,
+   * position, appearance, lighting, visibility, all inside the try/catch the
+   * second body had.
+   * @param {number} delta - Time delta in seconds
+   * @param {number} elapsed - Total elapsed time
+   */
   update(delta, elapsed) {
-    // Use AtmosphereSystem's time instead of independent tracking
-    const timeOfDay = this.atmosphereSystem.getTimeOfDay();
-    const yearProgress = this.atmosphereSystem.yearProgress || 0;
+    try {
+      // Use AtmosphereSystem's time instead of independent tracking
+      this.timeOfDay = this.atmosphereSystem.getTimeOfDay();
+      this.yearProgress = this.atmosphereSystem.yearProgress || 0;
 
-    // Update our local time for compatibility
-    this.timeOfDay = timeOfDay;
-    this.yearProgress = yearProgress;
-
-    this.updateSunPosition(delta, elapsed);
-    this.updateSunAppearance(delta, elapsed);
-    this.updateLighting(delta, elapsed);
-    this.updateVisibility();
+      this.updateSunPosition(delta, elapsed);
+      this.updateSunAppearance(delta, elapsed);
+      this.updateLighting(delta, elapsed);
+      this.updateVisibility();
+    } catch (error) {
+      Logger.error('SunSystem update failed:', error);
+    }
   }
 
   updateSunPosition(delta, elapsed) {
@@ -140,9 +159,12 @@ export class SunSystem extends System {
     // Sun angle based on time of day (midnight = -π/2)
     const angle = (this.timeOfDay * Math.PI * 2) - (Math.PI / 2);
 
-    // Calculate position on elliptical path
+    // Calculate position on elliptical path.
+    // Keep the unclamped altitude for visual fades (opacity/scale) so the sun
+    // disc fades out smoothly instead of popping at the clamp boundary.
+    this.rawSunAltitude = Math.sin(angle) * this.config.MAX_HEIGHT * this.seasonalTilt;
     this.sunPosition.x = Math.cos(angle) * this.config.SUN_DISTANCE;
-    this.sunPosition.y = Math.max(-200, Math.sin(angle) * this.config.MAX_HEIGHT * this.seasonalTilt);
+    this.sunPosition.y = Math.max(-200, this.rawSunAltitude);
     this.sunPosition.z = 0;
 
     // Update sun mesh position
@@ -164,17 +186,19 @@ export class SunSystem extends System {
   updateSunAppearance(delta, elapsed) {
     if (!this.sunMesh) return;
 
-    // Calculate horizon proximity for visual effects
-    const altitude = this.sunPosition.y;
+    // Use the unclamped altitude so fades are continuous through the horizon
+    const altitude = this.rawSunAltitude !== undefined ? this.rawSunAltitude : this.sunPosition.y;
     const horizonProximity = Math.max(0, 1 - Math.abs(altitude) / 1500);
 
-    // Adjust opacity based on altitude
+    // Adjust opacity based on altitude - fades to 0 below the horizon
     const belowHorizonFactor = altitude > 0 ? 1.0 :
       Math.max(0, 1.0 + (altitude / this.config.BELOW_HORIZON_FACTOR));
 
     this.sunMesh.material.opacity = 0.9 * belowHorizonFactor;
     if (this.sunGlow) {
-      this.sunGlow.material.opacity = this.config.GLOW_OPACITY * belowHorizonFactor;
+      // Glow swells near the horizon for a dramatic sunrise/sunset bloom
+      const glowBoost = 1.0 + horizonProximity * 1.5;
+      this.sunGlow.material.opacity = this.config.GLOW_OPACITY * glowBoost * belowHorizonFactor;
     }
 
     // Scale at horizon for more dramatic effect
@@ -188,68 +212,40 @@ export class SunSystem extends System {
   updateSunColors() {
     if (!this.sunMesh) return;
 
-    const altitude = this.sunPosition.y;
+    // Smoothly keyframed disc color (deep orange at horizon, yellow when high)
+    sampleKeyframes(SUN_DISC_KEYFRAMES, this.timeOfDay, this.sunMesh.material.color);
 
-    if (altitude > -300) {
-      if (this.timeOfDay < 0.35 || this.timeOfDay > 0.65) {
-        // Sunrise/sunset colors
-        const color = this.timeOfDay < 0.5 ? 0xffaa33 : 0xff7733;
-        this.sunMesh.material.color.setHex(color);
-        if (this.sunGlow) {
-          this.sunGlow.material.color.setHex(color);
-        }
-      } else {
-        // Daytime - yellow
-        this.sunMesh.material.color.setHex(0xffff00);
-        if (this.sunGlow) {
-          this.sunGlow.material.color.setHex(0xffff80);
-        }
-      }
+    if (this.sunGlow) {
+      // Glow is the disc color softened toward white
+      this.sunGlow.material.color.copy(this.sunMesh.material.color).lerp(_glowWhite, 0.35);
     }
   }
 
   updateLighting(delta, elapsed) {
     if (!this.sunLight || !this.ambientLight) return;
 
-    const altitude = this.sunPosition.y;
+    // Smooth keyframe interpolation over the full day - no hard time buckets.
+    // Night keeps a faint cool fill (0.12) so the scene never goes pitch black.
+    this.sunLight.intensity = sampleKeyframes(SUN_KEYFRAMES, this.timeOfDay, this.sunLight.color);
 
-    if (this.timeOfDay > this.config.SUNRISE_TIME && this.timeOfDay < this.config.SUNSET_TIME) {
-      // Daytime: bright and clear
-      this.sunLight.color.setHex(0xffffcc);
-      this.sunLight.intensity = this.config.DEFAULT_INTENSITY;
-      this.ambientLight.color.setHex(0xaaccff);
-      this.ambientLight.intensity = this.config.AMBIENT_INTENSITY;
-    } else if (this.timeOfDay > 0.25 && this.timeOfDay < 0.35) {
-      // Sunrise: warm hues and increased brightness
-      this.sunLight.color.setHex(0xffaa33);
-      this.sunLight.intensity = this.config.DEFAULT_INTENSITY;
-      this.ambientLight.color.setHex(0xffddaa);
-      this.ambientLight.intensity = this.config.AMBIENT_INTENSITY * 0.4;
-    } else if (this.timeOfDay > 0.65 && this.timeOfDay < 0.75) {
-      // Sunset: warm, fading light
-      this.sunLight.color.setHex(0xff7733);
-      this.sunLight.intensity = this.config.DEFAULT_INTENSITY;
-      this.ambientLight.color.setHex(0xffccaa);
-      this.ambientLight.intensity = this.config.AMBIENT_INTENSITY * 0.4;
-    } else {
-      // Night: dark and cooler-toned
-      this.sunLight.color.setHex(0x223344);
-      this.sunLight.intensity = 0.05;
-      this.ambientLight.color.setHex(0x001122);
-      this.ambientLight.intensity = altitude > -300 ?
-        Math.max(0.05, 0.3 + (1 - Math.abs(altitude) / 1500) * 0.2) : 0.05;
-    }
+    // Ambient: warm-neutral at noon, golden in the evening, cool blue at night,
+    // with a hard readability floor.
+    const ambientIntensity = sampleKeyframes(AMBIENT_KEYFRAMES, this.timeOfDay, this.ambientLight.color);
+    this.ambientLight.intensity = Math.max(this.config.AMBIENT_MIN_INTENSITY, ambientIntensity);
   }
 
   updateVisibility() {
-    // Sun should be visible during day and transition periods
-    const shouldBeVisible = this.timeOfDay > 0.2 && this.timeOfDay < 0.8;
+    // Sun disc only near/above the horizon (opacity already fades it smoothly
+    // before these bounds are reached, so there is no pop)
+    const meshVisible = this.timeOfDay > 0.18 && this.timeOfDay < 0.82;
 
     if (this.sunMesh) {
-      this.sunMesh.visible = shouldBeVisible && this.isVisible;
+      this.sunMesh.visible = meshVisible && this.isVisible;
     }
     if (this.sunLight) {
-      this.sunLight.visible = shouldBeVisible;
+      // The light always stays on - the keyframed intensity handles night
+      // dimming. Toggling visibility here caused a hard step at dusk.
+      this.sunLight.visible = true;
     }
   }
 
@@ -261,29 +257,6 @@ export class SunSystem extends System {
     this.timeOfDay = currentSeconds / secondsInDay;
 
     Logger.info(`SunSystem: Initialized time of day to ${this.timeOfDay.toFixed(4)} (${(this.timeOfDay * 24).toFixed(1)} hours)`);
-  }
-
-  /**
-   * Update the sun system
-   * @param {number} delta - Time delta in seconds
-   * @param {number} elapsed - Total elapsed time
-   */
-  update(delta, elapsed) {
-    try {
-      // Update time of day from atmosphere system
-      this.timeOfDay = this.atmosphereSystem.getTimeOfDay();
-
-      // Update sun position based on time
-      this.updateSunPosition();
-
-      // Update lighting based on time
-      this.updateLighting(delta, elapsed);
-
-      // Update visibility
-      this.updateVisibility();
-    } catch (error) {
-      Logger.error('SunSystem update failed:', error);
-    }
   }
 
   // Public API methods

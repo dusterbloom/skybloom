@@ -46,9 +46,6 @@ export class PlayerSpells {
       Logger.error('Failed to load spells:', error);
       // Fallback to empty
     }
-    
-    // Load audio
-    this.spellSound = new Audio('/assets/audio/spell.mp3');
   }
   
   checkUnlock(spell, player) {
@@ -126,12 +123,12 @@ export class PlayerSpells {
     
     // Apply effect
     this.applyEffect(spell, player);
-    
+
     // VFX
     this.createVFX(spell, player.position);
-    
-    // Play sound
-    this.spellSound.play().catch(e => console.log('Audio play failed:', e));
+
+    // Notify listeners (quests, audio system) of the successful cast
+    this.engine.eventBus.emit('spellCast', { spellId: spell.id, name: spell.name });
   }
   
   applyEffect(spell, player) {

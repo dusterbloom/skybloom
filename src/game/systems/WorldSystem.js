@@ -29,6 +29,8 @@ export class WorldSystem extends System {
     this.maxHeight = 400;
     this.minHeight = -50;
     this.viewDistance = 8;  // Increased view distance for better horizon rendering
+    this.waterLevel = 0;    // Sea level (read by WaterSystem and LandmarkSystem)
+    this.maxManaNodes = 30; // Target number of live mana nodes around the player
 
     // Initialize frustum culling objects
     this._frustum = new THREE.Frustum();
@@ -600,90 +602,124 @@ export class WorldSystem extends System {
     }
   }
 
-  // --- createManaNodes method remains unchanged ---
-  createManaNodes() {
-    // Clear existing nodes
-    this.manaNodes.forEach(node => { if (node.parent) { this.scene.remove(node); } });
-    this.manaNodes = [];
-    
-    // Try to get player from PlayerSystem first, then playerState
-    let player = this.engine.systems.player?.localPlayer;
-     // Logger.debug('[WorldSystem] Checking PlayerSystem for player:', !!player);
-    
-    if (!player || !player.position) {
-      const playerState = this.engine.systemManager.get('playerState');
-      player = playerState?.localPlayer;
-       // Logger.debug('[WorldSystem] Checking playerState for player:', !!player, 'has position:', !!(player?.position));
+  // Pick spawn positions around the player. ~60% of candidates fall inside a forward
+  // cone (so nodes are discoverable while flying), the rest in a ring around the player.
+  // All positions sit safely above terrain and water, with minimum spacing enforced
+  // against both each other and any existing nodes passed in.
+  generateManaNodePositions(player, count, existingNodes = []) {
+    const minSpacing = 80;
+    const minDistance = 300;
+    const maxDistance = 1500;
+    const coneHalfAngle = THREE.MathUtils.degToRad(35);
+    const heading = player.rotation ? player.rotation.y : 0; // forward = (sin(y), cos(y)) in XZ
+    const positions = [];
+    const maxAttempts = count * 12;
+
+    const tooCloseTo = (list, x, z) => list.some(item => {
+      const dx = item.position.x - x;
+      const dz = item.position.z - z;
+      return dx * dx + dz * dz < minSpacing * minSpacing;
+    });
+
+    for (let attempt = 0; attempt < maxAttempts && positions.length < count; attempt++) {
+      // ~60% of candidates in the forward cone, the rest anywhere around the player
+      const inCone = Math.random() < 0.6;
+      const angle = inCone
+        ? heading + (Math.random() * 2 - 1) * coneHalfAngle
+        : Math.random() * Math.PI * 2;
+      const distance = minDistance + Math.random() * (maxDistance - minDistance);
+      const x = player.position.x + Math.sin(angle) * distance;
+      const z = player.position.z + Math.cos(angle) * distance;
+
+      // Enforce min spacing against live nodes and already-chosen positions
+      if (tooCloseTo(existingNodes, x, z) || tooCloseTo(positions, x, z)) continue;
+
+      // Keep nodes reachable: never below water, 20-45 units above the surface
+      const surfaceHeight = Math.max(this.getTerrainHeight(x, z), this.waterLevel);
+      const y = surfaceHeight + 20 + Math.random() * 25;
+
+      // Use fractal noise for value: denser magical areas yield richer nodes
+      const noiseDensity = this.fractalNoise(x * 0.001, z * 0.001, 0.01, 4, 0.5, 2.0);
+      const spawnProb = (noiseDensity + 1) / 2; // Normalize to 0-1
+      positions.push({
+        position: new THREE.Vector3(x, y, z),
+        value: Math.floor(10 + (spawnProb * 20)) // Value scaled by density
+      });
     }
-    
+
+    return positions;
+  }
+
+  spawnManaNode(posData) {
+    const nodeMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(3, 16, 16),
+      new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        emissive: 0x00ffff,
+        emissiveIntensity: 0.7,
+        transparent: true,
+        opacity: 0.8
+      })
+    );
+    const glowMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(4, 16, 16),
+      new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.BackSide
+      })
+    );
+    nodeMesh.add(glowMesh);
+    nodeMesh.position.copy(posData.position);
+    nodeMesh.userData = { type: 'mana', value: posData.value, collected: false };
+    this.manaNodes.push(nodeMesh);
+    this.scene.add(nodeMesh);
+    return nodeMesh;
+  }
+
+  removeManaNode(node) {
+    if (node.parent) { this.scene.remove(node); }
+    node.traverse(child => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    });
+  }
+
+  createManaNodes() {
+    // Clear existing nodes (full regeneration, e.g. on world transition)
+    this.manaNodes.forEach(node => this.removeManaNode(node));
+    this.manaNodes = [];
+
+    const player = this.engine.systems.get('playerState')?.localPlayer;
     if (!player || !player.position) {
-       // Logger.warn('[WorldSystem] Cannot create mana nodes - player not ready. Player:', !!player, 'Position:', !!(player?.position));
+       // Logger.warn('[WorldSystem] Cannot create mana nodes - player not ready');
       return;
     }
-    
-     // Logger.debug('[WorldSystem] Creating mana nodes at player position:', player.position.x, player.position.y, player.position.z);
 
-    // Procedural generation using noise for density
-    const spawnRadius = this.chunkSize * 5; // 5120
-    const gridStep = 200; // Sample every 200 units for efficiency
-    const potentialNodes = [];
-    const gridRadius = spawnRadius / gridStep;
+    this.generateManaNodePositions(player, this.maxManaNodes)
+      .forEach(posData => this.spawnManaNode(posData));
 
-    // Generate potential positions in a grid around player
-    for (let gx = -gridRadius; gx <= gridRadius; gx++) {
-      for (let gz = -gridRadius; gz <= gridRadius; gz++) {
-        const x = player.position.x + gx * gridStep + (Math.random() - 0.5) * gridStep * 0.5; // Add jitter
-        const z = player.position.z + gz * gridStep + (Math.random() - 0.5) * gridStep * 0.5;
-        const distance = Math.sqrt((x - player.position.x)**2 + (z - player.position.z)**2);
-        if (distance > spawnRadius) continue;
+     // Logger.info(`[WorldSystem] Created ${this.manaNodes.length} mana nodes`);
+  }
 
-        // Use fractal noise for density: higher noise = higher spawn probability
-        const noiseDensity = this.fractalNoise(x * 0.001, z * 0.001, 0.01, 4, 0.5, 2.0); // Low frequency for natural clusters
-        const spawnProb = (noiseDensity + 1) / 2; // Normalize to 0-1
+  // Top up the node population: prune collected nodes, keep live ones untouched,
+  // and spawn only enough new nodes to reach maxManaNodes.
+  topUpManaNodes() {
+    const player = this.engine.systems.get('playerState')?.localPlayer;
+    if (!player || !player.position) return;
 
-        if (Math.random() < spawnProb && potentialNodes.length < 50) { // Cap potentials to avoid too many
-          const terrainHeight = this.getTerrainHeight(x, z);
-          const y = terrainHeight + 60; // Increased height for better visibility
-          potentialNodes.push({
-            position: new THREE.Vector3(x, y, z),
-            value: Math.floor(10 + (spawnProb * 20)) // Value scaled by density
-          });
-        }
-      }
-    }
+    this.manaNodes = this.manaNodes.filter(node => {
+      if (node.userData && !node.userData.collected) return true;
+      this.removeManaNode(node);
+      return false;
+    });
 
-    // Select top ~30 nodes (or all if fewer) for spawning
-    potentialNodes.sort((a, b) => b.value - a.value); // Prioritize higher value
-    const nodeCount = Math.min(30, potentialNodes.length);
-    for (let i = 0; i < nodeCount; i++) {
-      const posData = potentialNodes[i];
-      const nodeMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(3, 16, 16),
-        new THREE.MeshStandardMaterial({
-          color: 0x00ffff,
-          emissive: 0x00ffff,
-          emissiveIntensity: 0.7,
-          transparent: true,
-          opacity: 0.8
-        })
-      );
-      const glowMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(4, 16, 16),
-        new THREE.MeshBasicMaterial({
-          color: 0x00ffff,
-          transparent: true,
-          opacity: 0.3,
-          side: THREE.BackSide
-        })
-      );
-      nodeMesh.add(glowMesh);
-      nodeMesh.position.copy(posData.position);
-      nodeMesh.userData = { type: 'mana', value: posData.value, collected: false };
-      this.manaNodes.push(nodeMesh);
-      this.scene.add(nodeMesh);
-    }
-    
-     // Logger.info(`[WorldSystem] Created ${nodeCount} mana nodes. Total in array: ${this.manaNodes.length}`);
+    const deficit = this.maxManaNodes - this.manaNodes.length;
+    if (deficit <= 0) return;
+
+    this.generateManaNodePositions(player, deficit, this.manaNodes)
+      .forEach(posData => this.spawnManaNode(posData));
   }
 
   // --- isPositionSuitableForLandmark method remains unchanged ---
@@ -1975,11 +2011,11 @@ updateLandmarks(delta, elapsed) {
       return;
     }
 
-    // Check if we need more mana nodes
+    // Check if we need more mana nodes (top up without despawning live ones)
     const uncollectedNodes = this.manaNodes.filter(node => node.userData && !node.userData.collected).length;
     if (uncollectedNodes < 10) {
        // Logger.debug(`[WorldSystem] Need more mana nodes. Uncollected: ${uncollectedNodes}, Total: ${this.manaNodes.length}`);
-      this.createManaNodes();
+      this.topUpManaNodes();
     }
     
     // Create initial mana nodes if none exist and player is ready
@@ -2032,12 +2068,30 @@ updateLandmarks(delta, elapsed) {
     });
   }
 
-  // --- checkManaCollection method remains unchanged ---
-  checkManaCollection(position, radius) {
+  // Swept collection test: checks the segment the player travelled this frame against
+  // each node, so fast flight cannot tunnel through a node between frames.
+  // Backward compatible: checkManaCollection(position, radius) — second arg a number —
+  // is treated as a degenerate segment (pure point-in-radius test).
+  checkManaCollection(prevPosition, position, radius) {
+    if (typeof position === 'number') {
+      radius = position;
+      position = prevPosition;
+    }
     const collectedNodes = [];
+    const segment = new THREE.Vector3().subVectors(position, prevPosition);
+    const segmentLengthSq = segment.lengthSq();
+    const toNode = new THREE.Vector3();
+    const closestPoint = new THREE.Vector3();
     this.manaNodes.forEach((node) => {
       if (node.userData && !node.userData.collected) {
-        const distance = position.distanceTo(node.position);
+        // Closest point on the segment prevPosition -> position to this node
+        let t = 0;
+        if (segmentLengthSq > 0) {
+          toNode.subVectors(node.position, prevPosition);
+          t = THREE.MathUtils.clamp(toNode.dot(segment) / segmentLengthSq, 0, 1);
+        }
+        closestPoint.copy(prevPosition).addScaledVector(segment, t);
+        const distance = closestPoint.distanceTo(node.position);
         if (distance < radius + 2) {
           node.userData.collected = true; node.visible = false;
           collectedNodes.push({ position: node.position.clone(), value: node.userData.value || 10, });
@@ -2052,5 +2106,13 @@ updateLandmarks(delta, elapsed) {
     }
 
     return collectedNodes;
+  }
+
+  // Live (uncollected) mana nodes within radius of a position — used by Mana Reveal
+  getManaNodesInRadius(position, radius) {
+    return this.manaNodes.filter(node =>
+      node.userData && !node.userData.collected &&
+      node.position.distanceTo(position) <= radius
+    );
   }
 }

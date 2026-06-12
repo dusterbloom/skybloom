@@ -13,6 +13,18 @@ export class SystemManager {
         throw new Error(`System must have a name property: ${system.constructor.name}`);
       }
       this.systems.set(system.name, system);
+      // Much of the codebase reads systems as properties (engine.systems.playerState,
+      // engine.systems.ui, ...) while engine.systems is the raw Map — those reads were
+      // silently undefined. Mirror each registered system as a getter on both the
+      // manager and the Map so every access pattern resolves.
+      for (const target of [this, this.systems]) {
+        if (!(system.name in target)) {
+          Object.defineProperty(target, system.name, {
+            get: () => this.systems.get(system.name),
+            configurable: true,
+          });
+        }
+      }
       return this;
     }
 

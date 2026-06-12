@@ -6,14 +6,19 @@ export class PlayerPhysics extends System {
   constructor(engine) {
     super(engine, 'playerPhysics');
 
-    // Physics constants (unchanged)
+    // Physics constants
     this.gravity = 5.8;
     this.minAltitude = 5;
-    this.maxAltitude = 450;
-    this.dragCoefficient = 0.15;
-    this.altitudeDamping = 0.92;
+    this.maxAltitude = 2200; // Cloud band sits at 600-1000; leave room to soar well above it
+    this.dragCoefficient = 0.4; // Increased for better deceleration feel
+    this.altitudeDamping = 0.95; // Per-frame at 60fps; applied as pow(damping, delta * 60)
     this.bankingSensitivity = 0.08;
     this.turnDamping = 0.97;
+    this.velocityAlignRate = 2.5; // Velocity-to-facing easing: 1 - exp(-rate * delta)
+    this.maxAltitudeVelocity = 90;
+    this.divePower = 150; // Extra forward accel per unit of nose-down forward.y
+    this.diveCapStretch = 0.4; // Speed cap stretches to 1.4x in a full dive
+    this.climbDragCoefficient = 0.5; // Extra drag per unit of nose-up forward.y
     
     // Add reusable vector objects to eliminate allocations
     this._tempVec1 = new THREE.Vector3();
@@ -60,19 +65,20 @@ export class PlayerPhysics extends System {
     // Store previous position for collision detection
     this._tempVec3.copy(player.position);
 
-    // Preserve momentum during turns with reused vectors
-    if (Math.abs(player.bankAngle) > 0.01) {
-      const currentSpeed = player.velocity.length();
-      if (currentSpeed > 0.01) {
-        // Get forward direction using reused vector
-        this._tempVec1.set(0, 0, 1).applyEuler(player.rotation);
+    // Facing direction; rotation.x > 0 pitches the nose down (forward.y = -sin(rotation.x))
+    this._tempVec1.set(0, 0, 1).applyEuler(player.rotation);
+    const forwardY = this._tempVec1.y;
 
-        // Scale to match current speed
-        this._tempVec1.multiplyScalar(currentSpeed);
+    // Gently align velocity with forward direction (time-based, ~0.04/frame at 60fps)
+    let currentSpeed = player.velocity.length();
+    if (currentSpeed > 1) {
+      this._tempVec2.copy(this._tempVec1).multiplyScalar(currentSpeed);
+      player.velocity.lerp(this._tempVec2, 1 - Math.exp(-this.velocityAlignRate * delta));
+    }
 
-        // Lerp velocity toward forward direction
-        player.velocity.lerp(this._tempVec1, 0.1);
-      }
+    // Dive energy: nose-down trades altitude for extra forward acceleration
+    if (forwardY < 0) {
+      player.velocity.addScaledVector(this._tempVec1, -forwardY * this.divePower * delta);
     }
 
     // Update velocity with acceleration (reuse vector for scaled acceleration)
@@ -80,10 +86,27 @@ export class PlayerPhysics extends System {
     player.velocity.add(this._tempVec1);
 
     // Apply progressive drag based on speed (without creating new objects)
-    const currentSpeed = player.velocity.length();
+    currentSpeed = player.velocity.length();
     if (currentSpeed > 0.001) { // Only apply drag when actually moving
-      const dragFactor = 1 - (this.dragCoefficient * (currentSpeed / player.maxSpeed)) * delta;
-      player.velocity.multiplyScalar(dragFactor);
+      let dragFactor = 1 - (this.dragCoefficient * (currentSpeed / player.maxSpeed)) * delta;
+      // Climbing bleeds speed
+      if (forwardY > 0) {
+        dragFactor -= forwardY * this.climbDragCoefficient * delta;
+      }
+      player.velocity.multiplyScalar(Math.max(0, dragFactor));
+    }
+
+    // Clamp horizontal speed so top speed is frame-rate independent.
+    // Diving stretches the cap; y is deliberately left unclamped.
+    let speedCap = player.maxSpeed * (player.speedMultiplier || 1);
+    if (forwardY < 0) {
+      speedCap *= 1 + this.diveCapStretch * Math.min(1, -forwardY * 2);
+    }
+    const horizontalSpeed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z);
+    if (horizontalSpeed > speedCap) {
+      const capScale = speedCap / horizontalSpeed;
+      player.velocity.x *= capScale;
+      player.velocity.z *= capScale;
     }
 
     // Update position (reuse vector for position delta)
@@ -102,13 +125,20 @@ export class PlayerPhysics extends System {
 
   // Optimized version of altitude control
   updateAltitude(player, delta) {
+    // Clamp input-driven vertical rate
+    player.altitudeVelocity = THREE.MathUtils.clamp(
+      player.altitudeVelocity,
+      -this.maxAltitudeVelocity,
+      this.maxAltitudeVelocity
+    );
+
     // Apply altitude changes from user input
     if (Math.abs(player.altitudeVelocity) > 0.001) {
       player.position.y += player.altitudeVelocity * delta;
-      
-      // Apply damping to altitude velocity
-      player.altitudeVelocity *= this.altitudeDamping;
-      
+
+      // Apply damping to altitude velocity (frame-rate independent)
+      player.altitudeVelocity *= Math.pow(this.altitudeDamping, delta * 60);
+
       // Zero out extremely small values to prevent endless damping calculations
       if (Math.abs(player.altitudeVelocity) < 0.001) {
         player.altitudeVelocity = 0;
@@ -135,6 +165,9 @@ export class PlayerPhysics extends System {
       if (player.velocity.y < 0) {
         player.velocity.y = 0;
       }
+      if (player.altitudeVelocity < 0) {
+        player.altitudeVelocity = 0;
+      }
     }
 
     // Enforce maximum altitude
@@ -144,6 +177,9 @@ export class PlayerPhysics extends System {
       // Stop upward velocity
       if (player.velocity.y > 0) {
         player.velocity.y = 0;
+      }
+      if (player.altitudeVelocity > 0) {
+        player.altitudeVelocity = 0;
       }
     }
   }
@@ -177,11 +213,10 @@ export class PlayerPhysics extends System {
     player.altitudeVelocity += force;
 
     // Limit maximum altitude velocity
-    const maxAltitudeVelocity = 40;
     player.altitudeVelocity = THREE.MathUtils.clamp(
       player.altitudeVelocity,
-      -maxAltitudeVelocity,
-      maxAltitudeVelocity
+      -this.maxAltitudeVelocity,
+      this.maxAltitudeVelocity
     );
   }
 

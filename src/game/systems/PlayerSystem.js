@@ -1,10 +1,8 @@
 import * as THREE from 'three';
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
-import { Howl } from 'howler';
 import { PlayerPhysics } from './player/PlayerPhysics';
 import { PlayerSpells } from './player/PlayerSpells';
-import { PlayerInput } from './player/PlayerInput';
 import { PlayerModels } from './player/PlayerModels';
 
 export class PlayerSystem extends System {
@@ -19,6 +17,9 @@ export class PlayerSystem extends System {
     this.transitionAlpha = 0;
     this.worldTransitionComplete = null;
     this.worldSize = 2000;
+
+    // Last frame's position for swept mana collection (prevents tunneling)
+    this.lastCollectionPosition = null;
 
     // Keep spells and models internal
     this.spells = new PlayerSpells(this);
@@ -48,8 +49,7 @@ export class PlayerSystem extends System {
 
     // Spell input handling
     this.engine.input.on('keydown', (event) => {
-  if (!this.engine.systems.playerState?.localPlayer) return;
-      if (!this.engine.systems.playerState?.localPlayer) return;
+      if (!this.engine.systems.get('playerState')?.localPlayer) return;
 
       switch (event.code) {
         case 'Digit1':
@@ -65,8 +65,8 @@ export class PlayerSystem extends System {
           this.spells.selectSpell(3);
           break;
         case 'KeyE':
+          // PlayerSpells emits 'spellCast' itself, only on a successful cast
           this.spells.castSpell();
-          this.eventBus.emit('spellCast', { spellIndex: this.engine.systems.playerState?.localPlayer.currentSpell });
           break;
       }
     });
@@ -151,15 +151,17 @@ export class PlayerSystem extends System {
     this.worldTransitionComplete = () => {
       // Generate a new random seed for the world
       this.engine.systems.world.seed = Math.random() * 1000;
-      
+
+      // Move player to center of new world first so mana nodes spawn around it,
+      // and reset the sweep tracker so collection doesn't sweep across the teleport
+      this.localPlayer.position.set(0, 150, 0);
+      this.localPlayer.velocity.set(0, 0, 0);
+      this.lastCollectionPosition = null;
+
       // Regenerate world
       this.engine.systems.world.createTerrain();
       this.engine.systems.world.createTerrainCollision();
       this.engine.systems.world.createManaNodes();
-      
-      // Move player to center of new world at appropriate height
-      this.localPlayer.position.set(0, 150, 0);
-      this.localPlayer.velocity.set(0, 0, 0);
     };
   }
   
@@ -209,13 +211,7 @@ export class PlayerSystem extends System {
     if (!localPlayer) return;
 
     // Collection radius
-    const radius = 5;
-
-    // Load the mana collection sound
-    const manaSound = new Howl({
-      src: ['assets/audio/collect.mp3'],
-      volume: 0.5,
-    });
+    const radius = 15;
 
     // Check for mana node collection
     const worldSystem = this.engine.systems.get('world');
@@ -224,29 +220,31 @@ export class PlayerSystem extends System {
       return;
     }
 
+    // Swept test from last frame's position so fast flight cannot tunnel past nodes
+    const prevPosition = this.lastCollectionPosition || localPlayer.position;
     const collectedNodes = worldSystem.checkManaCollection(
+      prevPosition,
       localPlayer.position,
       radius
     );
-    
-    // Process collected nodes
+    this.lastCollectionPosition =
+      (this.lastCollectionPosition || new THREE.Vector3()).copy(localPlayer.position);
+
+    // Process collected nodes (WorldSystem emits the batched 'manaCollected' event)
     collectedNodes.forEach(node => {
-      // Add mana to player
-      localPlayer.mana += node.value;
-      localPlayer.totalMana += node.value;
-      this.eventBus.emit('manaCollected', { amount: node.value });
-      
+      // Add mana to player, honoring an active mana multiplier (e.g. Essence Surge)
+      const amount = node.value * (localPlayer.manaMultiplier || 1);
+      localPlayer.mana += amount;
+      localPlayer.totalMana += amount;
+
       // Update UI
       const ui = this.engine.systems.get('ui');
       if (ui) {
         ui.updateManaDisplay(localPlayer.mana);
       }
-      
+
       // Create collection effect
       this.models.createManaCollectionEffect(node.position);
-      
-      // Play mana collection sound
-      // // manaSound.play(); // Audio disabled // Audio disabled
     });
   }
 

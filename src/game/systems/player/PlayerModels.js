@@ -1,81 +1,83 @@
 import * as THREE from 'three';
 import { Logger } from '../../../utils/Logger.js';
+import { CarpetGeometry } from './CarpetGeometry.js';
 
 export class PlayerModels {
   constructor(playerSystem) {
     this.playerSystem = playerSystem;
     this.engine = playerSystem.engine;
     this.scene = playerSystem.scene;
-    
+
     this.carpetModels = [];
     this.carpetMaterials = [];
     this.crosshair = null;
+
+    // Store color schemes for consistent player colors
+    this.colorSchemes = Object.keys(CarpetGeometry.colorSchemes);
   }
-  
+
   async initialize() {
     await this.createCarpetModels();
   }
-  
+
   async createCarpetModels() {
-    // In a real implementation, you would use the loaded models from assets
-    // For simplicity, we'll create simple meshes
-    
-    // Create different carpet materials for players with brighter colors
-    this.carpetMaterials = [
-      new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0x33ff33, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0x3333ff, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0xffff33, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0xff33ff, roughness: 0.7, metalness: 0.3 }),
-      new THREE.MeshStandardMaterial({ color: 0x33ffff, roughness: 0.7, metalness: 0.3 })
-    ];
-    
-    // Create a simple carpet model
-    const carpetGeometry = new THREE.BoxGeometry(5, 0.5, 8);
-    
-    // Create different carpet models with different materials
-    this.carpetModels = this.carpetMaterials.map(material => {
-      return new THREE.Mesh(carpetGeometry, material);
+    // Create beautiful carpet models using different color schemes
+    const schemeNames = Object.keys(CarpetGeometry.colorSchemes);
+
+    this.carpetModels = schemeNames.map(schemeName => {
+      const scheme = CarpetGeometry.colorSchemes[schemeName];
+      return CarpetGeometry.createCarpet({
+        width: 5,
+        length: 8,
+        primaryColor: scheme.primary,
+        secondaryColor: scheme.secondary,
+        borderColor: scheme.border,
+        includeFringe: true,
+        segments: 16
+      });
     });
-    
-    // Set up shadows
-    this.carpetModels.forEach(model => {
-      model.castShadow = true;
-      model.receiveShadow = false;  // Prevent self-shadowing
+
+    // Store materials reference for marker colors
+    this.carpetMaterials = schemeNames.map(schemeName => {
+      const scheme = CarpetGeometry.colorSchemes[schemeName];
+      return { color: scheme.secondary }; // Use secondary color for markers
     });
-    
-    Logger.info(`Created ${this.carpetModels.length} carpet models`);
+
+    Logger.info(`Created ${this.carpetModels.length} beautiful carpet models`);
   }
   
   createCarpetModel(playerId) {
     if (this.carpetModels.length === 0) {
       // Fallback: create a default carpet model if none available
       Logger.warn('PlayerModels.createCarpetModel: No carpet models available, creating default');
-      
-      // Create default material
-      const defaultMaterial = new THREE.MeshStandardMaterial({ color: 0xff6600, roughness: 0.7, metalness: 0.3 });
-      const defaultGeometry = new THREE.BoxGeometry(5, 0.5, 8);
-      const defaultModel = new THREE.Mesh(defaultGeometry, defaultMaterial);
-      defaultModel.castShadow = true;
-      defaultModel.receiveShadow = false;
-      
+
+      // Create fallback using CarpetGeometry
+      const fallbackCarpet = CarpetGeometry.createCarpet({
+        width: 5,
+        length: 8,
+        primaryColor: new THREE.Color(0xff6600),
+        secondaryColor: new THREE.Color(0xffaa00),
+        borderColor: new THREE.Color(0x4a2a1a),
+        includeFringe: true
+      });
+
       // Add floating marker
-      const markerGeometry = new THREE.SphereGeometry(1, 8, 8);
+      const markerGeometry = new THREE.SphereGeometry(0.6, 12, 12);
       const markerMaterial = new THREE.MeshBasicMaterial({
-        color: 0xff6600,
+        color: 0xffaa00,
         transparent: true,
-        opacity: 0.8
+        opacity: 0.7
       });
       const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-      marker.position.y = 3;
-      defaultModel.add(marker);
-      
-      return defaultModel;
+      marker.position.y = 2.5;
+      fallbackCarpet.add(marker);
+
+      return fallbackCarpet;
     }
-    
+
     // Use player ID to determine carpet color consistently
     let carpetIndex = 0;
-    
+
     if (playerId) {
       // Hash the player ID to get a consistent color
       let hash = 0;
@@ -88,21 +90,32 @@ export class PlayerModels {
       // Random for local testing
       carpetIndex = Math.floor(Math.random() * this.carpetModels.length);
     }
-    
-    const carpetModel = this.carpetModels[carpetIndex].clone();
-    
-    // Add a floating marker above the carpet for better visibility
-    const markerGeometry = new THREE.SphereGeometry(1, 8, 8);
-    const markerMaterial = new THREE.MeshBasicMaterial({
-      color: this.carpetMaterials[carpetIndex].color,
-      transparent: true,
-      opacity: 0.8
+
+    // Deep clone the carpet group (includes body, fringe, and glow)
+    const carpetModel = this.carpetModels[carpetIndex].clone(true);
+
+    // Only clone materials for the main body (the textured part)
+    // Fringe and glow can share materials safely
+    carpetModel.traverse(child => {
+      if (child.isMesh && child.name === 'carpetBody' && child.material) {
+        child.material = child.material.clone();
+      }
     });
-    
+
+    // Add a floating marker above the carpet for multiplayer visibility
+    const markerGeometry = new THREE.SphereGeometry(0.6, 12, 12);
+    const markerColor = this.carpetMaterials[carpetIndex]?.color || 0xffffff;
+    const markerMaterial = new THREE.MeshBasicMaterial({
+      color: markerColor,
+      transparent: true,
+      opacity: 0.7
+    });
+
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-    marker.position.y = 3; // Position above carpet
+    marker.position.y = 2.5; // Position above carpet
+    marker.name = 'playerMarker';
     carpetModel.add(marker);
-    
+
     return carpetModel;
   }
   

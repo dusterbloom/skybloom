@@ -17,7 +17,12 @@ export class MaterialSystemIntegration {
     integrateWithCarpetTrail() {
         const trailSystem = this.engine.systems.carpetTrail;
         if (!trailSystem) return;
-        
+
+        // These overrides target the legacy particle/ribbon trail API. The current
+        // CarpetTrailSystem exposes a different surface, so skip when absent.
+        const legacyApi = ['initialize', 'createParticle', 'createSteamParticle', 'updateRibbonTrail', 'initializePools'];
+        if (legacyApi.some(m => typeof trailSystem[m] !== 'function')) return;
+
         // Override material creation methods
         const originalInitialize = trailSystem.initialize.bind(trailSystem);
         trailSystem.initialize = () => {

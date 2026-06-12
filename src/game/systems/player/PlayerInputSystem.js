@@ -15,6 +15,9 @@ export class PlayerInputSystem extends System {
     this.throttleSpeed = 1.0;
     this.bankingSensitivity = 0.3;
     this.rotationDamping = 0.92;
+    this.turnRate = 1.6; // rad/s yaw at full A/D or joystick deflection
+    this.maxBankAngle = Math.PI / 6; // 30 degrees while turning
+    this.bankEaseRate = 8; // bank easing: 1 - exp(-rate * delta)
     this.currentThrottle = 0;
     this.unsubscribeState = null;
     this.motionControlsEnabled = false;
@@ -81,36 +84,51 @@ export class PlayerInputSystem extends System {
     const player = this.playerState.localPlayer;
     if (!player) return;
 
-    // Apply rotation damping
-    player.bankAngle = (player.bankAngle || 0) * this.rotationDamping;
+    // Banked turning: A/D and joystick X share the same yaw-rate path
+    let turnInput = 0;
+    if (this.input.isKeyDown('KeyA')) turnInput -= 1;
+    if (this.input.isKeyDown('KeyD')) turnInput += 1;
+    if (this.joystick && this.joystick.active && Math.abs(this.joystick.position.x) > 0.1) {
+      turnInput = THREE.MathUtils.clamp(turnInput + this.joystick.position.x, -1, 1);
+    }
 
-    // Handle joystick input for mobile
-    if (this.joystick && this.joystick.active) {
-      if (Math.abs(this.joystick.position.x) > 0.1) {
-        player.rotation.y -= this.joystick.position.x * 0.05;
-        const targetBankAngle = -this.joystick.position.x * 0.5;
-        player.bankAngle = THREE.MathUtils.lerp(player.bankAngle || 0, targetBankAngle, 0.1);
-      }
+    if (turnInput !== 0) {
+      player.rotation.y -= turnInput * this.turnRate * delta;
+      // Positive bank raises the carpet's +X (left) edge, leaning into a right turn
+      const bankEase = 1 - Math.exp(-this.bankEaseRate * delta);
+      player.bankAngle = THREE.MathUtils.lerp(player.bankAngle || 0, turnInput * this.maxBankAngle, bankEase);
+    } else {
+      // Time-based decay (0.92/frame at 60fps) so mouse-look banking still settles
+      player.bankAngle = (player.bankAngle || 0) * Math.pow(this.rotationDamping, delta * 60);
+    }
 
-      if (Math.abs(this.joystick.position.y) > 0.1) {
-        player.altitudeVelocity += -this.joystick.position.y * 30 * delta;
-        const targetPitch = this.joystick.position.y * 0.5;
-        player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, targetPitch, 0.1);
+    // Joystick Y: altitude and pitch (X is handled by the turn path above)
+    if (this.joystick && this.joystick.active && Math.abs(this.joystick.position.y) > 0.1) {
+      player.altitudeVelocity += -this.joystick.position.y * 90 * delta;
+      const targetPitch = this.joystick.position.y * 0.5;
+      player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, targetPitch, 1 - Math.exp(-6 * delta));
 
-        // Update contrail
-        if (this.engine.systems.carpetTrail && this.joystick.position.y < -0.3) {
-          this.engine.systems.carpetTrail.setSpaceBarState(true);
-        } else if (this.engine.systems.carpetTrail) {
-          this.engine.systems.carpetTrail.setSpaceBarState(false);
-        }
+      // Update contrail
+      if (this.engine.systems.carpetTrail && this.joystick.position.y < -0.3) {
+        this.engine.systems.carpetTrail.setSpaceBarState(true);
+      } else if (this.engine.systems.carpetTrail) {
+        this.engine.systems.carpetTrail.setSpaceBarState(false);
       }
     }
 
     // Throttle control
-    if (this.input.isKeyDown('KeyW')) {
+    const isAccelerating = this.input.isKeyDown('KeyW');
+    const isBraking = this.input.isKeyDown('KeyS') || this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight');
+
+    if (isAccelerating && !isBraking) {
       this.currentThrottle = Math.min(1.0, this.currentThrottle + this.throttleSpeed * delta);
-    } else if (this.input.isKeyDown('KeyS')) {
-      this.currentThrottle = Math.max(0.0, this.currentThrottle - this.throttleSpeed * delta);
+    } else if (isBraking) {
+      // Shift = strong brake, S = gentle slowdown
+      const brakeStrength = (this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight')) ? 3.0 : 1.5;
+      this.currentThrottle = Math.max(0.0, this.currentThrottle - this.throttleSpeed * brakeStrength * delta);
+    } else {
+      // Natural throttle decay when no keys pressed (coast down gently)
+      this.currentThrottle = Math.max(0.0, this.currentThrottle - this.throttleSpeed * 0.3 * delta);
     }
 
     // Auto-forward for mobile
@@ -118,28 +136,17 @@ export class PlayerInputSystem extends System {
       this.currentThrottle = 0.5;
     }
 
-    // Set acceleration for forward
+    // Set acceleration for forward (physics integrates with delta, so none here)
     player.acceleration = player.acceleration || new THREE.Vector3(0, 0, 0);
-    const forwardForce = this.currentThrottle * player.maxSpeed;
-    const forwardDir = new THREE.Vector3(0, 0, 1).applyEuler(player.rotation).multiplyScalar(forwardForce * delta);
+    const forwardForce = this.currentThrottle * player.accelerationValue * (player.speedMultiplier || 1);
+    const forwardDir = new THREE.Vector3(0, 0, 1).applyEuler(player.rotation).multiplyScalar(forwardForce);
     player.acceleration.add(forwardDir);
 
-    // Strafing
-    let strafeForce = 0;
-    if (this.input.isKeyDown('KeyA')) strafeForce -= 0.3;
-    if (this.input.isKeyDown('KeyD')) strafeForce += 0.3;
-    if (strafeForce !== 0) {
-      const sideDir = new THREE.Vector3(1, 0, 0).applyEuler(player.rotation).multiplyScalar(player.accelerationValue * strafeForce * delta * 0.3);
-      player.acceleration.add(sideDir);
-      const targetBankAngle = strafeForce * Math.PI / 6;
-      player.bankAngle = THREE.MathUtils.lerp(player.bankAngle || 0, targetBankAngle, 0.1);
-    }
-
-    // Vertical movement
+    // Vertical movement (Space = up, Ctrl = down, Shift is now brake)
     let verticalForce = 0;
     let spacePressed = this.input.isKeyDown('Space');
     if (spacePressed) verticalForce += 1;
-    if (this.input.isKeyDown('ShiftLeft') || this.input.isKeyDown('ShiftRight')) verticalForce -= 1;
+    if (this.input.isKeyDown('ControlLeft') || this.input.isKeyDown('ControlRight')) verticalForce -= 1;
     if (this.touchAltitude.up) verticalForce += 1;
     if (this.touchAltitude.down) verticalForce -= 1;
 
@@ -148,7 +155,7 @@ export class PlayerInputSystem extends System {
     }
 
     if (verticalForce !== 0) {
-      player.altitudeVelocity += 30 * verticalForce * delta;
+      player.altitudeVelocity += 90 * verticalForce * delta;
     }
 
     // Natural falling
@@ -168,18 +175,18 @@ export class PlayerInputSystem extends System {
         player.altitudeVelocity += betaResponse * 40 * delta;
       }
 
-      // Gamma for rotation
+      // Gamma for rotation (time-based; matches the previous per-frame feel at 60fps)
       let gammaResponse = 0;
       if (Math.abs(fusedOrientation.gamma) > this.motionResponseCurve.deadzone) {
         const normalizedGamma = Math.sign(fusedOrientation.gamma) * (Math.abs(fusedOrientation.gamma) - this.motionResponseCurve.deadzone);
         gammaResponse = Math.sign(normalizedGamma) * Math.min(1.0, Math.pow(Math.abs(normalizedGamma) / this.motionResponseCurve.maxResponse, 2));
-        player.rotation.y -= gammaResponse * this.motionSensitivity.yaw * 2;
+        player.rotation.y -= gammaResponse * this.motionSensitivity.yaw * 120 * delta;
         const targetBankAngle = -gammaResponse * 0.5;
-        player.bankAngle = THREE.MathUtils.lerp(player.bankAngle || 0, targetBankAngle, 0.15);
+        player.bankAngle = THREE.MathUtils.lerp(player.bankAngle || 0, targetBankAngle, 1 - Math.exp(-10 * delta));
       }
 
-      // Forward force for motion
-      const motionForwardForce = player.maxSpeed * 0.5 * delta;
+      // Forward force for motion (half throttle equivalent; physics integrates with delta)
+      const motionForwardForce = player.accelerationValue * 0.5 * (player.speedMultiplier || 1);
       const forwardDir = new THREE.Vector3(0, 0, 1).applyEuler(player.rotation).multiplyScalar(motionForwardForce);
       player.acceleration.add(forwardDir);
     }

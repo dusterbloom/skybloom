@@ -130,9 +130,13 @@ export class MoonSystem {
       }
     }
 
-    // Update moonlight intensity
+    // Update moonlight intensity. Keep a baseline so nights stay gently
+    // moonlit even around the new moon - the night scene must remain
+    // readable (the ambient floor handles the rest).
     if (this.moonLight) {
-      this.moonLight.intensity = isAboveHorizon ? 0.2 * nightFactor * moonIllumination : 0;
+      this.moonLight.intensity = isAboveHorizon
+        ? 0.35 * nightFactor * (0.3 + 0.7 * moonIllumination)
+        : 0;
     }
 
     // Rotate moon texture for phase

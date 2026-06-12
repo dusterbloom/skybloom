@@ -1,6 +1,5 @@
 import { io } from 'socket.io-client';
 import { EventEmitter } from '../../utils/EventEmitter';
-import { IntroScreen } from '../ui/screens/IntroScreen';
 import { PlayerList } from '../ui/components/PlayerList';
 import { System } from '../core/System';
 import { Logger } from '../../utils/Logger.js';
@@ -15,9 +14,9 @@ export class NetworkManager extends System {
     this.serverTimeDiff = 0;
     this.ping = 0;
     this.isConnected = false;
-    
+    this.connectionFailureNotified = false;
+
     // Create UI components
-    this.introScreen = new IntroScreen(engine);
     this.playerList = new PlayerList(engine);
     
     // Set up development mode for local testing
@@ -26,15 +25,8 @@ export class NetworkManager extends System {
   }
   
   async _initialize() {
-    // Initialize and show intro screen
-    this.introScreen.initialize();
-    this.introScreen.show();
-    
-    // Set up play button callback
-    this.introScreen.onPlay(() => {
-      this.connect();
-    });
-    
+    // The intro screen is owned by the Engine; its start flow calls connect()
+
     // Set up server URL - FIXED for mobile devices
     // Use VITE_SERVER_URL if provided, otherwise use window.location.origin
     // This will use the same domain/IP that the website is loaded from
@@ -56,20 +48,19 @@ export class NetworkManager extends System {
     Logger.info("Connecting to server URL:", this.serverUrl);
     
     // Create socket but don't connect yet
+    // Reconnection is capped so a missing server can't retry (and log) forever
     this.socket = io(this.serverUrl, {
       autoConnect: false,
       reconnection: true,
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 10000
     });
-    
+
     // Set up socket event listeners
     this.setupEventListeners();
-    
-    // Update intro screen status
-    // Don't show status message
-    
+
     // If in simulation mode, connect automatically after a short delay
     if (this.useSimulation) {
       Logger.info("Using network simulation mode");
@@ -85,33 +76,33 @@ export class NetworkManager extends System {
     this.socket.on('connect', () => {
       Logger.info('Connected to server');
       this.isConnected = true;
-      this.introScreen.updateServerStatus('Connected to server', 'success');
       this.eventEmitter.emit('connected');
-      
+
       // Request player ID from server
       this.socket.emit('request_id');
     });
-    
+
     this.socket.on('disconnect', () => {
       Logger.warn('Disconnected from server');
       this.isConnected = false;
-      this.introScreen.updateServerStatus('Disconnected from server. Reconnecting...', 'error');
       this.eventEmitter.emit('disconnected');
     });
-    
+
     this.socket.on('connect_error', (error) => {
-      Logger.error('Connection error:', error);
-      this.introScreen.updateServerStatus('Server connection error. Please try again.', 'error');
+      // Keep per-attempt failures quiet; one warning is logged when we give up
+      Logger.debug('Connection attempt failed:', error.message);
     });
-    
+
+    // Fired once by the socket.io manager after all reconnection attempts fail
+    this.socket.io.on('reconnect_failed', () => {
+      this.handleConnectionFailure();
+    });
+
     this.socket.on('player_id', (data) => {
       this.localPlayerId = data.id;
       Logger.debug('Received player ID:', this.localPlayerId);
       this.eventEmitter.emit('connected', { id: this.localPlayerId });
-      
-      // Hide intro screen after successful connection
-      this.introScreen.hide();
-      
+
       // Show player list
       this.playerList.show();
     });
@@ -156,16 +147,28 @@ export class NetworkManager extends System {
       this.simulateConnection();
       return;
     }
-    
+
     // Connect to real server
-    this.introScreen.updateServerStatus('Connecting to server...', 'info');
     this.socket.connect();
   }
-  
+
+  // Called once when the socket gives up reconnecting; multiplayer is optional
+  handleConnectionFailure() {
+    if (this.connectionFailureNotified) return;
+    this.connectionFailureNotified = true;
+
+    Logger.warn('Multiplayer server unreachable, giving up after maximum reconnection attempts. Continuing in single-player mode.');
+
+    // Show a small non-blocking notice if the UI system supports it
+    const ui = this.engine.systems && this.engine.systems.ui;
+    if (ui && typeof ui.showMessage === 'function') {
+      ui.showMessage('Multiplayer unavailable — flying solo');
+    }
+  }
+
   simulateConnection() {
     Logger.info("Simulating network connection");
-    this.introScreen.updateServerStatus('Connected to simulation server', 'success');
-    
+
     setTimeout(() => {
       // Simulate receiving player ID
       this.localPlayerId = 'player_' + Math.floor(Math.random() * 10000);
@@ -174,10 +177,7 @@ export class NetworkManager extends System {
       // Emit connected event
       this.isConnected = true;
       this.eventEmitter.emit('connected', { id: this.localPlayerId });
-      
-      // Hide intro screen
-      this.introScreen.hide();
-      
+
       // Show player list
       this.playerList.show();
       

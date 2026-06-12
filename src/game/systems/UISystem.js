@@ -1179,6 +1179,36 @@ export class UISystem extends System {
     }
   }
   
+  showMessage(text, duration = 2500) {
+    // Lightweight toast; reused element, callers fire-and-forget
+    if (!this.elements.messageToast) {
+      const toast = document.createElement('div');
+      toast.style.position = 'fixed';
+      toast.style.bottom = '12%';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.padding = '10px 22px';
+      toast.style.borderRadius = '18px';
+      toast.style.background = 'rgba(20, 30, 60, 0.75)';
+      toast.style.color = '#fff';
+      toast.style.fontFamily = 'var(--app-font, sans-serif)';
+      toast.style.fontSize = '16px';
+      toast.style.pointerEvents = 'none';
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease';
+      toast.style.zIndex = '1001';
+      document.body.appendChild(toast);
+      this.elements.messageToast = toast;
+    }
+    const toast = this.elements.messageToast;
+    toast.textContent = text;
+    toast.style.opacity = '1';
+    clearTimeout(this._messageToastTimer);
+    this._messageToastTimer = setTimeout(() => {
+      toast.style.opacity = '0';
+    }, duration);
+  }
+
   updateHealthDisplay(health, maxHealth) {
     if (this.elements.healthBar) {
       const percentage = (health / maxHealth) * 100;

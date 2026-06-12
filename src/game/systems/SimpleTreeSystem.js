@@ -16,8 +16,10 @@ export class SimpleTreeSystem extends System {
 
     // Tree collections
     this.treeModels = []; // Loaded GLTF models
-    this.spawnedTrees = []; // Trees in the scene
-    this.chunksWithTrees = new Set();
+    this.spawnedTrees = []; // Flat list of live trees (PlayerPhysics iterates this every frame)
+    // chunkKey -> { x, z, trees: [] }. A Map keeps .has()/.size/.clear() compatible
+    // with the old Set usage while letting us despawn trees per chunk.
+    this.chunksWithTrees = new Map();
 
     // Configuration - tuned for forest clustering
     this.clustersPerChunk = 3; // Number of forest clusters per chunk
@@ -27,6 +29,16 @@ export class SimpleTreeSystem extends System {
     this.scatteredTreeDensity = 0.15; // Probability for scattered individual trees
     this.scatteredTreeAttempts = 30; // Attempts for scattered trees
     this.maxTreesPerChunk = 80; // Limit trees per chunk
+
+    // Lifecycle configuration (despawn / cap / fade) - spawn density above is unchanged
+    this.viewDistance = 3; // Spawn trees within this many chunks of the player
+    this.keepDistance = this.viewDistance + 1; // Despawn chunks beyond this (hysteresis ring)
+    this.maxTotalTrees = 1200; // Global safety cap; farthest chunks evicted first when exceeded
+    this.treeFadeDistance = 1800; // Hide trees beyond this horizontal distance (fog softens the cutoff)
+
+    // Last player chunk - despawn/cap checks only need to run when this changes
+    this._lastPlayerChunkX = null;
+    this._lastPlayerChunkZ = null;
 
     // Model paths - Kenney Nature Kit trees (CC0 License)
     this.modelPaths = [
@@ -181,9 +193,9 @@ export class SimpleTreeSystem extends System {
     const chunkSize = this.worldSystem.chunkSize;
     const playerChunkX = Math.floor(player.position.x / chunkSize);
     const playerChunkZ = Math.floor(player.position.z / chunkSize);
-    const viewDistance = 3; // Spawn trees within 3 chunks
+    const viewDistance = this.viewDistance; // Spawn trees within 3 chunks
 
-    // Spawn trees for nearby chunks
+    // Spawn trees for nearby chunks (each chunk spawns once while it stays in range)
     for (let x = -viewDistance; x <= viewDistance; x++) {
       for (let z = -viewDistance; z <= viewDistance; z++) {
         const chunkX = playerChunkX + x;
@@ -191,22 +203,137 @@ export class SimpleTreeSystem extends System {
         const chunkKey = `${chunkX},${chunkZ}`;
 
         if (!this.chunksWithTrees.has(chunkKey)) {
-          this.spawnTreesForChunk(chunkX, chunkZ);
-          this.chunksWithTrees.add(chunkKey);
+          const trees = this.spawnTreesForChunk(chunkX, chunkZ);
+          this.chunksWithTrees.set(chunkKey, { x: chunkX, z: chunkZ, trees });
         }
+      }
+    }
+
+    // Despawn far chunks / enforce the global cap only when the player crosses a
+    // chunk boundary - chunk distances cannot change otherwise.
+    if (playerChunkX !== this._lastPlayerChunkX || playerChunkZ !== this._lastPlayerChunkZ) {
+      this._lastPlayerChunkX = playerChunkX;
+      this._lastPlayerChunkZ = playerChunkZ;
+      this.despawnDistantChunks(playerChunkX, playerChunkZ, player);
+    }
+
+    // Cheap distance fade every tick (despawn above is the hard bound)
+    this.updateTreeVisibility(player);
+  }
+
+  /**
+   * Despawn chunks that fell out of range and enforce the global tree cap.
+   * NOTE: cloned trees share geometry/materials with the source models in
+   * this.treeModels, so we only scene.remove() and drop references - never
+   * dispose() a clone's resources.
+   */
+  despawnDistantChunks(playerChunkX, playerChunkZ, player) {
+    let liveCount = this.spawnedTrees.length;
+    let removedAny = false;
+
+    // 1) Remove chunks outside the keep ring (viewDistance + 1, Chebyshev to
+    // match the square spawn grid). Deleting the entry lets the area respawn
+    // if the player comes back.
+    for (const [chunkKey, entry] of this.chunksWithTrees) {
+      if (Math.abs(entry.x - playerChunkX) > this.keepDistance ||
+          Math.abs(entry.z - playerChunkZ) > this.keepDistance) {
+        liveCount -= entry.trees.length;
+        this.removeChunkTrees(chunkKey, entry);
+        removedAny = true;
+      }
+    }
+
+    // 2) Global safety cap: evict farthest chunks first (by chunk-center
+    // distance to the player). Only chunks outside the spawn window are
+    // evictable - evicting one inside it would just respawn next frame
+    // (churn) and punch visible holes around the player.
+    if (liveCount > this.maxTotalTrees) {
+      const chunkSize = this.worldSystem.chunkSize;
+      const px = player.position.x;
+      const pz = player.position.z;
+      const candidates = [];
+
+      for (const [chunkKey, entry] of this.chunksWithTrees) {
+        if (Math.abs(entry.x - playerChunkX) > this.viewDistance ||
+            Math.abs(entry.z - playerChunkZ) > this.viewDistance) {
+          const dx = (entry.x + 0.5) * chunkSize - px;
+          const dz = (entry.z + 0.5) * chunkSize - pz;
+          candidates.push({ chunkKey, entry, distSq: dx * dx + dz * dz });
+        }
+      }
+
+      candidates.sort((a, b) => b.distSq - a.distSq); // Farthest first
+
+      for (let i = 0; i < candidates.length && liveCount > this.maxTotalTrees; i++) {
+        liveCount -= candidates[i].entry.trees.length;
+        this.removeChunkTrees(candidates[i].chunkKey, candidates[i].entry);
+        removedAny = true;
+      }
+    }
+
+    // Keep the flat array PlayerPhysics iterates accurate and bounded
+    if (removedAny) {
+      this.rebuildSpawnedTrees();
+    }
+  }
+
+  /**
+   * Remove one chunk's trees from the scene and forget the chunk.
+   * No geometry/material dispose: clones share GPU resources with this.treeModels.
+   */
+  removeChunkTrees(chunkKey, entry) {
+    const trees = entry.trees;
+    for (let i = 0; i < trees.length; i++) {
+      this.scene.remove(trees[i]);
+    }
+    trees.length = 0;
+    this.chunksWithTrees.delete(chunkKey);
+  }
+
+  /**
+   * Rebuild this.spawnedTrees in place from the per-chunk lists, so any
+   * external reader (PlayerPhysics collision loop) never sees a stale array.
+   */
+  rebuildSpawnedTrees() {
+    const flat = this.spawnedTrees;
+    flat.length = 0;
+    for (const entry of this.chunksWithTrees.values()) {
+      const trees = entry.trees;
+      for (let i = 0; i < trees.length; i++) {
+        flat.push(trees[i]);
       }
     }
   }
 
   /**
-   * Spawn trees for a chunk using cluster-based generation
+   * Distance fade: hide trees beyond treeFadeDistance (horizontal only).
+   * Saves draw calls; scene fog (FogExp2) softens the cutoff. Allocation-free.
+   */
+  updateTreeVisibility(player) {
+    const px = player.position.x;
+    const pz = player.position.z;
+    const fadeDistSq = this.treeFadeDistance * this.treeFadeDistance;
+    const trees = this.spawnedTrees;
+    for (let i = 0; i < trees.length; i++) {
+      const tree = trees[i];
+      const dx = tree.position.x - px;
+      const dz = tree.position.z - pz;
+      tree.visible = (dx * dx + dz * dz) < fadeDistSq;
+    }
+  }
+
+  /**
+   * Spawn trees for a chunk using cluster-based generation.
+   * Returns the array of tree groups spawned for this chunk (possibly empty).
    */
   spawnTreesForChunk(chunkX, chunkZ) {
+    const chunkTrees = [];
+
     if (this.treeModels.length === 0) {
       if (this.chunksWithTrees.size === 0) {
         Logger.warn("No tree models loaded! Falling back to procedural...");
       }
-      return;
+      return chunkTrees;
     }
 
     const chunkSize = this.worldSystem.chunkSize;
@@ -252,7 +379,7 @@ export class SimpleTreeSystem extends System {
         if (!this.isValidTreePosition(x, z)) continue;
 
         // Spawn tree in cluster
-        this.spawnTree(x, height, z);
+        chunkTrees.push(this.spawnTree(x, height, z));
         treesSpawned++;
       }
     }
@@ -279,7 +406,7 @@ export class SimpleTreeSystem extends System {
       if (Math.random() > this.scatteredTreeDensity) continue;
 
       // Spawn scattered tree
-      this.spawnTree(x, height, z);
+      chunkTrees.push(this.spawnTree(x, height, z));
       treesSpawned++;
     }
 
@@ -287,6 +414,8 @@ export class SimpleTreeSystem extends System {
     if (treesSpawned > 0 && this.chunksWithTrees.size <= 3) {
       Logger.info(`🌲 Spawned ${treesSpawned} trees in chunk ${chunkX},${chunkZ} (cluster-based)`);
     }
+
+    return chunkTrees;
   }
 
   /**
@@ -309,7 +438,7 @@ export class SimpleTreeSystem extends System {
   }
 
   /**
-   * Spawn a single tree
+   * Spawn a single tree. Returns the spawned tree group.
    */
   spawnTree(x, y, z) {
     // Pick random tree model
@@ -346,6 +475,8 @@ export class SimpleTreeSystem extends System {
     if (this.spawnedTrees.length === 1) {
       Logger.info(`🌲 First tree spawned at (${x.toFixed(0)}, ${y.toFixed(0)}, ${z.toFixed(0)}) with scale ${scale.toFixed(1)}`);
     }
+
+    return tree;
   }
 
   /**
@@ -358,6 +489,8 @@ export class SimpleTreeSystem extends System {
     }
     this.spawnedTrees = [];
     this.chunksWithTrees.clear();
+    this._lastPlayerChunkX = null;
+    this._lastPlayerChunkZ = null;
     Logger.info("Simple Tree System destroyed");
   }
 }

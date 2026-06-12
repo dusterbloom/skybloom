@@ -28,7 +28,7 @@ export class LandmarkSystem extends System {
         minDistance: 600,      // Reduced minimum distance
         maxSlope: 0.4,         // Increased allowed slope
         frequency: 0.0004,     // 20x higher frequency
-        size: { min: 10, max: 25 },
+        size: { min: 60, max: 120 },
         requiresWater: false
       },
       {
@@ -38,7 +38,7 @@ export class LandmarkSystem extends System {
         minDistance: 900,       // Reduced minimum distance
         maxSlope: 0.8,          // Increased allowed slope
         frequency: 0.0003,      // 20x higher frequency
-        size: { min: 15, max: 35 },
+        size: { min: 80, max: 160 },
         requiresWater: false
       }
     ];
@@ -65,13 +65,34 @@ export class LandmarkSystem extends System {
         metalness: 0.8
       }),
       magicCircle: new THREE.MeshStandardMaterial({
-        color: 0x00ffff,
-        emissive: 0x00ffff,
-        emissiveIntensity: 0.5,
+        color: 0xcc66ff,
+        emissive: 0xcc66ff,
+        emissiveIntensity: 0.8,
         transparent: true,
         opacity: 0.7
       })
     };
+
+    // Beacon light-pillars so landmarks are visible from afar
+    // One shared geometry + one shared material per type (1 draw call per landmark)
+    this.beaconColors = {
+      ancient_ruins: 0xffcc66,
+      magical_circle: 0xcc66ff,
+      crystal_formation: 0x66ffee
+    };
+    this.beaconGeometry = new THREE.CylinderGeometry(2.5, 4, 300, 8, 1, true);
+    this.beaconMaterials = {};
+    for (const [typeName, color] of Object.entries(this.beaconColors)) {
+      this.beaconMaterials[typeName] = new THREE.MeshBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.22,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        fog: false // Keep beacons visible at distance despite scene fog
+      });
+    }
   }
 
   async _initialize() {
@@ -82,13 +103,45 @@ export class LandmarkSystem extends System {
   }
 
   _update(delta, elapsed) {
-    // Direct implementation to avoid recursion
+    // Check for new landmark locations
     this.checkForLandmarkLocations();
-    this.cleanupInvalidLandmarks();
+
+    // Animate landmarks
     this.animateLandmarks(elapsed);
+
+    // Remove landmarks that are too far from player
+    const player = this.engine.systems.player?.localPlayer;
+    if (player && player.position && this.worldSystem) {
+      // Validate player position
+      if (isNaN(player.position.x) || isNaN(player.position.z)) {
+        return; // Skip if player position is invalid
+      }
+
+      const maxDistance = this.worldSystem.chunkSize * (this.worldSystem.viewDistance + 4);
+
+      for (const [id, landmark] of this.landmarks.entries()) {
+        // Skip landmarks with invalid positions
+        if (!landmark.position || isNaN(landmark.position.x) || isNaN(landmark.position.z)) {
+          // Clean up invalid landmark
+          if (landmark.mesh) this.scene.remove(landmark.mesh);
+          this.landmarks.delete(id);
+          continue;
+        }
+
+        const dx = landmark.position.x - player.position.x;
+        const dz = landmark.position.z - player.position.z;
+        const distanceSquared = dx * dx + dz * dz;
+
+        if (distanceSquared > maxDistance * maxDistance) {
+          // Remove landmark from scene
+          this.scene.remove(landmark.mesh);
+          this.landmarks.delete(id);
+        }
+      }
+    }
   }
-  
-  
+
+
   /**
    * Check if a position is suitable for a landmark
    * @param {number} x - X coordinate
@@ -142,7 +195,7 @@ export class LandmarkSystem extends System {
         const checkZ = z + Math.sin(angle) * checkDist;
         const checkHeight = this.worldSystem.getTerrainHeight(checkX, checkZ);
         
-        if (checkHeight < this.worldSystem.waterLevel) {
+        if (checkHeight < (this.worldSystem.waterLevel ?? 0)) {
           hasWaterNearby = true;
           break;
         }
@@ -215,7 +268,11 @@ export class LandmarkSystem extends System {
           Logger.warn('Unknown landmark type:', landmarkType.name);
           return null;
       }
-      
+
+      // Add a tall light-pillar beacon so the landmark can be spotted from afar
+      const beacon = this.createBeacon(landmarkType.name);
+      landmarkGroup.add(beacon);
+
       // Save landmark with unique ID
       const landmarkId = `${landmarkType.name}_${this.landmarks.size}`;
       this.landmarks.set(landmarkId, {
@@ -223,7 +280,9 @@ export class LandmarkSystem extends System {
         type: landmarkType.name,
         position: new THREE.Vector3(x, y, z),
         size: size,
-        mesh: landmarkGroup
+        mesh: landmarkGroup,
+        beacon: beacon,
+        beaconPhase: Math.random() * Math.PI * 2
       });
       
       // Add to scene
@@ -236,6 +295,18 @@ export class LandmarkSystem extends System {
     }
   }
   
+  /**
+   * Creates a vertical light-pillar beacon marking a landmark from afar
+   * @param {string} typeName - Landmark type name (selects beacon color)
+   * @returns {THREE.Mesh} The beacon mesh
+   */
+  createBeacon(typeName) {
+    const material = this.beaconMaterials[typeName] || this.beaconMaterials.ancient_ruins;
+    const beacon = new THREE.Mesh(this.beaconGeometry, material);
+    beacon.position.y = 150; // Pillar reaches ~300 units above the terrain
+    return beacon;
+  }
+
   /**
    * Creates ancient ruins landmark
    * @param {THREE.Group} group - Parent group
@@ -358,7 +429,9 @@ export class LandmarkSystem extends System {
       32
     );
     const platformMaterial = new THREE.MeshStandardMaterial({
-      color: 0xeeeeee,
+      color: 0xddccff,
+      emissive: 0x5522aa,
+      emissiveIntensity: 0.25,
       roughness: 0.3,
       metalness: 0.5
     });
@@ -385,22 +458,25 @@ export class LandmarkSystem extends System {
     }
     
     // Add pillars around the circle
+    // Emissive tint so pillars read against sand/grass at distance
+    const pillarMaterial = new THREE.MeshStandardMaterial({
+      color: 0xbbaaee,
+      emissive: 0x6633aa,
+      emissiveIntensity: 0.35,
+      roughness: 0.7
+    });
     const pillarCount = 5;
     for (let i = 0; i < pillarCount; i++) {
       const angle = (i / pillarCount) * Math.PI * 2;
       const x = Math.cos(angle) * size * 0.4;
       const z = Math.sin(angle) * size * 0.4;
-      
+
       const pillarGeometry = new THREE.CylinderGeometry(
         size * 0.03,
         size * 0.03,
         size * 0.4,
         8
       );
-      const pillarMaterial = new THREE.MeshStandardMaterial({
-        color: 0xaaaaaa,
-        roughness: 0.7
-      });
       const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
       
       pillar.position.set(x, size * 0.2, z);
@@ -410,8 +486,8 @@ export class LandmarkSystem extends System {
       // Add glowing crystal on top of each pillar
       const crystalGeometry = new THREE.OctahedronGeometry(size * 0.05);
       const crystal = new THREE.Mesh(crystalGeometry, this.materials.crystal.clone());
-      crystal.material.color.set(0x00ffff);
-      crystal.material.emissive.set(0x00ffff);
+      crystal.material.color.set(0xcc66ff);
+      crystal.material.emissive.set(0xcc66ff);
       
       crystal.position.set(x, size * 0.4 + size * 0.05, z);
       crystal.castShadow = true;
@@ -469,8 +545,8 @@ export class LandmarkSystem extends System {
     base.receiveShadow = true;
     group.add(base);
     
-    // Add crystal clusters
-    const crystalCount = Math.floor(size / 4) + 5;
+    // Add crystal clusters (divisor tuned for size 80-160 to keep mesh count low)
+    const crystalCount = Math.floor(size / 16) + 5;
     for (let i = 0; i < crystalCount; i++) {
       // Vary crystal properties
       const crystalSize = size * (0.05 + Math.random() * 0.1);
@@ -495,7 +571,7 @@ export class LandmarkSystem extends System {
       
       const crystalMaterial = this.materials.crystal.clone();
       crystalMaterial.color = crystalColor;
-      crystalMaterial.emissive = crystalColor.clone().multiplyScalar(0.5);
+      crystalMaterial.emissive = crystalColor.clone().multiplyScalar(0.8);
       
       const crystal = new THREE.Mesh(crystalGeometry, crystalMaterial);
       
@@ -519,7 +595,7 @@ export class LandmarkSystem extends System {
       
       crystal.castShadow = true;
       crystal.userData.isGlowing = true;
-      crystal.userData.originalIntensity = 0.4;
+      crystal.userData.originalIntensity = 0.7;
       crystal.userData.pulseRate = 0.5 + Math.random();
       group.add(crystal);
     }
@@ -624,10 +700,16 @@ export class LandmarkSystem extends System {
     // Apply animations to landmark elements
     for (const [id, landmark] of this.landmarks.entries()) {
       const landmarkMesh = landmark.mesh;
-      
+
       // Skip if not in scene or invalid
       if (!landmarkMesh || !landmarkMesh.parent) continue;
-      
+
+      // Slow beacon pulse (scale only - beacon materials are shared per type)
+      if (landmark.beacon) {
+        const pulse = 0.85 + 0.15 * Math.sin(elapsed * 0.8 + landmark.beaconPhase);
+        landmark.beacon.scale.set(pulse, 1, pulse);
+      }
+
       // Animate any glowing objects
       landmarkMesh.traverse(object => {
         if (object.userData && object.userData.isGlowing) {
@@ -644,54 +726,6 @@ export class LandmarkSystem extends System {
     }
   }
 
-  /**
-   * Update landmarks animations and manage lifecycle
-   * @param {number} delta - Time since last frame in seconds
-   * @param {number} elapsed - Total elapsed time
-   */
-  update(delta, elapsed) {
-    try {
-      // Check for new landmark locations
-      this.checkForLandmarkLocations();
-      
-      // Animate landmarks
-      this.animateLandmarks(elapsed);
-      
-      // Remove landmarks that are too far from player
-      const player = this.engine.systems.player?.localPlayer;
-      if (player && player.position) {
-        // Validate player position
-        if (isNaN(player.position.x) || isNaN(player.position.z)) {
-          return; // Skip if player position is invalid
-        }
-        
-        const maxDistance = this.worldSystem.chunkSize * (this.worldSystem.viewDistance + 4);
-        
-        for (const [id, landmark] of this.landmarks.entries()) {
-          // Skip landmarks with invalid positions
-          if (!landmark.position || isNaN(landmark.position.x) || isNaN(landmark.position.z)) {
-            // Clean up invalid landmark
-            if (landmark.mesh) this.scene.remove(landmark.mesh);
-            this.landmarks.delete(id);
-            continue;
-          }
-          
-          const dx = landmark.position.x - player.position.x;
-          const dz = landmark.position.z - player.position.z;
-          const distanceSquared = dx * dx + dz * dz;
-          
-          if (distanceSquared > maxDistance * maxDistance) {
-            // Remove landmark from scene
-            this.scene.remove(landmark.mesh);
-            this.landmarks.delete(id);
-          }
-        }
-      }
-    } catch (error) {
-      Logger.error('Error updating landmarks:', error);
-    }
-  }
-  
   /**
    * Handle visibility change event
    */

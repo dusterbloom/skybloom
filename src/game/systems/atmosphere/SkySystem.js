@@ -2,6 +2,12 @@ import * as THREE from "three";
 import { Logger } from '../../../utils/Logger.js';
 import { Sky } from "three/examples/jsm/objects/Sky.js";
 import { deviceCapabilities } from "../../core/utils/DeviceCapabilities.js"; // Import device caps
+import {
+  SKY_ZENITH_KEYFRAMES,
+  SKY_HORIZON_KEYFRAMES,
+  FOG_DENSITY_KEYFRAMES,
+  sampleKeyframes
+} from "../../../config/SunConfig.js";
 
 /**
  * SkySystem - Manages the sky background and fog
@@ -18,6 +24,13 @@ export class SkySystem {
     this.sky = null;
     this.isFallbackSky = false; // Flag for fallback
     this.fallbackSkyMaterial = null; // Material for fallback
+
+    // Scratch colors reused every frame (no per-frame allocation)
+    this._zenithColor = new THREE.Color(0x77bbff);
+    this._horizonColor = new THREE.Color(0xbcdfff);
+
+    // Per-vertex zenith/horizon blend factors for the gradient fallback sky
+    this._skyGradientFactors = null;
   }
 
   /**
@@ -31,22 +44,31 @@ export class SkySystem {
     this.isFallbackSky = true;
     this.createFallbackSky();
 
-    // Store original background color
-    this.originalBackgroundColor = new THREE.Color(0x88ccff);
-
-    // Set renderer tone mapping exposure
-    Logger.debug('SkySystem: engine.rendererManager:', this.engine.rendererManager);
-    const renderer = this.engine.rendererManager ? this.engine.rendererManager.renderer : this.engine.renderer;
-    if (renderer) {
-      renderer.toneMappingExposure = 0.6;
-    } else {
-      Logger.warn('SkySystem: no renderer found');
+    // NOTE: the renderer usually does not exist yet at init time
+    // (RendererManager.setup() runs later). All renderer work (clear color)
+    // is done lazily per-frame in updateSkyColors(), and tone mapping
+    // exposure is owned by RendererManager (ACESFilmic @ 1.0).
+    if (!this.getRenderer()) {
+      Logger.debug('SkySystem: renderer not ready at init; per-frame updates will pick it up lazily');
     }
 
-    // Initialize scene fog
-    this.scene.fog = new THREE.FogExp2(0x88ccff, 0.00015);
+    // Initialize scene fog. After init, SkySystem is the ONLY system that
+    // writes scene.fog - color and density are keyframed in updateSkyColors()
+    // so distant terrain always melts into the horizon color.
+    this.scene.fog = new THREE.FogExp2(0xbcdfff, 0.00022);
 
     Logger.info("SkySystem initialization complete");
+  }
+
+  /**
+   * Lazily resolve the renderer (it may not exist during early init)
+   * @returns {THREE.WebGLRenderer|null}
+   */
+  getRenderer() {
+    if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
+      return this.engine.rendererManager.renderer;
+    }
+    return this.engine.renderer || null;
   }
 
 
@@ -84,125 +106,120 @@ export class SkySystem {
     // Calculate appropriate size based on camera far plane
     const farPlane = this.engine.camera.far;
     const skyboxRadius = farPlane * 0.8; // Keep within far plane
-    
+
     // Create a sphere geometry to act as the skybox
     // Use more segments for better quality on mobile (prevent visible seams)
     const segmentsWidth = deviceCapabilities.gpuTier === 'low' ? 24 : 32;
     const segmentsHeight = deviceCapabilities.gpuTier === 'low' ? 12 : 16;
     const geometry = new THREE.SphereGeometry(skyboxRadius, segmentsWidth, segmentsHeight);
-    
-    // Basic material, color will be updated dynamically
+
+    // Vertical gradient via vertex colors: horizon color at/below the horizon
+    // blending to the zenith color overhead. Precompute each vertex's blend
+    // factor once; updateFallbackSkyGradient() rewrites the colors per frame.
+    const positions = geometry.getAttribute('position');
+    const vertexCount = positions.count;
+    this._skyGradientFactors = new Float32Array(vertexCount);
+    for (let i = 0; i < vertexCount; i++) {
+      const ny = positions.getY(i) / skyboxRadius; // -1 (below) .. 1 (zenith)
+      const f = Math.max(0, Math.min(1, ny / 0.55)); // horizon band ~0..33 degrees
+      this._skyGradientFactors[i] = Math.pow(f, 0.8);
+    }
+    geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(vertexCount * 3), 3));
+
+    // Vertex-colored material; tone mapping/color space handled like any
+    // built-in material so the sky matches the lit terrain.
     this.fallbackSkyMaterial = new THREE.MeshBasicMaterial({
-      color: 0x88ccff, // Start with a default blue
+      vertexColors: true,
       side: THREE.BackSide, // Render inside of the sphere
-      fog: false // Fallback sky shouldn't be affected by fog
+      fog: false, // Fallback sky shouldn't be affected by fog
+      depthWrite: false // Pure background - never occlude distant geometry
     });
-    
+
     this.sky = new THREE.Mesh(geometry, this.fallbackSkyMaterial);
     this.sky.renderOrder = -1; // Render very first
     this.scene.add(this.sky);
+
+    // Paint the initial gradient so the first frame isn't black
+    this.updateFallbackSkyGradient();
+  }
+
+  /**
+   * Rewrite the fallback sky's vertex colors from the current
+   * horizon/zenith scratch colors. Cheap: a few hundred vertices.
+   */
+  updateFallbackSkyGradient() {
+    if (!this.sky || !this._skyGradientFactors) return;
+    const colorAttr = this.sky.geometry.getAttribute('color');
+    if (!colorAttr) return;
+
+    const arr = colorAttr.array;
+    const factors = this._skyGradientFactors;
+    const h = this._horizonColor;
+    const z = this._zenithColor;
+
+    for (let i = 0; i < factors.length; i++) {
+      const f = factors[i];
+      const j = i * 3;
+      arr[j] = h.r + (z.r - h.r) * f;
+      arr[j + 1] = h.g + (z.g - h.g) * f;
+      arr[j + 2] = h.b + (z.b - h.b) * f;
+    }
+    colorAttr.needsUpdate = true;
   }
 
 
 
   updateSkyColors() {
     const timeOfDay = this.atmosphereSystem.getTimeOfDay();
-    const nightFactor = this.atmosphereSystem.getNightFactor();
-    let fogColor;
-    let skyColor; // Color for the fallback sky
 
-    // --- Calculate Colors (same logic as before) ---
-    if (timeOfDay < 0.25) { // Night to sunrise
-      const t = timeOfDay / 0.25;
-      fogColor = new THREE.Color(0x000010).lerp(new THREE.Color(0xff9933), t);
-      skyColor = new THREE.Color(0x000005).lerp(new THREE.Color(0x442211), t); // Dark blue to dark orange
-    } else if (timeOfDay < 0.5) { // Sunrise to noon
-      const t = (timeOfDay - 0.25) / 0.25;
-      fogColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x88ccff), t);
-      skyColor = new THREE.Color(0x664433).lerp(new THREE.Color(0x77bbff), t); // Orange to bright blue
-    } else if (timeOfDay < 0.75) { // Noon to sunset
-      const t = (timeOfDay - 0.5) / 0.25;
-      fogColor = new THREE.Color(0x88ccff).lerp(new THREE.Color(0xff9933), t);
-      skyColor = new THREE.Color(0x77bbff).lerp(new THREE.Color(0x664433), t); // Bright blue to orange
-    } else { // Sunset to night
-      const t = (timeOfDay - 0.75) / 0.25;
-      fogColor = new THREE.Color(0xff9933).lerp(new THREE.Color(0x000010), t);
-      skyColor = new THREE.Color(0x442211).lerp(new THREE.Color(0x000005), t); // Dark orange to dark blue
+    // --- Sample the shared atmosphere keyframes (same timeline the sun uses) ---
+    sampleKeyframes(SKY_ZENITH_KEYFRAMES, timeOfDay, this._zenithColor);
+    sampleKeyframes(SKY_HORIZON_KEYFRAMES, timeOfDay, this._horizonColor);
+    const fogDensity = sampleKeyframes(FOG_DENSITY_KEYFRAMES, timeOfDay, null);
+
+    // --- Fog: SkySystem is the single fog owner after init ---
+    // Fog color IS the horizon color so distant terrain melts into the sky.
+    // Guarded on FogExp2 so a special-effect fog override (if one is ever
+    // active) is left alone.
+    if (this.scene.fog && this.scene.fog.isFogExp2) {
+      this.scene.fog.color.copy(this._horizonColor);
+      this.scene.fog.density = fogDensity;
     }
 
-    // --- Apply Colors ---
-    // Update fog (applies regardless of sky type)
-    if (this.scene.fog) {
-      this.scene.fog.color.copy(fogColor);
+    // --- Clear color tracks the horizon too (covers any undrawn background) ---
+    const renderer = this.getRenderer();
+    if (renderer) {
+      renderer.setClearColor(this._horizonColor);
     }
 
-    // Update background clear color (applies regardless of sky type)
-    if (nightFactor > 0) {
-      const bgColor = new THREE.Color(0x000014).lerp(this.originalBackgroundColor, 1 - nightFactor);
-      if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
-        this.engine.rendererManager.renderer.setClearColor(bgColor);
-      }
-    } else {
-      if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
-        this.engine.rendererManager.renderer.setClearColor(this.originalBackgroundColor);
-      }
-    }
-
-    // Update the actual sky object
+    // --- Update the actual sky object ---
     if (this.isFallbackSky) {
-      // Update the fallback material color
-      this.fallbackSkyMaterial.color.copy(skyColor);
-    } else {
-      // Update the standard THREE.Sky uniforms
+      // Repaint the gradient sphere (horizon -> zenith)
+      this.updateFallbackSkyGradient();
+    } else if (this.sky && this.sky.material && this.sky.material.uniforms) {
+      // Standard THREE.Sky path (currently unused - isFallbackSky is forced
+      // true at init). Kept functional but without per-frame log spam.
       const uniforms = this.sky.material.uniforms;
       const sunPosition = this.engine.systems.sun.getSunPosition();
       uniforms['sunPosition'].value.copy(sunPosition.normalize());
 
-      // Adjust sky parameters based on time (existing logic)
       if (timeOfDay < 0.25) {
         const t = timeOfDay / 0.25;
-        console.log('SkySystem.updateSkyColors: Setting toneMappingExposure for night to sunrise');
-        console.log('SkySystem.updateSkyColors: engine exists:', !!this.engine);
-        console.log('SkySystem.updateSkyColors: rendererManager exists:', !!this.engine?.rendererManager);
-        console.log('SkySystem.updateSkyColors: renderer exists:', !!this.engine?.rendererManager?.renderer);
-        if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
-          this.engine.rendererManager.renderer.toneMappingExposure = 0.1 + t * 0.4;
-        } else {
-          Logger.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
-        }
         uniforms['turbidity'].value = 0.5 + t * 7.5;
         uniforms['rayleigh'].value = 0.05 + t * 0.95;
         uniforms['mieCoefficient'].value = 0.001 + t * 0.024;
       } else if (timeOfDay < 0.5) {
         const t = (timeOfDay - 0.25) / 0.25;
-        console.log('SkySystem.updateSkyColors: Setting toneMappingExposure for sunrise to noon');
-        if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
-          this.engine.rendererManager.renderer.toneMappingExposure = 0.6;
-        } else {
-          Logger.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
-        }
         uniforms['turbidity'].value = 8;
         uniforms['rayleigh'].value = 1 + t * 0.5;
         uniforms['mieCoefficient'].value = 0.025;
       } else if (timeOfDay < 0.75) {
         const t = (timeOfDay - 0.5) / 0.25;
-        console.log('SkySystem.updateSkyColors: Setting toneMappingExposure for noon to sunset');
-        if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
-          this.engine.rendererManager.renderer.toneMappingExposure = 0.6;
-        } else {
-          Logger.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
-        }
         uniforms['turbidity'].value = 8 + t * 2;
         uniforms['rayleigh'].value = 1.5 - t * 0.5;
         uniforms['mieCoefficient'].value = 0.025;
       } else {
         const t = (timeOfDay - 0.75) / 0.25;
-        console.log('SkySystem.updateSkyColors: Setting toneMappingExposure for sunset to night');
-        if (this.engine.rendererManager && this.engine.rendererManager.renderer) {
-          this.engine.rendererManager.renderer.toneMappingExposure = 0.6 - t * 0.5;
-        } else {
-          Logger.warn('SkySystem.updateSkyColors: Cannot set toneMappingExposure - renderer unavailable');
-        }
         uniforms['turbidity'].value = 10 - t * 9.5;
         uniforms['rayleigh'].value = 1 - t * 0.95;
         uniforms['mieCoefficient'].value = 0.025 - t * 0.024;

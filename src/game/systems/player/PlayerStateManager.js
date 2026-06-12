@@ -58,12 +58,13 @@ export class PlayerStateManager extends System {
       landmarksVisited: 0,
       health: 100,
       maxHealth: 100,
-      maxSpeed: 700,
+      maxSpeed: 250,
       accelerationValue: 400,
+      speedMultiplier: 1,
       rotationSpeed: 3,
       spells: [],
       altitude: 350,
-      altitudeVelocity: 400,
+      altitudeVelocity: 0,
       currentSpell: 0,
       visitedLandmarks: new Set()
     };

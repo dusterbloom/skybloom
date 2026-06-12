@@ -358,8 +358,8 @@ export class SkyboxSystem extends System {
     // Calculate visibility values
     this.updateVisibility();
 
-    // Update scene fog based on time of day
-    this.updateSceneFog();
+    // NOTE: scene fog is owned exclusively by the atmosphere SkySystem.
+    // This system no longer writes scene.fog (updateSceneFog is a no-op).
 
     // Update shader uniforms if they exist
     this.updateShaderUniforms();
@@ -463,43 +463,10 @@ export class SkyboxSystem extends System {
   }
 
   updateSceneFog() {
-    if (!this.scene || !this.scene.fog) return;
-
-    // Adjust fog color and density based on time of day
-    let fogColor, fogDensity;
-
-    if (this.timeOfDay < 0.25) {
-      // Night to dawn - deep blue fog
-      const t = this.timeOfDay / 0.25;
-      fogColor = new THREE.Color().lerpColors(
-        new THREE.Color(0x0a0a1a), // Deep night blue
-        new THREE.Color(0x4a5a7a), // Dawn blue
-        t
-      );
-      fogDensity = 0.0004 + t * 0.0002; // Denser at night
-    } else if (this.timeOfDay < 0.75) {
-      // Dawn to dusk - lighter blue fog
-      const t = (this.timeOfDay - 0.25) / 0.5;
-      fogColor = new THREE.Color().lerpColors(
-        new THREE.Color(0x4a5a7a), // Dawn blue
-        new THREE.Color(0x87CEEB), // Day sky blue
-        t
-      );
-      fogDensity = 0.0003; // Standard density during day
-    } else {
-      // Dusk to night - transition to night colors
-      const t = (this.timeOfDay - 0.75) / 0.25;
-      fogColor = new THREE.Color().lerpColors(
-        new THREE.Color(0x87CEEB), // Day sky blue
-        new THREE.Color(0x0a0a1a), // Deep night blue
-        t
-      );
-      fogDensity = 0.0003 + t * 0.0003; // Getting denser toward night
-    }
-
-    // Apply fog settings to scene (but keep minimum density for atmosphere)
-    this.scene.fog.color.copy(fogColor);
-    this.scene.fog.density = Math.max(fogDensity, 0.00015); // Minimum fog for atmospheric depth
+    // Intentionally a no-op. Scene fog (color + density) is owned exclusively
+    // by the atmosphere SkySystem since the lighting/atmosphere rework - two
+    // systems writing scene.fog fought each other. Kept as a stub so any
+    // stale caller is harmless.
   }
 
   updateShaderUniforms() {

@@ -51,18 +51,16 @@ export class QuestManager extends System {
   }
 
   _update(delta, elapsed) {
-    const player = this.engine.systems.player?.localPlayer;
+    const player = this.engine.systems.get('playerState')?.localPlayer;
     if (!player || !player.position) return;
 
     if (this.lastPosition) {
-      const dist = player.position.distanceTo(this.lastPosition);
+      // Cap per-frame contribution so teleports/respawns don't credit the explore quest
+      const dist = Math.min(player.position.distanceTo(this.lastPosition), 200);
       this.totalDistance += dist;
       this.checkExploreObjectives(this.totalDistance);
     }
     this.lastPosition = player.position.clone();
-
-    // Check for quest completion and notify UI
-    this.checkQuestCompletion();
   }
 
   handleManaCollected(data) {
@@ -108,10 +106,13 @@ export class QuestManager extends System {
     this.activeQuests.forEach(quest => {
       if (quest.status !== 'active') return;
       const obj = quest.objectives.find(o => o.type === 'exploreDistance');
-      if (obj && distance >= obj.target) {
-        obj.current = distance;
-        console.log(`Quest progress: ${quest.name} - Distance: ${obj.current}/${obj.target}`);
-        this.checkObjectiveCompletion(quest, obj);
+      if (obj) {
+        // Keep progress live for the UI; clamp so current never exceeds target
+        obj.current = Math.min(distance, obj.target);
+        if (distance >= obj.target) {
+          console.log(`Quest progress: ${quest.name} - Distance: ${obj.current}/${obj.target}`);
+          this.checkObjectiveCompletion(quest, obj);
+        }
       }
     });
   }
@@ -122,28 +123,31 @@ export class QuestManager extends System {
       quest.status = 'completed';
       this.applyRewards(quest);
       // Notify UI
-      if (this.engine.systems.ui) {
-        this.engine.systems.ui.showQuestLog();
+      const ui = this.engine.systems.get('ui');
+      if (ui) {
+        ui.showQuestLog();
       }
       console.log(`Quest completed: ${quest.name}`);
     }
   }
 
   applyRewards(quest) {
-    const player = this.engine.systems.player?.localPlayer;
+    const player = this.engine.systems.get('playerState')?.localPlayer;
     if (!player) return;
 
     if (quest.rewards.mana) {
       player.mana += quest.rewards.mana;
-      if (this.engine.systems.ui) {
-        this.engine.systems.ui.updateManaDisplay(player.mana);
+      const ui = this.engine.systems.get('ui');
+      if (ui) {
+        ui.updateManaDisplay(player.mana);
       }
     }
 
     if (quest.rewards.unlockSpell) {
       // Call unlock on PlayerSpells
-      if (this.engine.systems.player.spells) {
-        this.engine.systems.player.spells.unlockNextSpell();
+      const playerSystem = this.engine.systems.get('player');
+      if (playerSystem && playerSystem.spells) {
+        playerSystem.spells.unlockNextSpell();
       }
     }
   }

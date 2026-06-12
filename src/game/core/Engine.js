@@ -28,6 +28,7 @@ import { CarpetTrailSystem } from "../systems/CarpetTrailSystem";
 import { LandmarkSystem } from "../systems/LandmarkSystem";
 import { MinimapSystem } from "../systems/MinimapSystem";
 import { AmbientLifeSystem } from "../systems/AmbientLifeSystem";
+import { ProceduralAudioSystem } from "../systems/ProceduralAudioSystem";
 import { IntroScreen } from "../ui/screens/IntroScreen";
 import { useGameState, GameStates } from '../state/gameState.js';
 import { Logger } from '../../utils/Logger.js';
@@ -168,6 +169,7 @@ export class Engine {
       .register(new AtmosphereSystem(this))
       .register(new AmbientLifeSystem(this))
       .register(new UISystem(this))
+      .register(new ProceduralAudioSystem(this))
       .register(new CarpetTrailSystem(this))
       .register(new LandmarkSystem(this));
 
@@ -211,6 +213,7 @@ export class Engine {
       "atmosphere", // Atmosphere system manages its own sun/moon/star subsystems
       "ambientLife", // Birds and butterflies for cozy world feel
       "ui", // UI needs player for HUD elements
+      "proceduralAudio", // Procedural WebAudio sound (wind, chimes, whooshes)
       "carpetTrail", // Trail system needs player
       "landmarks",   // Landmarks need world and player
       "minimap",    // Minimap needs world and player info

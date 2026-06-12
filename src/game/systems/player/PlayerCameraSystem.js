@@ -62,9 +62,23 @@ export class PlayerCameraSystem extends System {
       targetCameraPos.y = terrainY + cameraMinOffset;
     }
 
-    this.engine.camera.position.lerp(targetCameraPos, 0.1);
+    const camera = this.engine.camera;
+    camera.position.lerp(targetCameraPos, 1 - Math.exp(-6 * delta));
+
+    // Speed-based FOV: widens toward the cap, up to 1.3x for dives / Wind Glide
+    const targetFov = 75 + 14 * Math.min(player.velocity.length() / player.maxSpeed, 1.3);
+    const easedFov = THREE.MathUtils.lerp(camera.fov, targetFov, 1 - Math.exp(-3 * delta));
+    if (Math.abs(easedFov - camera.fov) > 0.01) {
+      camera.fov = easedFov;
+      camera.updateProjectionMatrix();
+    }
+
+    // Subtle roll into the bank; the up vector feeds lookAt, and must be rotated
+    // into the player's frame so the roll happens about the view direction
+    const roll = (player.bankAngle || 0) * 0.3;
+    camera.up.set(-Math.sin(roll), Math.cos(roll), 0).applyQuaternion(quaternion);
 
     const lookTarget = player.position.clone().add(rotatedLookAhead);
-    this.engine.camera.lookAt(lookTarget);
+    camera.lookAt(lookTarget);
   }
 }

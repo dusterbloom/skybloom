@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Logger } from '../../../utils/Logger.js';
+import { CLOUD_KEYFRAMES, sampleKeyframes } from '../../../config/SunConfig.js';
 
 /**
  * CloudSystem - Manages cloud formations and movement
@@ -16,11 +17,14 @@ export class CloudSystem {
     
     // Cloud collection
     this.clouds = [];
-    
+
     // Configuration - Enhanced for cozy world
     this.cloudCount = 100; // More clouds for a livelier sky
     this.cloudSpread = 3000; // Spread clouds wider
     this.cloudHeight = 600; // Lower clouds for more presence
+
+    // Scratch color for time-of-day tinting (clouds are unlit sprites)
+    this._cloudTint = new THREE.Color(0xffffff);
   }
   
   /**
@@ -140,7 +144,19 @@ export class CloudSystem {
    */
   update(delta) {
     if (!this.clouds || this.clouds.length === 0) return;
-    
+
+    // Tint clouds with the shared atmosphere keyframes: white by day, warm at
+    // golden hour/sunset, dark blue-grey at night (sprites are unlit, so
+    // without this they would glow white against the night sky).
+    const timeOfDay = this.atmosphereSystem.getTimeOfDay();
+    const cloudOpacity = sampleKeyframes(CLOUD_KEYFRAMES, timeOfDay, this._cloudTint);
+    for (const cloud of this.clouds) {
+      if (cloud.material) {
+        cloud.material.color.copy(this._cloudTint);
+        cloud.material.opacity = cloudOpacity;
+      }
+    }
+
     const player = this.engine.systems.player?.localPlayer;
     if (!player) {
       // If player not available, update clouds but don't position them relative to player
