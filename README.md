@@ -1,93 +1,97 @@
-# Magical Carpet
+# Vibe Carpet ✨
 
-An immersive 3D flying carpet adventure game where players soar through procedurally generated worlds, collect mana, and explore with friends.
+A chill 3D flying-carpet game for the browser. Soar over an infinite procedurally generated world, chase mana through the air, discover glowing landmarks, cast wind magic, and climb above the clouds — all in vanilla JavaScript + Three.js, no install required.
 
-![Magical Carpet Game](docs/images/screenshot.png)
+## 🌟 What it feels like
 
-## 🌟 Overview
+You throttle up, the field of view stretches, procedural wind rises in your ears, and a gold-to-magenta ribbon twists behind your carpet as you bank between islands. Dive to trade altitude for speed, pull up and bleed it off, ride out to a beacon on the horizon at golden hour. That's the game.
 
-Magical Carpet is a web-based 3D game built with Three.js that allows players to fly on magic carpets through beautiful, never-ending procedurally generated landscapes. Collect floating mana orbs, discover hidden locations, and enjoy the serene experience of flight.
+## 🚀 Features
 
-## 🚀 Key Features
+- **Infinite procedural world** — chunked simplex-noise terrain: oceans, beaches, forests, mountains, all streamed around you as you fly
+- **A real flight model** — banked turns, dive-to-gain-speed energy, speed-reactive camera FOV, frame-rate-independent physics, altitude ceiling at 2,200 (the cloud band starts at 600 — go through it)
+- **Day/night cycle with keyframed lighting** — golden-hour sunsets, readable moonlit nights with stars, time presets and a time-scale slider in the HUD
+- **Mana & quests** — collect mana orbs spawned along your flight path; four starter quests (collect, explore, visit landmarks, cast a spell)
+- **Four spells** — Wind Glide (speed boost), Aether Shield, Mana Reveal (scan), Essence Surge (collection multiplier); select with 1-4, cast with E
+- **Landmark beacons** — ancient ruins, magical circles, and crystal formations, each marked by a colored light pillar visible from kilometers away
+- **Procedural audio** — wind that scales with your speed, collection chimes, spell whooshes; synthesized live with WebAudio, zero audio assets
+- **Mobile support** — touch joystick, auto-forward, adaptive quality scaling
+- **Multiplayer scaffold** — optional socket.io server for flying with friends (single-player works fully without it)
 
-- **Infinite Procedural World**: Endless unique terrains to explore, from mountains to oceans
-- **Dynamic Weather & Day/Night Cycle**: Experience changing skies, cloud patterns, and time of day
-- **Flying Physics**: Intuitive and satisfying carpet controls for a magical flying experience
-- **Mana Collection**: Gather magical energy throughout the world
-- **Multiplayer Support**: Fly and explore with friends
-- **Atmospheric Environment**: Clouds, birds, trees, and natural elements bring the world to life
+## 🎮 Controls
 
-## 🎮 How to Play
+| Input | Action |
+|---|---|
+| **W** | Throttle up |
+| **S** | Gentle brake |
+| **Shift** | Hard brake |
+| **A / D** | Banked turn left / right |
+| **Mouse** (click canvas to lock) | Steer and pitch |
+| **Space** | Climb (and charge your trail) |
+| **Ctrl** | Descend |
+| **1–4** | Select spell |
+| **E** | Cast selected spell |
+| **M** | Toggle map |
+| **Esc** | Release mouse |
 
-1. Use WASD or arrow keys to control your carpet's direction
-2. Press Space to ascend and Shift to descend
-3. Fly near glowing blue orbs to collect mana
-4. Press E to interact with special locations
-5. Press Tab to see player stats and collected mana
+Tip: nose down to dive — you'll exceed the normal speed cap while you fall. That speed is yours to spend on the pull-out.
 
-## 🛠️ Setup & Installation
+## 🛠️ Run it
 
-1. Clone this repository
 ```bash
-git clone https://github.com/yourusername/magical-carpet.git
+git clone <this-repo>
 cd magical-carpet
+yarn install        # or npm install
+npm run dev         # Vite dev server → http://localhost:5173
 ```
 
-2. Install dependencies
+Optional multiplayer server (Express + socket.io):
+
 ```bash
-npm install
+npm start           # serves the built game + socket server
 ```
 
-3. Start the development server
-```bash
-npm run dev
-```
+Other scripts: `npm run build` (production build), `npm run preview` (preview the build).
 
-4. Open your browser and navigate to `http://localhost:5173`
+## 🧰 Built with
 
-## 🔧 Controls
+- [Three.js](https://threejs.org/) — rendering
+- [simplex-noise](https://github.com/jwagner/simplex-noise) — terrain generation
+- [Vite](https://vitejs.dev/) — dev server & bundling
+- [zustand](https://github.com/pmndrs/zustand) — game state
+- [socket.io](https://socket.io/) — optional multiplayer
+- WebAudio API — procedural sound
 
-- **W/↑**: Move forward
-- **S/↓**: Move backward
-- **A/←**: Turn left
-- **D/→**: Turn right
-- **Space**: Ascend
-- **Shift**: Descend
-- **E**: Interact
-- **Tab**: Open/close stats display
-- **M**: Toggle map
-- **Esc**: Pause game
+## 🏗️ Architecture
 
-## 🧰 Technologies Used
+A lightweight system architecture: every feature is a `System` registered by name with the engine and updated in a fixed order each frame (`engine.systems.get('world')` or `engine.systems.world` both resolve).
 
-- **Three.js**: 3D rendering engine
-- **JavaScript/ES6+**: Core programming language
-- **Simplex Noise**: Procedural terrain generation
-- **Vite**: Development environment and bundler
-- **WebGL**: GPU-accelerated graphics
+- `Engine` — game loop, renderer, quality management
+- `WorldSystem` — terrain chunks, mana nodes
+- `PlayerSystem` + `player/` — physics, input, camera, spells, state
+- `AtmosphereSystem` + `SunSystem` — keyframed sky, sun, moon, stars, clouds, fog
+- `SimpleTreeSystem` — vegetation with chunk-based lifecycle (bounded population)
+- `LandmarkSystem` — procedural points of interest with beacons
+- `QuestManager` — event-driven quest progression
+- `CarpetTrailSystem` — single-draw-call ribbon trail
+- `ProceduralAudioSystem` — WebAudio wind/chimes/whooshes
+- `NetworkManager` — optional multiplayer sync
+- `UISystem` — HUD, minimap, toasts
 
-## 🎮 Game Architecture
+In development, the engine is exposed as `window.gameEngine` — the whole game can be driven programmatically (state reads, synthetic input), which doubles as a primitive agent API.
 
-The game is built using a component-based architecture with the following systems:
+## 🗺️ Roadmap
 
-- **Engine**: Core game loop and systems management
-- **WorldSystem**: Procedural terrain generation and chunk management
-- **PlayerSystem**: Player controls, physics, and interactions
-- **AtmosphereSystem**: Sky, clouds, weather, and day/night cycle
-- **VegetationSystem**: Trees and plant life generation
-- **WaterSystem**: Oceans, rivers, and water effects
-- **UISystem**: HUD and user interface elements
-- **NetworkManager**: Multiplayer synchronization
+- **Ghost time-trials** — race recordings of your own (or shared) runs; multiplayer with zero servers
+- **P2P live races** — WebRTC (no central server) kart-style circuits woven through the procedural world
+- **Agent API** — formalize the programmatic interface so AI agents are first-class players: structured observations and actions over the same channel humans use. An open world for agents.
 
 ## 🙌 Credits
 
 Created with ❤️ by Dusterbloom
 
-Special thanks to:
-- [Three.js](https://threejs.org/) community
-- [Simplex Noise](https://github.com/jwagner/simplex-noise) library
-- All contributors and testers
+Thanks to the Three.js community and everyone who test-flies the carpet.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT — see [LICENSE](LICENSE).
