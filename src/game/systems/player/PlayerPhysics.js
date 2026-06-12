@@ -17,8 +17,8 @@ export class PlayerPhysics extends System {
     this.velocityAlignRate = 2.5; // Velocity-to-facing easing: 1 - exp(-rate * delta)
     this.maxAltitudeVelocity = 90;
     this.divePower = 150; // Extra forward accel per unit of nose-down forward.y
-    this.diveCapStretch = 0.25; // Speed cap stretches to 1.25x in a full dive
-    this.absoluteMaxSpeed = 300; // Hard ceiling regardless of boost/dive stacking
+    this.diveCapStretch = 0.4; // Speed cap stretches to 1.4x in a full dive
+    this.absoluteMaxSpeed = 420; // Hard ceiling regardless of boost/dive stacking
     this.climbDragCoefficient = 0.5; // Extra drag per unit of nose-up forward.y
     
     // Add reusable vector objects to eliminate allocations
