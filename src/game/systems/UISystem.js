@@ -1,6 +1,12 @@
 import { useGameState, GameStates } from '../state/gameState';
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
+import { ensureVibeTheme } from '../ui/theme.js';
+
+// Engineering readouts (fog, etc.) render only when explicitly enabled.
+const debugUI = () => {
+  try { return localStorage.getItem('vc.debug') === '1'; } catch (e) { return false; }
+};
 
 export class UISystem extends System {
   constructor(engine) {
@@ -60,6 +66,7 @@ export class UISystem extends System {
   }
 
   async _initialize() {
+    ensureVibeTheme();
     this.createBaseUI();
     this.createManaDisplay();
     // this.createHealthDisplay();
@@ -80,6 +87,7 @@ export class UISystem extends System {
   }
 
   createFogStatus() {
+    if (!debugUI()) return; // engineering readout, not player UI
     // Create fog status element
     this.fogStatusElement = document.createElement('div');
     this.fogStatusElement.style.position = 'absolute';
@@ -98,6 +106,7 @@ export class UISystem extends System {
   }
 
   startFogStatusUpdates() {
+    if (!debugUI()) return; // engineering readout, not player UI
     // Update fog status every 2 seconds
     this.fogStatusInterval = setInterval(() => {
       this.updateFogStatus();
@@ -158,41 +167,36 @@ export class UISystem extends System {
     this.container.style.pointerEvents = 'none';
     this.container.style.display = 'flex';
     this.container.style.flexDirection = 'column';
-    this.container.style.fontFamily = 'Arial, sans-serif';
+    this.container.style.fontFamily = 'var(--vc-font)';
     this.container.style.color = 'white';
   }
   
   createManaDisplay() {
-    // Create mana display in top-right corner
+    // Mana pill, top-right — Twilight Glass chip with the cyan accent
     const manaContainer = document.createElement('div');
+    manaContainer.className = 'vc-chip';
     manaContainer.style.position = 'absolute';
-    manaContainer.style.top = '20px';
-    manaContainer.style.right = '20px';
-    manaContainer.style.padding = '10px';
-    manaContainer.style.background = 'rgba(0, 0, 30, 0.7)';
-    manaContainer.style.borderRadius = '5px';
-    manaContainer.style.display = 'flex';
-    manaContainer.style.alignItems = 'center';
-    manaContainer.style.boxShadow = '0 0 10px rgba(0, 255, 255, 0.5)';
-    
+    manaContainer.style.top = '14px';
+    manaContainer.style.right = '14px';
+
     const manaIcon = document.createElement('div');
-    manaIcon.style.width = '20px';
-    manaIcon.style.height = '20px';
+    manaIcon.style.width = '8px';
+    manaIcon.style.height = '8px';
     manaIcon.style.borderRadius = '50%';
-    manaIcon.style.background = 'linear-gradient(135deg, #00ffff, #0066ff)';
-    manaIcon.style.marginRight = '10px';
-    manaIcon.style.boxShadow = '0 0 5px rgba(0, 255, 255, 0.8)';
-    
+    manaIcon.style.background = 'var(--vc-cyan)';
+    manaIcon.style.boxShadow = '0 0 6px var(--vc-cyan)';
+
     const manaText = document.createElement('div');
+    manaText.className = 'vc-num';
     manaText.textContent = '0';
-    manaText.style.fontSize = '18px';
-    manaText.style.fontWeight = 'bold';
-    manaText.style.textShadow = '0 0 5px rgba(0, 255, 255, 0.8)';
-    
+    manaText.style.fontSize = '15px';
+    manaText.style.fontWeight = '600';
+    manaText.style.transition = 'transform 0.2s ease';
+
     manaContainer.appendChild(manaIcon);
     manaContainer.appendChild(manaText);
     this.container.appendChild(manaContainer);
-    
+
     this.elements.manaText = manaText;
   }
   
@@ -1157,8 +1161,9 @@ export class UISystem extends System {
   }
   
   selectSpell(index) {
-    // Highlight selected spell and reset others
-    this.elements.spellSlots.forEach((slot, i) => {
+    // Highlight selected spell and reset others (slot UI is currently
+    // disabled — guard so spell selection never throws without it)
+    (this.elements.spellSlots || []).forEach((slot, i) => {
       if (i === index) {
         slot.element.style.transform = 'scale(1.1)';
         slot.indicator.style.boxShadow = `0 0 10px ${slot.data.color}`;
@@ -1414,8 +1419,13 @@ export class UISystem extends System {
     toggleButton.style.pointerEvents = 'auto';
     toggleButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.3)';
     toggleButton.style.pointerEvents = 'auto';
-    toggleButton.innerHTML = '⏱️';
-    toggleButton.style.fontSize = '20px';
+    toggleButton.textContent = '◔';
+    toggleButton.style.fontSize = '18px';
+    toggleButton.style.fontFamily = 'var(--vc-font)';
+    toggleButton.style.color = 'var(--vc-ink)';
+    toggleButton.style.background = 'var(--vc-panel)';
+    toggleButton.style.border = '1px solid var(--vc-border)';
+    toggleButton.title = 'Time of day';
     
     // Create container for time controls using modern UI style based on mockup
     const container = document.createElement('div');
@@ -1462,58 +1472,27 @@ export class UISystem extends System {
     presetTitle.style.fontWeight = 'bold';
     container.appendChild(presetTitle);
     
-    // Time presets with icons
+    // Time presets — quiet text buttons on the glass tokens
     const presets = [
-      { label: 'Midnight', hour: 0, minute: 0, icon: '🌙' },
-      { label: 'Sunrise', hour: 6, minute: 0, icon: '🌅' },
-      { label: 'Noon', hour: 12, minute: 0, icon: '☀️' },
-      { label: 'Sunset', hour: 18, minute: 0, icon: '🌇' }
+      { label: 'Night', hour: 0, minute: 0 },
+      { label: 'Dawn', hour: 6, minute: 0 },
+      { label: 'Noon', hour: 12, minute: 0 },
+      { label: 'Dusk', hour: 18, minute: 0 }
     ];
-    
+
     const presetContainer = document.createElement('div');
     presetContainer.style.display = 'grid';
     presetContainer.style.gridTemplateColumns = 'repeat(4, 1fr)';
     presetContainer.style.gap = '8px';
     presetContainer.style.marginBottom = '15px';
-    
+
     presets.forEach(preset => {
-      const button = document.createElement('div');
-      button.style.display = 'flex';
-      button.style.flexDirection = 'column';
-      button.style.alignItems = 'center';
-      button.style.justifyContent = 'center';
-      button.style.backgroundColor = '#1c1e21';
-      button.style.borderRadius = '8px';
-      button.style.padding = '8px';
-      button.style.cursor = 'pointer';
-      button.style.transition = 'all 0.2s';
-      
-      // Icon
-      const icon = document.createElement('div');
-      icon.textContent = preset.icon;
-      icon.style.fontSize = '24px';
-      icon.style.marginBottom = '4px';
-      button.appendChild(icon);
-      
-      // Label below icon
-      if (preset.label !== 'Sunrise' && preset.label !== 'Sunset') {
-        const label = document.createElement('div');
-        label.textContent = preset.label;
-        label.style.fontSize = '10px';
-        button.appendChild(label);
-      }
-      
-      // Hover effect
-      button.addEventListener('mouseover', () => {
-        button.style.backgroundColor = '#2c2e31';
-        button.style.transform = 'translateY(-2px)';
-      });
-      
-      button.addEventListener('mouseout', () => {
-        button.style.backgroundColor = '#1c1e21';
-        button.style.transform = 'translateY(0)';
-      });
-      
+      const button = document.createElement('button');
+      button.className = 'vc-btn-ghost';
+      button.textContent = preset.label;
+      button.style.padding = '7px 6px';
+      button.style.fontSize = '12px';
+
       // Click handler
       button.addEventListener('click', () => {
         const atmosphereSystem = this.engine.systemManager.get('atmosphere');
@@ -1521,7 +1500,7 @@ export class UISystem extends System {
           atmosphereSystem.setTime(preset.hour, preset.minute);
         }
       });
-      
+
       presetContainer.appendChild(button);
     });
     
