@@ -1,6 +1,6 @@
 # Vibe Carpet ✨
 
-A chill 3D flying-carpet game for the browser. Soar over an infinite procedurally generated world, chase mana through the air, discover glowing landmarks, cast wind magic, and climb above the clouds — all in vanilla JavaScript + Three.js, no install required.
+A chill 3D flying-carpet game that plays entirely in your browser. Soar over an infinite procedurally generated world, chase mana through the air, discover glowing landmarks, cast wind magic, and climb above the clouds — vanilla JavaScript + Three.js, no game engine, no binaries.
 
 ## 🌟 What it feels like
 
@@ -38,6 +38,8 @@ Tip: nose down to dive — you'll exceed the normal speed cap while you fall. Th
 
 ## 🛠️ Run it
 
+Requires Node 18+.
+
 ```bash
 git clone <this-repo>
 cd magical-carpet
@@ -45,13 +47,16 @@ yarn install        # or npm install
 npm run dev         # Vite dev server → http://localhost:5173
 ```
 
-Optional multiplayer server (Express + socket.io):
+Optional multiplayer server (Express + socket.io). Build first — it serves `dist/`:
 
 ```bash
-npm start           # serves the built game + socket server
+npm run build
+npm start           # http://localhost:4000 (game + socket server)
 ```
 
-Other scripts: `npm run build` (production build), `npm run preview` (preview the build).
+For LAN play (phones, friends on your network), copy `.env.example` to `.env` — `VITE_AUTO_IP=true` makes clients connect back to whatever host they loaded the page from.
+
+Other scripts: `npm run preview` (preview the production build).
 
 ## 🧰 Built with
 
