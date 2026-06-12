@@ -49,8 +49,16 @@ export class UISystem extends System {
 
     // Fog status display
     this.fogStatusElement = null;
+
+    // Quest tracker toggle (Q) — panel is non-blocking, gameplay never pauses
+    this._questKeyHandler = (e) => {
+      if (e.code === 'KeyQ' && !e.repeat && this.engine.gameStarted) {
+        this.showQuestLog();
+      }
+    };
+    window.addEventListener('keydown', this._questKeyHandler);
   }
-  
+
   async _initialize() {
     this.createBaseUI();
     this.createManaDisplay();
@@ -1179,33 +1187,47 @@ export class UISystem extends System {
     }
   }
   
-  showMessage(text, duration = 2500) {
-    // Lightweight toast; reused element, callers fire-and-forget
-    if (!this.elements.messageToast) {
-      const toast = document.createElement('div');
-      toast.style.position = 'fixed';
-      toast.style.bottom = '12%';
-      toast.style.left = '50%';
-      toast.style.transform = 'translateX(-50%)';
-      toast.style.padding = '10px 22px';
-      toast.style.borderRadius = '18px';
-      toast.style.background = 'rgba(20, 30, 60, 0.75)';
-      toast.style.color = '#fff';
-      toast.style.fontFamily = 'var(--app-font, sans-serif)';
-      toast.style.fontSize = '16px';
-      toast.style.pointerEvents = 'none';
-      toast.style.opacity = '0';
-      toast.style.transition = 'opacity 0.3s ease';
-      toast.style.zIndex = '1001';
-      document.body.appendChild(toast);
-      this.elements.messageToast = toast;
+  showMessage(text, duration = 3500, accentColor = '#66ffee') {
+    // Stacking corner toasts — never centered, never input-blocking.
+    if (!this.elements.toastStack) {
+      const stack = document.createElement('div');
+      stack.style.position = 'fixed';
+      stack.style.top = '70px';
+      stack.style.right = '12px';
+      stack.style.display = 'flex';
+      stack.style.flexDirection = 'column';
+      stack.style.alignItems = 'flex-end';
+      stack.style.gap = '8px';
+      stack.style.pointerEvents = 'none';
+      stack.style.zIndex = '1001';
+      document.body.appendChild(stack);
+      this.elements.toastStack = stack;
     }
-    const toast = this.elements.messageToast;
+    const stack = this.elements.toastStack;
+    while (stack.children.length >= 4) stack.removeChild(stack.firstChild);
+
+    const toast = document.createElement('div');
+    toast.style.background = 'rgba(20, 30, 60, 0.78)';
+    toast.style.color = '#fff';
+    toast.style.padding = '8px 14px';
+    toast.style.borderRadius = '10px';
+    toast.style.borderLeft = `3px solid ${accentColor}`;
+    toast.style.fontFamily = 'var(--app-font, sans-serif)';
+    toast.style.fontSize = '14px';
+    toast.style.maxWidth = '280px';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(12px)';
+    toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
     toast.textContent = text;
-    toast.style.opacity = '1';
-    clearTimeout(this._messageToastTimer);
-    this._messageToastTimer = setTimeout(() => {
+    stack.appendChild(toast);
+    requestAnimationFrame(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(0)';
+    });
+    setTimeout(() => {
       toast.style.opacity = '0';
+      toast.style.transform = 'translateX(12px)';
+      setTimeout(() => toast.remove(), 300);
     }, duration);
   }
 
@@ -1771,24 +1793,91 @@ export class UISystem extends System {
   }
 
   showQuestLog() {
-    // Minimal implementation: log active quests to console or show simple alert
-    // In full implementation, this would open a quest log UI panel
+    // Toggleable quest tracker panel — non-blocking (no dialogs, no pointer
+    // capture), refreshes at 1 Hz while open.
     const questManager = this.engine.systemManager.get('questManager');
-    if (questManager) {
-      const activeQuests = questManager.getActiveQuests();
-      Logger.info('Quest Log:', activeQuests);
-      // For now, show a simple alert with quest status
-      const status = activeQuests.map(q => `${q.name}: ${q.status}`).join('\n');
-      alert(`Quest Log:\n${status}`);
-    } else {
+    if (!questManager) {
       Logger.warn('No quest manager found');
+      return;
     }
+
+    if (this.elements.questPanel && this.elements.questPanel.style.display !== 'none') {
+      this.elements.questPanel.style.display = 'none';
+      clearInterval(this._questPanelTimer);
+      return;
+    }
+
+    if (!this.elements.questPanel) {
+      const panel = document.createElement('div');
+      panel.style.position = 'fixed';
+      panel.style.top = '170px';
+      panel.style.left = '12px';
+      panel.style.minWidth = '210px';
+      panel.style.maxWidth = '260px';
+      panel.style.background = 'rgba(15, 22, 40, 0.72)';
+      panel.style.borderRadius = '10px';
+      panel.style.padding = '10px 12px';
+      panel.style.color = '#fff';
+      panel.style.fontFamily = 'var(--app-font, sans-serif)';
+      panel.style.fontSize = '13px';
+      panel.style.pointerEvents = 'none';
+      panel.style.zIndex = '1000';
+      document.body.appendChild(panel);
+      this.elements.questPanel = panel;
+    }
+
+    const panel = this.elements.questPanel;
+    const render = () => {
+      const quests = questManager.getActiveQuests();
+      panel.innerHTML = '';
+      const title = document.createElement('div');
+      title.textContent = 'Quests — Q to close';
+      title.style.opacity = '0.65';
+      title.style.marginBottom = '6px';
+      title.style.fontSize = '11px';
+      title.style.letterSpacing = '0.08em';
+      title.style.textTransform = 'uppercase';
+      panel.appendChild(title);
+      quests.forEach(q => {
+        const done = q.status === 'completed';
+        const obj = q.objectives && q.objectives[0];
+        const row = document.createElement('div');
+        row.style.marginBottom = '7px';
+        const label = document.createElement('div');
+        label.textContent = (done ? '✓ ' : '') + q.name;
+        label.style.opacity = done ? '0.55' : '1';
+        row.appendChild(label);
+        if (!done && obj && obj.target > 1) {
+          const barWrap = document.createElement('div');
+          barWrap.style.height = '4px';
+          barWrap.style.borderRadius = '2px';
+          barWrap.style.background = 'rgba(255,255,255,0.15)';
+          barWrap.style.marginTop = '3px';
+          const bar = document.createElement('div');
+          bar.style.height = '100%';
+          bar.style.borderRadius = '2px';
+          bar.style.width = Math.min(100, (obj.current / obj.target) * 100) + '%';
+          bar.style.background = '#66ffee';
+          barWrap.appendChild(bar);
+          row.appendChild(barWrap);
+        }
+        panel.appendChild(row);
+      });
+    };
+    render();
+    panel.style.display = 'block';
+    clearInterval(this._questPanelTimer);
+    this._questPanelTimer = setInterval(render, 1000);
   }
 
   /**
    * Clean up resources when component is destroyed
    */
   destroy() {
+    window.removeEventListener('keydown', this._questKeyHandler);
+    clearInterval(this._questPanelTimer);
+    if (this.elements.toastStack) this.elements.toastStack.remove();
+    if (this.elements.questPanel) this.elements.questPanel.remove();
     // Clean up state subscription
     if (this.unsubscribeState) {
       this.unsubscribeState();

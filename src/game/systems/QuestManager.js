@@ -122,10 +122,11 @@ export class QuestManager extends System {
     if (allComplete) {
       quest.status = 'completed';
       this.applyRewards(quest);
-      // Notify UI
+      // Non-blocking corner toast; Q toggles the full tracker panel
       const ui = this.engine.systems.get('ui');
-      if (ui) {
-        ui.showQuestLog();
+      if (ui && typeof ui.showMessage === 'function') {
+        const reward = quest.rewards && quest.rewards.mana ? ` — +${quest.rewards.mana} mana` : '';
+        ui.showMessage(`✦ Quest complete: ${quest.name}${reward}`, 4500, '#ffcc66');
       }
       console.log(`Quest completed: ${quest.name}`);
     }
