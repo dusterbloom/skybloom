@@ -2,7 +2,7 @@
 
 An immersive 3D flying carpet adventure game where players soar through procedurally generated worlds, collect mana, and explore with friends.
 
-![Magical Carpet Game](docs/images/screenshot.png)
+![Magical Carpet Game](https://github.com/dusterbloom/magical-carpet/blob/main/screenshots/Screenshot%202026-06-12%20231859.png)
 
 ## 🌟 Overview
 
