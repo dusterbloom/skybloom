@@ -58,7 +58,7 @@ export class PlayerStateManager extends System {
       landmarksVisited: 0,
       health: 100,
       maxHealth: 100,
-      maxSpeed: 250,
+      maxSpeed: 210,
       accelerationValue: 400,
       speedMultiplier: 1,
       rotationSpeed: 3,

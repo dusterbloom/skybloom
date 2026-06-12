@@ -1,5 +1,6 @@
 [
   {
+    "id": "wind_glide",
     "name": "Wind Glide",
     "manaCost": 10,
     "cooldown": 30,
@@ -19,6 +20,7 @@
     "integration": ["PlayerPhysics"]
   },
   {
+    "id": "aether_shield",
     "name": "Aether Shield",
     "manaCost": 15,
     "cooldown": 60,
@@ -38,6 +40,7 @@
     "integration": ["PlayerSystem"]
   },
   {
+    "id": "mana_reveal",
     "name": "Mana Reveal",
     "manaCost": 5,
     "cooldown": 45,
@@ -59,6 +62,7 @@
     "integration": ["WorldSystem", "LandmarkSystem"]
   },
   {
+    "id": "essence_surge",
     "name": "Essence Surge",
     "manaCost": 20,
     "cooldown": 120,

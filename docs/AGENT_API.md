@@ -418,7 +418,8 @@ hand-written observation object and no game running.
    weave. With damping you can raise `Kp` and corner harder. (Store `prevBearing`
    between ticks; this is the one place your bot wants memory.)
 3. **Exploit dive energy on descending gates.** The carpet's speed cap is
-   pitch-aware: nose-down flight stretches the effective cap by up to about 1.4 ×
+   pitch-aware: nose-down flight stretches the effective cap by up to about 1.25 ×
+   (boost and dive stacking is bounded by an absolute 300 u/s ceiling)
    `maxSpeed` (toward `limits.boostedMaxSpeed`). When `nextGates[0].elevation` is
    strongly negative, dive steeper than the direct line, bank the surplus speed,
    and shallow out through the gate. Watch `altitudeAboveTerrain` while you do it —

@@ -17,7 +17,8 @@ export class PlayerPhysics extends System {
     this.velocityAlignRate = 2.5; // Velocity-to-facing easing: 1 - exp(-rate * delta)
     this.maxAltitudeVelocity = 90;
     this.divePower = 150; // Extra forward accel per unit of nose-down forward.y
-    this.diveCapStretch = 0.4; // Speed cap stretches to 1.4x in a full dive
+    this.diveCapStretch = 0.25; // Speed cap stretches to 1.25x in a full dive
+    this.absoluteMaxSpeed = 300; // Hard ceiling regardless of boost/dive stacking
     this.climbDragCoefficient = 0.5; // Extra drag per unit of nose-up forward.y
     
     // Add reusable vector objects to eliminate allocations
@@ -102,6 +103,9 @@ export class PlayerPhysics extends System {
     if (forwardY < 0) {
       speedCap *= 1 + this.diveCapStretch * Math.min(1, -forwardY * 2);
     }
+    // Boosts and dives stack multiplicatively; keep the game controllable
+    // by bounding the stack at an absolute ceiling.
+    speedCap = Math.min(speedCap, this.absoluteMaxSpeed);
     const horizontalSpeed = Math.sqrt(player.velocity.x * player.velocity.x + player.velocity.z * player.velocity.z);
     if (horizontalSpeed > speedCap) {
       const capScale = speedCap / horizontalSpeed;
