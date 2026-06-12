@@ -2,6 +2,8 @@
 
 A chill 3D flying-carpet game that plays entirely in your browser. Soar over an infinite procedurally generated world, chase mana through the air, discover glowing landmarks, cast wind magic, and climb above the clouds — vanilla JavaScript + Three.js, no game engine, no binaries.
 
+![SkyBloom screenshot](https://github.com/dusterbloom/magical-carpet/blob/main/screenshots/Screenshot%202026-06-12%20231859.png)
+
 ## 🌟 What it feels like
 
 You throttle up, the field of view stretches, procedural wind rises in your ears, and a gold-to-magenta ribbon twists behind your carpet as you bank between islands. Dive to trade altitude for speed, pull up and bleed it off, ride out to a beacon on the horizon at golden hour. That's the game.
