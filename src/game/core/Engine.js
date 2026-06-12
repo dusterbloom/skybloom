@@ -31,6 +31,7 @@ import { AmbientLifeSystem } from "../systems/AmbientLifeSystem";
 import { ProceduralAudioSystem } from "../systems/ProceduralAudioSystem";
 import { AgentAPISystem } from "../systems/AgentAPISystem";
 import { RaceSystem } from "../systems/RaceSystem";
+import { OnboardingHints } from "../ui/OnboardingHints.js";
 import { IntroScreen } from "../ui/screens/IntroScreen";
 import { useGameState, GameStates } from '../state/gameState.js';
 import { Logger } from '../../utils/Logger.js';
@@ -175,7 +176,8 @@ export class Engine {
       .register(new CarpetTrailSystem(this))
       .register(new LandmarkSystem(this))
       .register(new AgentAPISystem(this))
-      .register(new RaceSystem(this));
+      .register(new RaceSystem(this))
+      .register(new OnboardingHints(this));
 
     // Conditionally register MinimapSystem based on flag
     if (this.minimapEnabled !== false) {
@@ -223,7 +225,8 @@ export class Engine {
       "carpetTrail", // Trail system needs player
       "landmarks",   // Landmarks need world and player
       "minimap",    // Minimap needs world and player info
-      "questManager"
+      "questManager",
+      "onboarding"  // Teach-by-doing hint chips on first flight
     ];
 
     this.systemManager.setUpdateOrder(initOrder);
@@ -332,6 +335,12 @@ export class Engine {
       useGameState.getState().setGameState(GameStates.PLAYING);
     });
 
+    // Golden hour behind the title screen (atmosphere integrates timeOfDay forward from here)
+    const menuAtmosphere = this.systemManager.get('atmosphere');
+    if (menuAtmosphere && typeof menuAtmosphere.timeOfDay === 'number') {
+      menuAtmosphere.timeOfDay = 0.72;
+    }
+
     // Show intro screen and transition to INTRO state
     this.introScreen.show();
     useGameState.getState().setGameState(GameStates.INTRO);
@@ -362,6 +371,28 @@ export class Engine {
     if (!this.isRunning) return;
 
     requestAnimationFrame(this.animate.bind(this));
+
+    // Menu cinematic: a slow golden-hour orbit of the live world behind the
+    // title screen. Renders only atmosphere/water — no gameplay simulation.
+    if (this.isVisible && !this.gameStarted && this.introScreen && this.introScreen.visible && !this._menuCinematicDisabled) {
+      try {
+        this.delta = Math.min(this.clock.getDelta(), this.maxDeltaTime);
+        this.elapsed = this.clock.getElapsedTime();
+        this._menuCinematicActive = true;
+        const t = this.elapsed * 0.02;
+        this.camera.position.set(Math.cos(t) * 900, 220 + Math.sin(t * 0.7) * 40, Math.sin(t) * 900);
+        this.camera.lookAt(0, 40, 0);
+        const menuAtmo = this.systemManager.get('atmosphere');
+        if (menuAtmo && typeof menuAtmo.update === 'function') menuAtmo.update(this.delta, this.elapsed);
+        const menuWater = this.systemManager.get('water');
+        if (menuWater && typeof menuWater.update === 'function') menuWater.update(this.delta, this.elapsed);
+        this.rendererManager.render(this.scene, this.camera);
+      } catch (err) {
+        this._menuCinematicDisabled = true;
+        this._menuCinematicActive = false;
+      }
+      return;
+    }
 
     // Skip updates if tab is not visible or game not started
     if (!this.isVisible || !this.gameStarted) return;
