@@ -11,7 +11,7 @@ Improve the color transitions of the sky and lighting throughout the day/night c
 - `src/game/systems/atmosphere/SunSystem.js` – (method: `updateSunLight()` newly created, `updateSunAppearance()` modified)
 
 **Branch:** slow-mode  
-**Project Path:** `C:\Users\PC\Desktop\magical-carpet`
+**Project Path:** `C:\Users\PC\Desktop\skybloom`
 
 ---
 
@@ -64,7 +64,7 @@ Reduced star brightness to avoid overpowering the night sky:
   - Night-time settings produce a darker, cooler ambiance
   - Sunrise and sunset have warm, orange tones
   - Daytime has bright, clear lighting
-  - Changes have been tested on branch _slow-mode_ in the `magical-carpet` project
+  - Changes have been tested on branch _slow-mode_ in the `skybloom` project
 
 - **Commit Message:**  
   `feat: Improved day-night cycle with enhanced sky and lighting color transitions`

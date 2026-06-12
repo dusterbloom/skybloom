@@ -51,7 +51,7 @@ A 3D web-based flying carpet game built with Three.js featuring multiplayer supp
 ### Installation
 ```bash
 git clone <repository-url>
-cd magical-carpet
+cd skybloom
 npm install
 ```
 

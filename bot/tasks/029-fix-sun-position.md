@@ -4,7 +4,7 @@
 The sun is incorrectly rendering with a green line connecting it to the player. This issue appears to be caused by the sun's position being tied to the player's position rather than being fixed in world space following the proper day/night cycle.
 
 **Files**:
-- `C:\Users\PC\Desktop\magical-carpet\src\game\systems\AtmosphereSystem.js`
+- `C:\Users\PC\Desktop\skybloom\src\game\systems\AtmosphereSystem.js`
 
 ## 2. Quick Plan
 1. Remove any code that ties the sun's position to the player

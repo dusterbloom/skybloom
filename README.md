@@ -2,7 +2,7 @@
 
 A chill 3D flying-carpet game that plays entirely in your browser. Soar over an infinite procedurally generated world, chase mana through the air, discover glowing landmarks, cast wind magic, and climb above the clouds — vanilla JavaScript + Three.js, no game engine, no binaries.
 
-![SkyBloom screenshot](https://github.com/dusterbloom/magical-carpet/blob/main/screenshots/image.png)
+![SkyBloom screenshot](https://github.com/dusterbloom/skybloom/blob/main/screenshots/image.png)
 
 ##  What it feels like
 
@@ -44,7 +44,7 @@ Requires Node 18+.
 
 ```bash
 git clone <this-repo>
-cd magical-carpet
+cd skybloom
 yarn install        # or npm install
 npm run dev         # Vite dev server → http://localhost:5173
 ```

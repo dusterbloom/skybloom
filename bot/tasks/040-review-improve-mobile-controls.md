@@ -6,7 +6,7 @@
 - Primary files: `src/game/systems/player/PlayerInput.js`, `src/game/core/InputManager.js`, and `src/game/systems/PlayerSystem.js`.
 - Fixed issues with device orientation handlers and touch input processing.
 
-**Branch:** slow-mode (located at `C:\Users\PC\Desktop\magical-carpet`)
+**Branch:** slow-mode (located at `C:\Users\PC\Desktop\skybloom`)
 
 **Context:**  
 - The game runs at 30 fps on mobile, indicating solid performance.

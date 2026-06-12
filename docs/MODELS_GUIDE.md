@@ -50,7 +50,7 @@
 1. Go to Poly Pizza: https://poly.pizza
 2. Search: "tree low poly"
 3. Download 3-5 different tree models (GLB format)
-4. Save to: `/home/user/magical-carpet/public/assets/models/`
+4. Save to: `/home/user/skybloom/public/assets/models/`
 
 **Example models to search for:**
 - "pine tree low poly"
@@ -62,13 +62,13 @@
 ### Step 2: Create Models Directory
 
 ```bash
-cd /home/user/magical-carpet
+cd /home/user/skybloom
 mkdir -p public/assets/models
 ```
 
 ### Step 3: Add Model Paths to SimpleTreeSystem
 
-Edit: `/home/user/magical-carpet/src/game/systems/SimpleTreeSystem.js`
+Edit: `/home/user/skybloom/src/game/systems/SimpleTreeSystem.js`
 
 Find this section (around line 23):
 ```javascript

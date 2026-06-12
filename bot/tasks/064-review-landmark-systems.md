@@ -2,7 +2,7 @@
 
 ## 1. Task & Context
 **Task**: Review the landmark systems to verify if it's working correctly.
-**Context**: We're working on the "slow-mode" branch in the magical-carpet project. We need to evaluate if the landmark systems are functioning as expected.
+**Context**: We're working on the "slow-mode" branch in the skybloom project. We need to evaluate if the landmark systems are functioning as expected.
 
 ## 2. Quick Plan
 **How**: 

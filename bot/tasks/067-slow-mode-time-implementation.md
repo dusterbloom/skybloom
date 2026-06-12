@@ -2,7 +2,7 @@
 
 ## 1. Task & Context
 **Task**: Modify the game's time system so that time in the game progresses at the same rate as real-life time.
-**Context**: Working on the "slow-mode" branch in the magical-carpet project. Currently, time in the game is accelerated (default timeScale = 1.0 represents 360x real-time, where 4 minutes of game time = 1 day). We need to modify the time scale to match real world time.
+**Context**: Working on the "slow-mode" branch in the skybloom project. Currently, time in the game is accelerated (default timeScale = 1.0 represents 360x real-time, where 4 minutes of game time = 1 day). We need to modify the time scale to match real world time.
 
 ## 2. Quick Plan
 **How**: 

@@ -32,7 +32,7 @@
 **Step 1: Create Service Worker**
 ```javascript
 // public/sw.js
-const CACHE_NAME = 'magical-carpet-v1';
+const CACHE_NAME = 'skybloom-v1';
 const STATIC_CACHE = 'static-v1';
 const DYNAMIC_CACHE = 'dynamic-v1';
 

@@ -6,7 +6,7 @@
 **Location:**  
 - Primary file: `src/game/systems/atmosphere/StarSystem.js`
 
-**Branch:** slow-mode (located at `C:\Users\PC\Desktop\magical-carpet`)
+**Branch:** slow-mode (located at `C:\Users\PC\Desktop\skybloom`)
 
 **Context:**  
 - The current implementation causes stars to appear in two sharp steps, giving the impression of a sudden onset rather than a gradual fade-in.

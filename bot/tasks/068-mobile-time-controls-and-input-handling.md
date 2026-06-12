@@ -6,7 +6,7 @@
 2. Ensure boost and joystick inputs can work simultaneously on mobile as they do on desktop
 
 **Context**: 
-Working on the "slow-mode" branch in the magical-carpet project. Currently, the time controls are visible on mobile but take up valuable screen space. Also, there appears to be an issue where boost and joystick inputs don't work concurrently on mobile like they do on desktop.
+Working on the "slow-mode" branch in the skybloom project. Currently, the time controls are visible on mobile but take up valuable screen space. Also, there appears to be an issue where boost and joystick inputs don't work concurrently on mobile like they do on desktop.
 
 ## 2. Quick Plan
 **How**:

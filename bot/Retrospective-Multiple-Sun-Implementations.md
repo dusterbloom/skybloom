@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document examines how we ended up with three separate sun implementations in the magical-carpet project and how to avoid similar issues in future development.
+This document examines how we ended up with three separate sun implementations in the skybloom project and how to avoid similar issues in future development.
 
 ## The Problem
 

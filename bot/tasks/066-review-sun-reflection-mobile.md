@@ -2,7 +2,7 @@
 
 ## 1. Task & Context
 **Task**: Review the sun implementation focusing on alpha/reflection glitches on tablet devices.
-**Context**: Working on the "slow-mode" branch in the magical-carpet project. Recent changes to the sun's alpha or reflection on water are causing glitches specifically on tablet devices, while working perfectly on web and Android phones.
+**Context**: Working on the "slow-mode" branch in the skybloom project. Recent changes to the sun's alpha or reflection on water are causing glitches specifically on tablet devices, while working perfectly on web and Android phones.
 
 ## 2. Quick Plan
 **How**: 
