@@ -425,6 +425,51 @@ hand-written observation object and no game running.
    and shallow out through the gate. Watch `altitudeAboveTerrain` while you do it —
    the terrain override exists for a reason.
 
+## Streaming transport (WebSocket) — bots in any language
+
+External agents (a local SLM, a cloud-API middleman, any process) don't poll —
+the game **streams** to them. Architecture: browsers can't listen on sockets, so
+the GAME is the WebSocket *client* and your agent process runs a tiny WS
+*server*. Connect either way:
+
+```js
+agentAPI.connectAgent('ws://localhost:8765')   // from DevTools
+```
+```
+http://localhost:5173/?agent=ws://localhost:8765   // auto-connect at boot
+```
+
+Once connected the game pushes one message per observation tick (20 Hz, the
+latency buffer **is** applied — fairness travels with the data):
+
+```json
+{ "type": "observation", "payload": { ...same schema as observe()... } }
+```
+
+Your process answers whenever it wants (messages are applied through the same
+10 Hz action ticks as `act()`):
+
+| You send | Effect |
+|---|---|
+| `{"type": "act", "payload": {throttle, brake, turn, climb, ...}}` | queued for the next action tick |
+| `{"type": "start-race", "seed": 123}` | starts a race |
+| `{"type": "release"}` | hands controls back to the human |
+| `{"type": "config", "payload": {...}}` | setConfig (tighten-only) |
+
+A `{"type": "hello"}` frame with the current config arrives on connect.
+**Safety invariant:** if the socket drops, the game immediately releases the
+virtual pad — a dead agent can never leave the carpet pinned. Reconnects are
+attempted 3 times, then it stays with the human. `agentAPI.transportStatus()`
+reports `connecting | connected | reconnecting | disconnected`.
+
+A complete reference pilot lives at [`examples/agent_pilot.py`](../examples/agent_pilot.py)
+(`pip install websockets`, run it, open the game with `?agent=...`). It also
+shows the **two-tier pattern** for language-model pilots: a reflex loop answers
+every observation with simple math at full rate, while the slow model (Ollama,
+llama.cpp, a cloud API) runs beside it as a *planner*, re-reading the latest
+observation every few seconds and adjusting the reflex layer's goals. Model
+latency then costs strategy freshness — never control of the carpet.
+
 ## Limits and roadmap
 
 Current, honestly stated:
@@ -434,12 +479,9 @@ Current, honestly stated:
   pipelines that assume replaying inputs reproduces a run.
 - **Cooperative enforcement.** Rate limits, latency, and pilot tags are applied
   client-side. A modified client can cheat. Local and friendly competition only.
-- **Browser-bound transport.** Today you drive via `window.agentAPI` or the
-  postMessage bridge; an out-of-process bot needs a page or extension as a shim.
 
 Roadmap, in rough order:
 
-- **WebSocket transport** — observe/act over a socket; bots in any language, no shim.
 - **Replay re-simulation** — deterministic input logs re-run by a verifier, making
   pilot tags and times trustworthy.
 - **Server-verified leaderboards** — ranked seeds where only verified runs count.

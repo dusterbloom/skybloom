@@ -77,6 +77,14 @@ export class AgentAPISystem extends System {
 
     this._api = null;
     this._onMessage = null;
+
+    // Optional WebSocket transport: the game connects OUT to an external
+    // agent process (local SLM, cloud-API middleman) and streams the same
+    // fairness-shaped observations in-page bots get. Game = WS client.
+    this._ws = null;
+    this._wsUrl = null;
+    this._wsRetries = 0;
+    this._wsStatus = 'disconnected';
   }
 
   async _initialize() {
@@ -92,6 +100,9 @@ export class AgentAPISystem extends System {
       clearGhost: this.clearGhost.bind(this),
       setConfig: this.setConfig.bind(this),
       getConfig: this.getConfig.bind(this),
+      connectAgent: this.connectAgent.bind(this),
+      disconnectAgent: this.disconnectAgent.bind(this),
+      transportStatus: () => this._wsStatus,
       meta: {
         version: 1,
         fairness: 'information/action/tempo parity; act 10Hz hold-last; observe 20Hz + latency',
@@ -133,6 +144,12 @@ export class AgentAPISystem extends System {
         }
       };
       window.addEventListener('message', this._onMessage);
+
+      // Auto-wire an external agent: open the game with ?agent=ws://localhost:8765
+      try {
+        const wsParam = new URLSearchParams(window.location.search).get('agent');
+        if (wsParam) this.connectAgent(wsParam);
+      } catch (err) { /* no URL access — skip */ }
     }
 
     Logger.info('AgentAPISystem initialized — window.agentAPI is live');
@@ -165,10 +182,91 @@ export class AgentAPISystem extends System {
       if (this._obsAccumulator >= obsInterval) {
         this._obsAccumulator %= obsInterval;
         this._captureSnapshot();
+        this._streamObservation();
       }
     } catch (err) {
       // Never throw — a failed snapshot just means no new observation.
     }
+  }
+
+  // =====================================================================
+  // Streaming transport (WebSocket). External agents — local SLMs, cloud
+  // models, any process — run a small WS server; the game connects to it,
+  // streams observations at observationHz (latency buffer included), and
+  // applies incoming actions through the same fairness pipeline as act().
+  // =====================================================================
+
+  connectAgent(url) {
+    if (typeof url !== 'string' || !/^wss?:\/\//.test(url)) return false;
+    this.disconnectAgent();
+    this._wsUrl = url;
+    this._wsRetries = 0;
+    this._openTransport();
+    return true;
+  }
+
+  disconnectAgent() {
+    this._wsUrl = null;
+    if (this._ws) {
+      try { this._ws.close(); } catch (err) { /* already closing */ }
+      this._ws = null;
+    }
+    this._wsStatus = 'disconnected';
+    this.release();
+  }
+
+  _openTransport() {
+    try {
+      this._wsStatus = 'connecting';
+      const ws = new WebSocket(this._wsUrl);
+      this._ws = ws;
+      ws.onopen = () => {
+        this._wsStatus = 'connected';
+        this._wsRetries = 0;
+        try {
+          ws.send(JSON.stringify({ type: 'hello', payload: { game: 'vibe-carpet', config: this.getConfig() } }));
+        } catch (err) { /* first frame lost, stream continues */ }
+      };
+      ws.onmessage = (event) => this._handleTransportMessage(event);
+      ws.onclose = () => this._onTransportClosed(ws);
+      ws.onerror = () => { /* onclose always follows */ };
+    } catch (err) {
+      this._wsStatus = 'error';
+    }
+  }
+
+  _onTransportClosed(ws) {
+    if (this._ws !== ws) return; // superseded by a newer connection
+    this._ws = null;
+    // Safety: controls always return to the human when the agent link drops.
+    this.release();
+    if (this._wsUrl && this._wsRetries < 3) {
+      this._wsRetries++;
+      this._wsStatus = 'reconnecting';
+      setTimeout(() => { if (this._wsUrl && !this._ws) this._openTransport(); }, 2000);
+    } else {
+      this._wsStatus = 'disconnected';
+    }
+  }
+
+  _streamObservation() {
+    const ws = this._ws;
+    if (!ws || ws.readyState !== 1) return;
+    try {
+      const payload = this.observe();
+      if (payload) ws.send(JSON.stringify({ type: 'observation', payload }));
+    } catch (err) { /* a failed frame is just a dropped frame */ }
+  }
+
+  _handleTransportMessage(event) {
+    try {
+      const msg = JSON.parse(event.data);
+      if (!msg || typeof msg.type !== 'string') return;
+      if (msg.type === 'act') this.act(msg.payload);
+      else if (msg.type === 'release') this.release();
+      else if (msg.type === 'start-race') this.startRace(msg.seed);
+      else if (msg.type === 'config') this.setConfig(msg.payload || {});
+    } catch (err) { /* malformed frames are ignored */ }
   }
 
   // =====================================================================
@@ -647,6 +745,7 @@ export class AgentAPISystem extends System {
 
   destroy() {
     try {
+      this.disconnectAgent();
       if (typeof window !== 'undefined') {
         if (this._onMessage) {
           window.removeEventListener('message', this._onMessage);
