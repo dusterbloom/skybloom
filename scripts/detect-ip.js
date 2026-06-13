@@ -1,7 +1,12 @@
 import os from 'os';
 
 function getLocalIP() {
-  const interfaces = os.networkInterfaces();
+  let interfaces;
+  try {
+    interfaces = os.networkInterfaces();
+  } catch (error) {
+    return 'localhost';
+  }
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
       if (iface.family === 'IPv4' && !iface.internal) {

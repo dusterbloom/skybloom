@@ -69,12 +69,13 @@ export class UISystem extends System {
     ensureVibeTheme();
     this.createBaseUI();
     this.createManaDisplay();
-    // this.createHealthDisplay();
-    // this.createSpellsUI();
-    this.createMinimapContainer();
-    this.createTimeControls();
-    this.createFlightSettings();
-    
+      // this.createHealthDisplay();
+      // this.createSpellsUI();
+      this.createMinimapContainer();
+      this.createSettingsMenu();
+      this.createFlightSettings();
+      this.createTimeControls();
+
     // Subscribe to game state changes
     this.unsubscribeState = useGameState.subscribe(
       this.handleStateChange.bind(this)
@@ -129,7 +130,7 @@ export class UISystem extends System {
       this.fogStatusElement.textContent = 'Fog: Not available';
     }
   }
-  
+
   /**
    * Handle state changes
    */
@@ -137,24 +138,27 @@ export class UISystem extends System {
     // Update UI elements based on game state
     const currentState = state.currentState;
     switch (currentState) {
-      case GameStates.LOADING:
-        if (this.minimapContainer) this.minimapContainer.style.display = 'none';
-        break;
-      case GameStates.INTRO:
-        if (this.minimapContainer) this.minimapContainer.style.display = 'none';
-        // IntroScreen handles its own visibility
-        break;
+        case GameStates.LOADING:
+          if (this.minimapContainer) this.minimapContainer.style.display = 'none';
+          this.setSettingsVisible(false);
+          break;
+        case GameStates.INTRO:
+          if (this.minimapContainer) this.minimapContainer.style.display = 'none';
+          this.setSettingsVisible(false);
+          // IntroScreen handles its own visibility
+          break;
       case GameStates.PLAYING:
         this.showGameUI();
         if (this.minimapContainer) this.minimapContainer.style.display = 'block';
         break;
-      case GameStates.PAUSED:
-        this.showPauseMenu();
-        if (this.minimapContainer) this.minimapContainer.style.display = 'none';
-        break;
+        case GameStates.PAUSED:
+          this.showPauseMenu();
+          if (this.minimapContainer) this.minimapContainer.style.display = 'none';
+          this.setSettingsVisible(false);
+          break;
     }
   }
-  
+
   createBaseUI() {
     // Apply global UI styles
     this.container.style.position = 'absolute';
@@ -171,14 +175,15 @@ export class UISystem extends System {
     this.container.style.fontFamily = 'var(--vc-font)';
     this.container.style.color = 'white';
   }
-  
-  createManaDisplay() {
-    // Mana pill, top-right — Twilight Glass chip with the cyan accent
-    const manaContainer = document.createElement('div');
+
+    createManaDisplay() {
+      // Mana pill, top-right — Twilight Glass chip with the cyan accent
+      const manaContainer = document.createElement('div');
     manaContainer.className = 'vc-chip';
     manaContainer.style.position = 'absolute';
-    manaContainer.style.top = '14px';
-    manaContainer.style.right = '14px';
+    manaContainer.style.top = 'var(--vc-safe-y)';
+    manaContainer.style.right = 'var(--vc-safe-right)';
+    manaContainer.style.zIndex = '1001';
 
     const manaIcon = document.createElement('div');
     manaIcon.style.width = '8px';
@@ -198,10 +203,139 @@ export class UISystem extends System {
     manaContainer.appendChild(manaText);
     this.container.appendChild(manaContainer);
 
-    this.elements.manaText = manaText;
-  }
-  
-  // ---------------------------------------------------------------------
+      this.elements.manaText = manaText;
+    }
+
+    createSettingsMenu() {
+      const toggle = document.createElement('button');
+      toggle.id = 'settings-menu-toggle';
+      toggle.className = 'vc-chip';
+      toggle.type = 'button';
+      toggle.textContent = 'Menu';
+      toggle.title = 'Race, speed, and time controls';
+      toggle.style.position = 'absolute';
+      toggle.style.top = 'calc(var(--vc-safe-y) + 38px)';
+      toggle.style.right = 'var(--vc-safe-right)';
+      toggle.style.display = 'none';
+      toggle.style.pointerEvents = 'auto';
+      toggle.style.cursor = 'pointer';
+      toggle.style.fontSize = '11px';
+      toggle.style.letterSpacing = '0.08em';
+      toggle.style.textTransform = 'uppercase';
+      toggle.style.color = 'var(--vc-ink-dim)';
+      toggle.style.zIndex = '1001';
+
+      const panel = document.createElement('div');
+      panel.id = 'settings-menu-panel';
+      panel.className = 'vc-panel';
+      panel.style.position = 'absolute';
+      panel.style.top = 'calc(var(--vc-safe-y) + 76px)';
+      panel.style.right = 'var(--vc-safe-right)';
+      panel.style.width = 'min(320px, calc(100vw - 28px))';
+      panel.style.maxHeight = 'calc(100vh - var(--vc-safe-y) - 96px)';
+      panel.style.overflowY = 'auto';
+      panel.style.padding = '12px 14px';
+      panel.style.display = 'none';
+      panel.style.pointerEvents = 'auto';
+      panel.style.zIndex = '1001';
+
+      const head = document.createElement('div');
+      head.style.display = 'flex';
+      head.style.justifyContent = 'space-between';
+      head.style.alignItems = 'center';
+      head.style.gap = '10px';
+      head.style.marginBottom = '10px';
+      const title = document.createElement('div');
+      title.className = 'vc-label';
+      title.textContent = 'Settings';
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'vc-btn-ghost';
+      close.textContent = 'Close';
+      close.style.padding = '5px 10px';
+      close.style.fontSize = '11px';
+      close.addEventListener('click', () => this.closeSettingsMenu());
+      head.appendChild(title);
+      head.appendChild(close);
+      panel.appendChild(head);
+
+      const tabbar = document.createElement('div');
+      tabbar.className = 'vc-tabbar';
+      const panes = {};
+      const tabs = {};
+      const defs = [
+        ['race', 'Race'],
+        ['speed', 'Speed'],
+        ['time', 'Time'],
+      ];
+
+      defs.forEach(([key, label]) => {
+        const tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'vc-tab';
+        tab.textContent = label;
+        tab.setAttribute('aria-selected', key === 'race' ? 'true' : 'false');
+        tab.addEventListener('click', () => this.showSettingsPane(key));
+        tabs[key] = tab;
+        tabbar.appendChild(tab);
+
+        const pane = document.createElement('div');
+        pane.dataset.settingsPane = key;
+        pane.style.display = key === 'race' ? 'block' : 'none';
+        panes[key] = pane;
+      });
+
+      panel.appendChild(tabbar);
+      defs.forEach(([key]) => panel.appendChild(panes[key]));
+
+      toggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (panel.style.display === 'none') this.openSettingsMenu();
+        else this.closeSettingsMenu();
+      });
+
+      this.container.appendChild(toggle);
+      this.container.appendChild(panel);
+      this.elements.settingsToggle = toggle;
+      this.elements.settingsPanel = panel;
+      this.elements.settingsTabs = tabs;
+      this.elements.settingsPanes = panes;
+    }
+
+    setSettingsVisible(visible) {
+      if (this.elements.settingsToggle) {
+        this.elements.settingsToggle.style.display = visible ? 'inline-flex' : 'none';
+      }
+      if (!visible) this.closeSettingsMenu();
+    }
+
+    openSettingsMenu(pane = null) {
+      if (pane) this.showSettingsPane(pane);
+      if (this.elements.settingsPanel) this.elements.settingsPanel.style.display = 'block';
+    }
+
+    closeSettingsMenu() {
+      if (this.elements.settingsPanel) this.elements.settingsPanel.style.display = 'none';
+    }
+
+    showSettingsPane(activeKey) {
+      const panes = this.elements.settingsPanes || {};
+      const tabs = this.elements.settingsTabs || {};
+      Object.keys(panes).forEach((key) => {
+        panes[key].style.display = key === activeKey ? 'block' : 'none';
+        if (tabs[key]) tabs[key].setAttribute('aria-selected', key === activeKey ? 'true' : 'false');
+      });
+    }
+
+    registerSettingsPane(key, node) {
+      const pane = this.elements.settingsPanes && this.elements.settingsPanes[key];
+      if (!pane || !node) return false;
+      pane.replaceChildren(node);
+      return true;
+    }
+
+    // ---------------------------------------------------------------------
   // Flight settings — player-facing speed sliders. The physics reads
   // player.maxSpeed / player.accelerationValue / physics.absoluteMaxSpeed
   // every frame, so writes here apply live. Persisted per browser.
@@ -228,38 +362,15 @@ export class UISystem extends System {
     try { localStorage.setItem('vc.flight', JSON.stringify(settings)); } catch (e) { /* ignore */ }
   }
 
-  createFlightSettings() {
-    const settings = this.loadFlightSettings();
-    this.applyFlightSettings(settings);
+    createFlightSettings() {
+      const settings = this.loadFlightSettings();
+      this.applyFlightSettings(settings);
 
-    // Toggle chip under the mana pill
-    const toggle = document.createElement('button');
-    toggle.className = 'vc-chip';
-    toggle.textContent = 'speed';
-    toggle.style.position = 'absolute';
-    toggle.style.top = '52px';
-    toggle.style.right = '14px';
-    toggle.style.cursor = 'pointer';
-    toggle.style.pointerEvents = 'auto';
-    toggle.style.fontSize = '11px';
-    toggle.style.letterSpacing = '0.08em';
-    toggle.style.textTransform = 'uppercase';
-    toggle.style.color = 'var(--vc-ink-dim)';
-    this.container.appendChild(toggle);
+      const panel = document.createElement('div');
+      panel.style.display = 'block';
 
-    const panel = document.createElement('div');
-    panel.className = 'vc-panel';
-    panel.style.position = 'absolute';
-    panel.style.top = '90px';
-    panel.style.right = '14px';
-    panel.style.width = '230px';
-    panel.style.padding = '12px 14px';
-    panel.style.display = 'none';
-    panel.style.pointerEvents = 'auto';
-    panel.style.zIndex = '1001';
-
-    const title = document.createElement('div');
-    title.className = 'vc-label';
+      const title = document.createElement('div');
+      title.className = 'vc-label';
     title.textContent = 'Flight feel';
     title.style.marginBottom = '10px';
     panel.appendChild(title);
@@ -336,12 +447,9 @@ export class UISystem extends System {
     });
     panel.appendChild(reset);
 
-    this.container.appendChild(panel);
-    toggle.addEventListener('click', () => {
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    });
-    this.elements.flightPanel = panel;
-  }
+      this.registerSettingsPane('speed', panel);
+      this.elements.flightPanel = panel;
+    }
 
   createHealthDisplay() {
     // Create health bar at bottom center
@@ -355,20 +463,20 @@ export class UISystem extends System {
     healthContainer.style.background = 'rgba(0, 0, 30, 0.7)';
     healthContainer.style.borderRadius = '5px';
     healthContainer.style.boxShadow = '0 0 10px rgba(255, 0, 100, 0.5)';
-    
+
     const healthBar = document.createElement('div');
     healthBar.style.height = '10px';
     healthBar.style.width = '100%';
     healthBar.style.background = 'linear-gradient(90deg, #ff0066, #ff6699)';
     healthBar.style.borderRadius = '3px';
     healthBar.style.boxShadow = 'inset 0 0 5px rgba(0, 0, 0, 0.5)';
-    
+
     healthContainer.appendChild(healthBar);
     this.container.appendChild(healthContainer);
-    
+
     this.elements.healthBar = healthBar;
   }
-  
+
   createSpellsUI() {
     // Create spell selection UI at bottom right
     const spellsContainer = document.createElement('div');
@@ -378,16 +486,16 @@ export class UISystem extends System {
     spellsContainer.style.display = 'flex';
     spellsContainer.style.gap = '10px';
     spellsContainer.style.pointerEvents = 'auto';
-    
+
     // Create spell slots
     const spells = [
       { name: 'Fireball', color: '#ff3300', key: '1' },
       { name: 'Lightning', color: '#33ccff', key: '2' },
       { name: 'Shield', color: '#ffcc00', key: '3' }
     ];
-    
+
     this.elements.spellSlots = [];
-    
+
     spells.forEach((spell, index) => {
       const spellSlot = document.createElement('div');
       spellSlot.style.width = '50px';
@@ -401,46 +509,46 @@ export class UISystem extends System {
       spellSlot.style.cursor = 'pointer';
       spellSlot.style.transition = 'all 0.2s';
       spellSlot.style.boxShadow = `0 0 10px ${spell.color}80`;
-      
+
       const spellIndicator = document.createElement('div');
       spellIndicator.style.width = '30px';
       spellIndicator.style.height = '30px';
       spellIndicator.style.borderRadius = '50%';
       spellIndicator.style.background = spell.color;
       spellIndicator.style.boxShadow = `0 0 5px ${spell.color}`;
-      
+
       const spellKey = document.createElement('div');
       spellKey.textContent = spell.key;
       spellKey.style.fontSize = '12px';
       spellKey.style.marginTop = '5px';
-      
+
       spellSlot.appendChild(spellIndicator);
       spellSlot.appendChild(spellKey);
       spellsContainer.appendChild(spellSlot);
-      
+
       // Add hover effect
       spellSlot.addEventListener('mouseover', () => {
         spellSlot.style.transform = 'scale(1.1)';
       });
-      
+
       spellSlot.addEventListener('mouseout', () => {
         spellSlot.style.transform = 'scale(1)';
       });
-      
+
       // Add click handler
       spellSlot.addEventListener('click', () => {
         this.selectSpell(index);
       });
-      
+
       this.elements.spellSlots.push({
         element: spellSlot,
         indicator: spellIndicator,
         data: spell
       });
     });
-    
+
     this.container.appendChild(spellsContainer);
-    
+
     // Listen for key presses to select spells
     window.addEventListener('keydown', (event) => {
       if (event.key >= '1' && event.key <= '3') {
@@ -449,7 +557,7 @@ export class UISystem extends System {
       }
     });
   }
-  
+
   createMinimapContainer() {
     // Remove existing container if present
     const existingContainer = document.getElementById('minimap-container');
@@ -464,15 +572,17 @@ export class UISystem extends System {
     this.canvas.height = this.size;
     this.canvas.style.borderRadius = '50%'; // Circular map
     this.canvas.style.display = 'block';
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
 
     // Create container for the minimap
     this.minimapContainer = document.createElement('div');
     this.minimapContainer.id = 'minimap-container';
     this.minimapContainer.style.position = 'absolute';
-    this.minimapContainer.style.top = '10px';
-    this.minimapContainer.style.left = '10px';
-    this.minimapContainer.style.width = `${this.size}px`;
-    this.minimapContainer.style.height = `${this.size}px`;
+    this.minimapContainer.style.top = 'var(--vc-left-stack-top)';
+    this.minimapContainer.style.left = 'var(--vc-safe-x)';
+    this.minimapContainer.style.width = 'var(--vc-minimap-size)';
+    this.minimapContainer.style.height = 'var(--vc-minimap-size)';
     this.minimapContainer.style.border = '2px solid ' + this.colors.border;
     this.minimapContainer.style.backgroundColor = this.colors.background;
     this.minimapContainer.style.borderRadius = '50%';
@@ -663,161 +773,6 @@ export class UISystem extends System {
     this.container.appendChild(this.minimapContainer);
 
     Logger.info("Minimap container with zoom controls created in UISystem");
-  }
-
-  createTimeControls() {
-    // Create time controls container
-    const timeContainer = document.createElement('div');
-    timeContainer.id = 'time-controls';
-    timeContainer.style.position = 'absolute';
-    timeContainer.style.top = '10px';
-    timeContainer.style.right = '10px';
-    timeContainer.style.display = 'flex';
-    timeContainer.style.flexDirection = 'column';
-    timeContainer.style.alignItems = 'flex-end';
-    timeContainer.style.gap = '5px';
-    timeContainer.style.zIndex = '1000';
-
-    // Time display
-    const timeDisplay = document.createElement('div');
-    timeDisplay.id = 'time-display';
-    timeDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
-    timeDisplay.style.color = '#ffffff';
-    timeDisplay.style.padding = '10px 15px';
-    timeDisplay.style.borderRadius = '8px';
-    timeDisplay.style.fontSize = '16px';
-    timeDisplay.style.fontFamily = 'monospace';
-    timeDisplay.style.border = '2px solid #ffffff';
-    timeDisplay.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.5)';
-    timeDisplay.style.position = 'relative';
-    timeDisplay.style.zIndex = '1000';
-    timeDisplay.style.marginBottom = '10px';
-    timeDisplay.textContent = '12:00';
-
-    // Control buttons container
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.style.display = 'flex';
-    buttonsContainer.style.gap = '5px';
-
-    // Play/Pause button
-    const playPauseBtn = document.createElement('button');
-    playPauseBtn.id = 'play-pause-btn';
-    playPauseBtn.textContent = '⏸️';
-    playPauseBtn.style.padding = '6px 10px';
-    playPauseBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    playPauseBtn.style.color = '#ffffff';
-    playPauseBtn.style.border = '1px solid #ffffff';
-    playPauseBtn.style.borderRadius = '3px';
-    playPauseBtn.style.cursor = 'pointer';
-    playPauseBtn.style.fontSize = '12px';
-    playPauseBtn.style.boxShadow = '0 0 5px rgba(255, 255, 255, 0.3)';
-    playPauseBtn.title = 'Play/Pause time';
-
-    // Speed control buttons
-    const speedButtons = [
-      { label: '1x', speed: 1.0 },
-      { label: '2x', speed: 2.0 },
-      { label: '60x', speed: 60.0 },
-      { label: '120x', speed: 120.0 }
-    ];
-
-    const speedBtnElements = [];
-
-    speedButtons.forEach(({ label, speed }) => {
-      const btn = document.createElement('button');
-      btn.textContent = label;
-      btn.dataset.speed = speed;
-      btn.style.padding = '8px 12px';
-      btn.style.backgroundColor = speed === 1.0 ? 'rgba(255, 255, 0, 0.9)' : 'rgba(0, 0, 0, 0.8)';
-      btn.style.color = '#ffffff';
-      btn.style.border = '2px solid #ffffff';
-      btn.style.borderRadius = '6px';
-      btn.style.cursor = 'pointer';
-      btn.style.fontSize = '14px';
-      btn.style.fontWeight = 'bold';
-      btn.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.5)';
-      btn.style.margin = '2px';
-      btn.style.transition = 'all 0.2s ease';
-      btn.title = `Set time speed to ${label}`;
-
-      // Add hover effects
-      btn.addEventListener('mouseover', () => {
-        btn.style.transform = 'scale(1.05)';
-        btn.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.8)';
-      });
-      btn.addEventListener('mouseout', () => {
-        btn.style.transform = 'scale(1)';
-        btn.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.5)';
-      });
-
-      btn.addEventListener('click', () => {
-        this.setTimeSpeed(speed);
-        // Update button styles
-        speedBtnElements.forEach(b => {
-          b.style.backgroundColor = b.dataset.speed == speed ? 'rgba(255, 255, 0, 0.8)' : 'rgba(0, 0, 0, 0.8)';
-        });
-      });
-
-      speedBtnElements.push(btn);
-      buttonsContainer.appendChild(btn);
-    });
-
-    // Time preset buttons
-    const timePresets = [
-      { label: 'Dawn', time: 0.25 },
-      { label: 'Noon', time: 0.5 },
-      { label: 'Dusk', time: 0.75 },
-      { label: 'Midnight', time: 0.0 }
-    ];
-
-    const presetContainer = document.createElement('div');
-    presetContainer.style.display = 'flex';
-    presetContainer.style.gap = '3px';
-    presetContainer.style.marginTop = '5px';
-
-    timePresets.forEach(({ label, time }) => {
-      const btn = document.createElement('button');
-      btn.textContent = label;
-      btn.dataset.time = time;
-      btn.style.padding = '3px 6px';
-      btn.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-      btn.style.color = '#ffffff';
-      btn.style.border = '1px solid #ffffff';
-      btn.style.borderRadius = '3px';
-      btn.style.cursor = 'pointer';
-      btn.style.fontSize = '10px';
-      btn.style.boxShadow = '0 0 5px rgba(255, 255, 255, 0.3)';
-      btn.title = `Set time to ${label.toLowerCase()}`;
-
-      btn.addEventListener('click', () => {
-        this.setTimeOfDay(time);
-      });
-
-      presetContainer.appendChild(btn);
-    });
-
-    // Event listeners
-    let isPlaying = true;
-    playPauseBtn.addEventListener('click', () => {
-      isPlaying = !isPlaying;
-      playPauseBtn.textContent = isPlaying ? '⏸️' : '▶️';
-      this.setTimeSpeed(isPlaying ? 1.0 : 0.0);
-    });
-
-    // Add elements to container
-    timeContainer.appendChild(timeDisplay);
-    timeContainer.appendChild(buttonsContainer);
-    timeContainer.appendChild(presetContainer);
-
-    // Add to UI container
-    this.container.appendChild(timeContainer);
-
-    // Store references
-    this.elements.timeDisplay = timeDisplay;
-    this.elements.playPauseBtn = playPauseBtn;
-    this.elements.speedButtons = speedBtnElements;
-
-    Logger.info("Time controls created in UISystem");
   }
 
   setTimeSpeed(speed) {
@@ -1216,7 +1171,7 @@ export class UISystem extends System {
       if (player.id === localPlayer?.id) return; // Skip local player
 
       const { mapX, mapY } = this._worldToMap(player.position.x, player.position.z);
-      
+
       // Draw player dot (red for others)
       this.context.beginPath();
       this.context.arc(mapX, mapY, 2, 0, 2 * Math.PI);
@@ -1302,7 +1257,7 @@ export class UISystem extends System {
 
     // North indicator arrow removed
   }
-  
+
   selectSpell(index) {
     // Highlight selected spell and reset others (slot UI is currently
     // disabled — guard so spell selection never throws without it)
@@ -1315,18 +1270,18 @@ export class UISystem extends System {
         slot.indicator.style.boxShadow = `0 0 5px ${slot.data.color}`;
       }
     });
-    
+
     // Notify game about spell selection
     const playerState = this.engine.systemManager.get('playerState');
     if (playerState && playerState.localPlayer) {
       playerState.localPlayer.currentSpell = index;
     }
   }
-  
+
   updateManaDisplay(mana) {
     if (this.elements.manaText) {
       this.elements.manaText.textContent = mana.toString();
-      
+
       // Add pulse animation when mana changes
       this.elements.manaText.style.transform = 'scale(1.2)';
       setTimeout(() => {
@@ -1334,20 +1289,12 @@ export class UISystem extends System {
       }, 200);
     }
   }
-  
+
   showMessage(text, duration = 3500, accentColor = '#66ffee') {
-    // Stacking corner toasts — never centered, never input-blocking.
+    // Stacking toasts use their own lane, away from the fixed HUD chips.
     if (!this.elements.toastStack) {
       const stack = document.createElement('div');
-      stack.style.position = 'fixed';
-      stack.style.top = '70px';
-      stack.style.right = '12px';
-      stack.style.display = 'flex';
-      stack.style.flexDirection = 'column';
-      stack.style.alignItems = 'flex-end';
-      stack.style.gap = '8px';
-      stack.style.pointerEvents = 'none';
-      stack.style.zIndex = '1001';
+      stack.className = 'vc-toast-stack';
       document.body.appendChild(stack);
       this.elements.toastStack = stack;
     }
@@ -1355,26 +1302,20 @@ export class UISystem extends System {
     while (stack.children.length >= 4) stack.removeChild(stack.firstChild);
 
     const toast = document.createElement('div');
-    toast.style.background = 'rgba(20, 30, 60, 0.78)';
-    toast.style.color = '#fff';
-    toast.style.padding = '8px 14px';
-    toast.style.borderRadius = '10px';
-    toast.style.borderLeft = `3px solid ${accentColor}`;
-    toast.style.fontFamily = 'var(--app-font, sans-serif)';
-    toast.style.fontSize = '14px';
-    toast.style.maxWidth = '280px';
+    toast.className = 'vc-toast';
+    toast.style.borderLeftColor = accentColor;
     toast.style.opacity = '0';
-    toast.style.transform = 'translateX(12px)';
+    toast.style.transform = 'translateY(-8px)';
     toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
     toast.textContent = text;
     stack.appendChild(toast);
     requestAnimationFrame(() => {
       toast.style.opacity = '1';
-      toast.style.transform = 'translateX(0)';
+      toast.style.transform = 'translateY(0)';
     });
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateX(12px)';
+      toast.style.transform = 'translateY(-8px)';
       setTimeout(() => toast.remove(), 300);
     }, duration);
   }
@@ -1383,7 +1324,7 @@ export class UISystem extends System {
     if (this.elements.healthBar) {
       const percentage = (health / maxHealth) * 100;
       this.elements.healthBar.style.width = `${percentage}%`;
-      
+
       // Change color based on health
       if (percentage > 60) {
         this.elements.healthBar.style.background = 'linear-gradient(90deg, #ff0066, #ff6699)';
@@ -1475,17 +1416,17 @@ export class UISystem extends System {
 
   update(delta, elapsed) {
     // Update UI elements that need continuous updates
-    
+
     // Update health display if local player exists
     const playerSystem = this.engine.systemManager.get('player');
     if (playerSystem && playerSystem.localPlayer) {
       const player = playerSystem.localPlayer;
       this.updateHealthDisplay(player.health, player.maxHealth);
     }
-    
+
     // Update time display if atmosphere system exists
     this.updateTimeDisplay();
-    
+
     // Update minimap if initialized and game is playing
     const currentState = useGameState.getState().currentState;
     if (this.minimapInitialized && currentState === GameStates.PLAYING) {
@@ -1500,10 +1441,10 @@ export class UISystem extends System {
         this._drawCompassRose();
       }
     }
-    
+
     // Deprecated: updateMinimap() - minimap now handled internally
   }
-  
+
   /**
    * Update time display showing current time of day
    */
@@ -1530,91 +1471,33 @@ export class UISystem extends System {
       Logger.warn('timeDisplay element not found');
     }
   }
-  
+
   /**
    * Create time control UI elements
    */
   createTimeControls() {
-    // Create time controls for all devices (removed mobile restriction)
-    // const isMobile = this.engine.input.isTouchDevice;
-
-    // if (isMobile) {
-    //   // Skip creating time controls for mobile
-    //   Logger.info('Time controls disabled on mobile devices');
-    //   return;
-    // }
-    
-    // Create toggle button for time controls
-    const toggleButton = document.createElement('div');
-    toggleButton.id = 'time-controls-toggle-button';
-    toggleButton.style.position = 'absolute';
-    toggleButton.style.top = '70px';
-    toggleButton.style.right = '20px';
-    toggleButton.style.width = '40px';
-    toggleButton.style.height = '40px';
-    toggleButton.style.backgroundColor = 'rgba(45, 48, 52, 0.9)';
-    toggleButton.style.borderRadius = '50%';
-    toggleButton.style.display = 'none'; // Initially hidden, shown after game starts
-    toggleButton.style.justifyContent = 'center';
-    toggleButton.style.alignItems = 'center';
-    toggleButton.style.cursor = 'pointer';
-    toggleButton.style.zIndex = '1001';
-    toggleButton.style.pointerEvents = 'auto';
-    toggleButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.3)';
-    toggleButton.style.pointerEvents = 'auto';
-    toggleButton.textContent = '◔';
-    toggleButton.style.fontSize = '18px';
-    toggleButton.style.fontFamily = 'var(--vc-font)';
-    toggleButton.style.color = 'var(--vc-ink)';
-    toggleButton.style.background = 'var(--vc-panel)';
-    toggleButton.style.border = '1px solid var(--vc-border)';
-    toggleButton.title = 'Time of day';
-    
-    // Create container for time controls using modern UI style based on mockup
     const container = document.createElement('div');
-    container.style.position = 'absolute';
-    container.style.top = '120px'; // Positioned below the toggle button
-    container.style.right = '20px';
-    container.style.backgroundColor = 'rgba(45, 48, 52, 0.9)';
-    container.style.padding = '15px';
-    container.style.borderRadius = '10px';
-    container.style.color = 'white';
-    container.style.fontFamily = 'Arial, sans-serif';
-    container.style.zIndex = '1000';
-    container.style.pointerEvents = 'auto';
-    container.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
-    container.style.width = '240px';
-    container.style.display = 'none'; // Initially hidden
-    
-    // Toggle visibility
-    toggleButton.addEventListener('click', () => {
-      if (container.style.display === 'none') {
-        container.style.display = 'block';
-        toggleButton.style.backgroundColor = 'rgba(65, 68, 72, 0.9)';
-      } else {
-        container.style.display = 'none';
-        toggleButton.style.backgroundColor = 'rgba(45, 48, 52, 0.9)';
-      }
-    });
-    
+    container.style.color = 'var(--vc-ink)';
+    container.style.fontFamily = 'var(--vc-font)';
+    container.style.display = 'block';
+
     // Time display
     const timeDisplay = document.createElement('div');
-    timeDisplay.style.fontSize = '24px';
+    timeDisplay.style.fontSize = '22px';
     timeDisplay.style.textAlign = 'center';
     timeDisplay.style.marginBottom = '15px';
     timeDisplay.textContent = '00:00';
     container.appendChild(timeDisplay);
     this.elements.timeDisplay = timeDisplay;
-    
+
     // Create a section title for Presets
     const presetTitle = document.createElement('div');
     presetTitle.textContent = 'Presets';
-    presetTitle.style.fontSize = '18px';
-    presetTitle.style.textAlign = 'center';
+    presetTitle.className = 'vc-label';
+    presetTitle.style.textAlign = 'left';
     presetTitle.style.marginBottom = '10px';
-    presetTitle.style.fontWeight = 'bold';
     container.appendChild(presetTitle);
-    
+
     // Time presets — quiet text buttons on the glass tokens
     const presets = [
       { label: 'Night', hour: 0, minute: 0 },
@@ -1646,25 +1529,24 @@ export class UISystem extends System {
 
       presetContainer.appendChild(button);
     });
-    
+
     container.appendChild(presetContainer);
-    
+
     // Time scale title
     const timeScaleTitle = document.createElement('div');
     timeScaleTitle.textContent = 'Time Scale';
-    timeScaleTitle.style.fontSize = '18px';
-    timeScaleTitle.style.textAlign = 'center';
+    timeScaleTitle.className = 'vc-label';
+    timeScaleTitle.style.textAlign = 'left';
     timeScaleTitle.style.marginBottom = '10px';
-    timeScaleTitle.style.fontWeight = 'bold';
     container.appendChild(timeScaleTitle);
-    
+
     // Time scale buttons with updated values
     const timeScaleContainer = document.createElement('div');
     timeScaleContainer.style.display = 'grid';
     timeScaleContainer.style.gridTemplateColumns = 'repeat(4, 1fr)';
     timeScaleContainer.style.gap = '8px';
     timeScaleContainer.style.marginBottom = '15px';
-    
+
     // Updated scales according to mockup (replaced 720x with 120x)
     const scales = [
       { label: 'Real', value: 1 },
@@ -1672,51 +1554,34 @@ export class UISystem extends System {
       { label: '60x', value: 60 },
       { label: '120x', value: 120 }
     ];
-    
+
+    const timeScaleButtons = [];
     scales.forEach(scale => {
-      const button = document.createElement('div');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'vc-btn-ghost';
       button.textContent = scale.label;
-      button.style.backgroundColor = '#1c1e21';
-      button.style.borderRadius = '8px';
-      button.style.padding = '8px';
-      button.style.textAlign = 'center';
-      button.style.cursor = 'pointer';
-      button.style.transition = 'all 0.2s';
-      
-      // Hover effect
-      button.addEventListener('mouseover', () => {
-        button.style.backgroundColor = '#2c2e31';
-        button.style.transform = 'translateY(-2px)';
-      });
-      
-      button.addEventListener('mouseout', () => {
-        button.style.backgroundColor = '#1c1e21';
-        button.style.transform = 'translateY(0)';
-      });
-      
-      // Click handler
+      button.dataset.speed = scale.value;
+      button.style.padding = '7px 6px';
+      button.style.fontSize = '12px';
       button.addEventListener('click', () => {
-        const atmosphereSystem = this.engine.systemManager.get('atmosphere');
-        if (atmosphereSystem) {
-          atmosphereSystem.timeScale = scale.value;
-          Logger.info(`Time scale set to ${scale.value}x`);
-        }
+        this.setTimeSpeed(scale.value);
       });
-      
+      timeScaleButtons.push(button);
       timeScaleContainer.appendChild(button);
     });
-    
+    this.elements.speedButtons = timeScaleButtons;
+
     container.appendChild(timeScaleContainer);
-    
+
     // Custom time title
     const customTimeTitle = document.createElement('div');
     customTimeTitle.textContent = 'Custom Time';
-    customTimeTitle.style.fontSize = '18px';
-    customTimeTitle.style.textAlign = 'center';
+    customTimeTitle.className = 'vc-label';
+    customTimeTitle.style.textAlign = 'left';
     customTimeTitle.style.marginBottom = '10px';
-    customTimeTitle.style.fontWeight = 'bold';
     container.appendChild(customTimeTitle);
-    
+
     // Custom time slider
     const sliderContainer = document.createElement('div');
     sliderContainer.style.position = 'relative';
@@ -1725,7 +1590,7 @@ export class UISystem extends System {
     sliderContainer.style.backgroundColor = '#1c1e21';
     sliderContainer.style.borderRadius = '15px';
     sliderContainer.style.marginBottom = '15px';
-    
+
     const sliderTrack = document.createElement('div');
     sliderTrack.style.position = 'absolute';
     sliderTrack.style.top = '50%';
@@ -1736,7 +1601,7 @@ export class UISystem extends System {
     sliderTrack.style.backgroundColor = '#3c3e41';
     sliderTrack.style.borderRadius = '2px';
     sliderContainer.appendChild(sliderTrack);
-    
+
     const sliderThumb = document.createElement('div');
     sliderThumb.style.position = 'absolute';
     sliderThumb.style.top = '50%';
@@ -1749,46 +1614,46 @@ export class UISystem extends System {
     sliderThumb.style.cursor = 'pointer';
     sliderThumb.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.3)';
     sliderContainer.appendChild(sliderThumb);
-    
+
     // Make slider interactive
     let isDragging = false;
     const trackWidth = sliderTrack.clientWidth;
-    
+
     sliderThumb.addEventListener('mousedown', (e) => {
       isDragging = true;
       e.preventDefault(); // Prevent text selection
     });
-    
+
     document.addEventListener('mouseup', () => {
       isDragging = false;
     });
-    
+
     document.addEventListener('mousemove', (e) => {
       if (!isDragging) return;
-      
+
       const rect = sliderTrack.getBoundingClientRect();
       const trackStart = rect.left + 10; // 10px padding
       const trackEnd = rect.right - 10; // 10px padding
       const trackLength = trackEnd - trackStart;
-      
+
       let position = e.clientX - trackStart;
       position = Math.max(0, Math.min(position, trackLength));
-      
+
       const percentage = position / trackLength;
       sliderThumb.style.left = `${percentage * 100}%`;
-      
+
       // Calculate time based on position
       const hour = Math.floor(percentage * 24);
       const minute = Math.floor((percentage * 24 * 60) % 60);
-      
+
       const atmosphereSystem = this.engine.systemManager.get('atmosphere');
       if (atmosphereSystem) {
         atmosphereSystem.setTime(hour, minute);
       }
     });
-    
+
     container.appendChild(sliderContainer);
-    
+
     // Add toggle for motion controls (only on mobile)
     if (this.engine.input.isTouchDevice) {
       const motionControlsTitle = document.createElement('div');
@@ -1799,19 +1664,19 @@ export class UISystem extends System {
       motionControlsTitle.style.marginTop = '15px';
       motionControlsTitle.style.fontWeight = 'bold';
       container.appendChild(motionControlsTitle);
-      
+
       // Create toggle button for motion controls
       const toggleContainer = document.createElement('div');
       toggleContainer.style.display = 'flex';
       toggleContainer.style.justifyContent = 'center';
       toggleContainer.style.alignItems = 'center';
       toggleContainer.style.marginBottom = '15px';
-      
+
       const toggleLabel = document.createElement('div');
       toggleLabel.textContent = 'Use device tilt for controls';
       toggleLabel.style.marginRight = '10px';
       toggleContainer.appendChild(toggleLabel);
-      
+
       const toggleSwitch = document.createElement('div');
       toggleSwitch.style.width = '44px';
       toggleSwitch.style.height = '24px';
@@ -1819,7 +1684,7 @@ export class UISystem extends System {
       toggleSwitch.style.borderRadius = '12px';
       toggleSwitch.style.position = 'relative';
       toggleSwitch.style.cursor = 'pointer';
-      
+
       const toggleIndicator = document.createElement('div');
       toggleIndicator.style.width = '18px';
       toggleIndicator.style.height = '18px';
@@ -1830,10 +1695,10 @@ export class UISystem extends System {
       toggleIndicator.style.left = '3px';
       toggleIndicator.style.transition = 'all 0.2s';
       toggleSwitch.appendChild(toggleIndicator);
-      
+
       // Initialize state based on current settings
       let motionControlsEnabled = false;
-      
+
       // Update toggle state
       const updateToggleState = (enabled) => {
         if (enabled) {
@@ -1844,68 +1709,36 @@ export class UISystem extends System {
           toggleSwitch.style.backgroundColor = '#1c1e21';
         }
       };
-      
+
       // Handle toggle click
       toggleSwitch.addEventListener('click', () => {
         motionControlsEnabled = !motionControlsEnabled;
         updateToggleState(motionControlsEnabled);
-        
+
         // Toggle motion controls in the player input system
         const playerInput = this.engine.systemManager.get('playerInput');
         if (playerInput && typeof playerInput.toggleMotionControls === 'function') {
           playerInput.toggleMotionControls(motionControlsEnabled);
         }
       });
-      
+
       toggleContainer.appendChild(toggleSwitch);
       container.appendChild(toggleContainer);
     }
-    
-    // Close button
-    const closeButton = document.createElement('div');
-    closeButton.textContent = '✕';
-    closeButton.style.position = 'absolute';
-    closeButton.style.top = '8px';
-    closeButton.style.right = '12px';
-    closeButton.style.fontSize = '14px';
-    closeButton.style.cursor = 'pointer';
-    closeButton.style.opacity = '0.7';
-    closeButton.addEventListener('mouseover', () => {
-      closeButton.style.opacity = '1';
-    });
-    closeButton.addEventListener('mouseout', () => {
-      closeButton.style.opacity = '0.7';
-    });
-    closeButton.addEventListener('click', () => {
-      container.style.display = 'none';
-      toggleButton.style.backgroundColor = 'rgba(45, 48, 52, 0.9)';
-    });
-    container.appendChild(closeButton);
-    
-    // Add to document
-    this.container.appendChild(toggleButton);
-    this.container.appendChild(container);
-    
-    // Show current time in toggle button
-    // Continuously update the time in the toggle button tooltip
-    toggleButton.title = "Time Controls";
-    
-    // Save reference to toggle button for showing it later
-    this.elements.timeToggleButton = toggleButton;
-  }
-  
+
+      this.registerSettingsPane('time', container);
+      this.elements.timePanel = container;
+    }
+
   /**
    * Show game UI elements when entering PLAYING state
    */
-  showGameUI() {
-    // Show time controls only on desktop
-    if (!this.engine.input.isTouchDevice && this.elements.timeToggleButton) {
-      this.elements.timeToggleButton.style.display = 'flex';
+    showGameUI() {
+      this.setSettingsVisible(true);
+
+      // Show other gameplay UI elements as needed
     }
-    
-    // Show other gameplay UI elements as needed
-  }
-  
+
   /**
    * Show pause menu when entering PAUSED state
    */
@@ -2016,14 +1849,13 @@ export class UISystem extends System {
     this.canvas = null;
     this.context = null;
   }
-  
-  /**
-   * Show time controls after game starts (kept for backwards compatibility)
-   */
-  showTimeControls() {
-    if (!this.engine.input.isTouchDevice && this.elements.timeToggleButton) {
-      this.elements.timeToggleButton.style.display = 'flex';
+
+    /**
+     * Show time controls after game starts (kept for backwards compatibility)
+     */
+    showTimeControls() {
+      this.setSettingsVisible(true);
+      this.openSettingsMenu('time');
     }
-  }
 
 }

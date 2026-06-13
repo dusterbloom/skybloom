@@ -8,7 +8,9 @@
     "start": "node server.js",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "smoke": "node scripts/smoke.mjs",
+    "test:smoke": "npm run smoke"
   },
   "dependencies": {
     "express": "^4.18.2",

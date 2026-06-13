@@ -79,8 +79,10 @@ bot.stop();                    // control snaps back to you, mid-air
 | `startRace(courseSeed?)` | Load and start a race; omit the seed for a random course |
 | `abortRace()` | Abandon the current run |
 | `listReplays()` | All stored replays |
+| `getLatestReplay()` | Most recent stored replay |
 | `getBestReplay(seed)` | Fastest stored replay for a course seed |
 | `loadGhost(replay)` / `clearGhost()` | Show / hide a translucent ghost flying a replay |
+| `exportResult(replay?)` | Benchmark JSON for the latest or supplied replay |
 | `getConfig()` / `setConfig({...})` | Read / set `actionHz` and `observationLatencyMs` |
 
 `window.agentAPI` is frozen (`Object.freeze`) — you cannot monkey-patch it, and you
@@ -303,23 +305,45 @@ const all  = agentAPI.listReplays();        // every stored replay
 const best = agentAPI.getBestReplay(1337);  // fastest run on seed 1337, or null
 ```
 
-A replay is a **recording** of a run (not a re-simulatable input log — see
-[Limits and roadmap](#limits-and-roadmap)). Representative shape — illustrative; treat
-`listReplays()` output as the source of truth for the exact encoding:
+A replay is a **recording** of a run (not a verified re-simulation — see
+[Limits and roadmap](#limits-and-roadmap)). New runs use Replay v2 groundwork:
+ghost path samples are still present, and Agent API action metadata is recorded
+when available.
 
 ```json
 {
-  "version": 1,
+  "version": 2,
+  "schemaVersion": 2,
   "courseSeed": 1337,
+  "worldSeed": 0,
   "pilot": "agent",
-  "timeMs": 84210,
+  "finalTimeMs": 84210,
   "splits": [6210, 13480, 21900, 29800, 38100, 47000, 55900, 63200, 70800, 77400, 81000, 84210],
-  "recordedAt": "2026-06-12T09:30:00Z",
-  "frames": [
-    { "t": 0.0, "pos": [12.1, 86.0, -240.3], "heading": 1.57, "pitch": -0.05, "bank": 0.20 },
-    { "t": 0.1, "pos": [15.9, 86.1, -239.0], "heading": 1.55, "pitch": -0.04, "bank": 0.18 }
-  ]
+  "date": "2026-06-12T09:30:00Z",
+  "samples": [
+    [0, 12.1, 86.0, -240.3, 1.57],
+    [100, 15.9, 86.1, -239.0, 1.55]
+  ],
+  "actionLog": [
+    { "tMs": 100, "source": "agentAPI", "action": { "throttle": 1, "turn": 0.2 } }
+  ],
+  "fairnessConfig": { "profile": "strict", "actionHz": 10, "observationLatencyMs": 150 },
+  "verificationStatus": "action-log-present"
 }
+```
+
+`samples` are compact ghost path samples: `[tMs, x, y, z, heading]`.
+`verificationStatus` is currently one of:
+
+- `ghost-only`: path replay exists, no action stream.
+- `action-log-present`: path replay plus Agent API action metadata.
+- `verified`: reserved for future deterministic re-simulation; current builds do not emit it.
+
+Export the latest result:
+
+```js
+const result = agentAPI.exportResult();
+console.log(JSON.stringify(result, null, 2));
 ```
 
 ### Ghosts

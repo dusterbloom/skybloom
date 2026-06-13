@@ -41,6 +41,15 @@ import { RendererManager } from './RendererManager.js';
 import { QualityManager } from './QualityManager.js';
 import { EventBus } from './EventBus.js';
 
+const showDevStats = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.has('debug') || localStorage.getItem('vc.debug') === '1';
+  } catch (error) {
+    return false;
+  }
+};
+
 // Import mobile and physics systems from main (optional imports)
 let MaterialSystemIntegration, PhysicsSystem, MobileUI;
 
@@ -119,8 +128,16 @@ export class Engine {
     this.qualityManager.rendererManager = this.rendererManager;
 
     // Performance monitoring in development
-    if (import.meta.env.DEV) {
+    if (import.meta.env.DEV && showDevStats()) {
       this.stats = new Stats();
+      this.stats.dom.id = 'dev-stats';
+      Object.assign(this.stats.dom.style, {
+        position: 'absolute',
+        top: '6px',
+        left: '6px',
+        zIndex: '1200',
+      });
+      document.documentElement.style.setProperty('--vc-dev-hud-offset', '52px');
       document.body.appendChild(this.stats.dom);
     }
 
@@ -467,7 +484,10 @@ export class Engine {
     if (this.mobileUI && typeof this.mobileUI.destroy === 'function') {
       this.mobileUI.destroy();
     }
-    if (this.stats) document.body.removeChild(this.stats.dom);
+    if (this.stats) {
+      document.body.removeChild(this.stats.dom);
+      document.documentElement.style.removeProperty('--vc-dev-hud-offset');
+    }
     this.isRunning = false;
   }
 

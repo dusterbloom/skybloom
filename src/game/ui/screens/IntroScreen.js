@@ -125,7 +125,7 @@ export class IntroScreen {
 
     const playButton = document.createElement('button');
     playButton.className = 'vc-btn-primary';
-    playButton.textContent = 'Take Flight';
+    playButton.textContent = 'Play';
     playButton.style.alignSelf = 'flex-start';
     playButton.style.animation = 'vc-breathe 3s ease-in-out infinite';
     content.appendChild(playButton);
@@ -140,10 +140,6 @@ export class IntroScreen {
     howBtn.className = 'vc-btn-ghost';
     howBtn.textContent = 'How to fly';
 
-    const raceBtn = document.createElement('button');
-    raceBtn.className = 'vc-btn-ghost';
-    raceBtn.textContent = 'Race ghosts (R)';
-
     const apiLink = document.createElement('a');
     apiLink.className = 'vc-btn-ghost';
     apiLink.textContent = 'Agent API';
@@ -154,7 +150,6 @@ export class IntroScreen {
     apiLink.style.alignItems = 'center';
 
     ghostRow.appendChild(howBtn);
-    ghostRow.appendChild(raceBtn);
     ghostRow.appendChild(apiLink);
     content.appendChild(ghostRow);
 
@@ -169,10 +164,11 @@ export class IntroScreen {
       ['W / S · Shift', 'throttle · brake'],
       ['A / D', 'bank into the turn'],
       ['Space / Ctrl', 'climb / dive'],
-      ['Mouse', 'steer (click to lock)'],
-      ['1–4 · E', 'select · cast spells'],
-      ['R · Q', 'race · quest log'],
-    ];
+        ['Mouse', 'steer (click to lock)'],
+        ['1–4 · E', 'select · cast spells'],
+        ['R', 'start a 12-gate race'],
+        ['Menu', 'race · speed · time'],
+      ];
     rows.forEach(([keys, what]) => {
       const row = document.createElement('div');
       row.style.display = 'flex';
@@ -228,7 +224,6 @@ export class IntroScreen {
       event.preventDefault();
       playButton.removeEventListener('click', handlePlayPress);
       playButton.removeEventListener('touchend', handlePlayPress);
-      raceBtn.removeEventListener('click', handlePlayPress);
       self._unbindKeys();
 
       self.container.style.display = 'none';
@@ -244,7 +239,6 @@ export class IntroScreen {
     this._handlePlayPress = handlePlayPress;
     playButton.addEventListener('click', handlePlayPress);
     playButton.addEventListener('touchend', handlePlayPress);
-    raceBtn.addEventListener('click', handlePlayPress);
 
     // Responsive tweaks for narrow screens
     if (window.innerWidth < 700) {

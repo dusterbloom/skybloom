@@ -1,146 +1,73 @@
-# Skybloom: Status & Development Roadmap
+# SkyBloom Release Status
 
-## Current Status
+This document is the current public status page for the small release. Older task logs live under `bot/` and are archival.
 
-Skybloom is an immersive 3D flying carpet adventure game built with Three.js. The game enables players to explore a procedurally generated world, collect mana, and enjoy the experience of magical flight.
+## What Works
 
-### Core Systems Implemented
-
-- **Engine System**: Core game loop, system management, renderer configuration
-- **WorldSystem**: Advanced procedural terrain generation with biomes and features
-- **PlayerSystem**: Flight physics, controls, and player management
-- **AtmosphereSystem**: Sky rendering, clouds, weather effects
-- **VegetationSystem**: Procedural tree and plant generation
-- **WaterSystem**: Ocean, lakes, and water rendering
-- **CarpetTrailSystem**: Visual flight effects, motion lines, and particles
-- **LandmarkSystem**: Procedural points of interest (ruins, magical circles, etc.)
-- **UISystem**: Basic player HUD and interface elements
-- **NetworkManager**: Basic multiplayer capabilities
-
-### Recent Improvements
-
-1. **Enhanced Terrain Generation**:
-   - Multi-octave noise for more natural landscapes
-   - Better biome transitions based on temperature and moisture
-   - Improved coloring and texturing
-   - More varied terrain features (mountains, plateaus, valleys)
-   
-2. **Landmark System**:
-   - Procedurally generated points of interest
-   - Ancient ruins, magical circles, and crystal formations
-   - Smart placement based on terrain suitability
-   - Visual effects and animations
-   
-3. **Flight Visualization**:
-   - Magic particle trails
-   - Motion lines at high speeds
-   - Steam/cloud effects
-   - Ribbon trail showing flight path
-
-### Current Architecture
-
-The game uses a component-based architecture with systems that interact through the central Engine class. Each system is responsible for a specific aspect of the game and updates independently in the game loop.
-
-```
-Engine
-├── InputManager
-├── AssetManager
-└── Systems
-    ├── WorldSystem
-    ├── PlayerSystem
-    │   ├── PlayerPhysics
-    │   ├── PlayerInput
-    │   ├── PlayerModels
-    │   └── PlayerSpells
-    ├── AtmosphereSystem
-    ├── VegetationSystem
-    ├── WaterSystem
-    ├── CarpetTrailSystem
-    ├── LandmarkSystem
-    ├── UISystem
-    └── NetworkManager
-```
+- Browser-based Three.js flying game with procedural terrain, water, atmosphere, landmarks, mana, spells, and mobile controls.
+- A readable first session: intro screen, free flight, in-game hints, and a compact Race Panel.
+- Seeded 12-gate time trials started by **R** or the Race Panel.
+- Next-gate rings and beacon, gate-pass feedback, finish message, local best times, and local replay storage.
+- Ghost playback from saved local replays.
+- Agent API exposed as `window.agentAPI` with observation/action/fairness controls.
+- Bundled `SimpleBot` reference agent using only public API calls.
+- JSON benchmark export with build version, fairness config, replay samples, optional action log, and honest verification status.
+- Optional WebSocket transport for external agents.
+- Optional socket.io multiplayer scaffold for casual play.
+- CI build check and local smoke script.
 
 ## Known Limitations
 
-1. **Asset Management**: Currently experiences 404 errors for missing assets, though fallback systems are in place
-2. **Performance Optimization**: Needs Level of Detail (LOD) system for distant terrain
-3. **Physics**: Basic collision detection with terrain but no advanced physics
-4. **Multiplayer**: Basic framework exists but needs more robust implementation
-5. **Mobile Compatibility**: Not yet optimized for mobile devices
+- Exports are not verified leaderboard records. Current statuses are `ghost-only` and `action-log-present`.
+- Replays are path samples for ghost playback; deterministic action re-simulation is not implemented.
+- Client-side fairness is cooperative. A modified browser can lie about pilot tags, config, or times.
+- Replay storage is localStorage and capped.
+- Multiplayer is explicitly untrusted for benchmark claims.
+- The release has build/smoke CI, not full unit, integration, or browser automation coverage.
+- Some historical design docs and old task files remain in the repo for provenance, but are not release documentation.
 
-## Next Steps
+## Run Locally
 
-### High Priority Tasks
+```bash
+npm install
+npm run dev
+```
 
-1. **Asset Creation & Integration**:
-   - Create and include necessary 3D models (carpet, mana orbs)
-   - Add proper textures for terrain, water, etc.
-   - Implement sound effects and background music
-   
-2. **Gameplay Loop Enhancement**:
-   - Implement spell system using collected mana
-   - Add goals and objectives
-   - Create progression system
-   
-3. **Performance Optimization**:
-   - Implement Level of Detail (LOD) for distant terrain
-   - Optimize vegetation rendering with instancing
-   - Add frustum culling for off-screen objects
+Open `http://localhost:5173`.
 
-### Medium Priority Tasks
+## Build And Check
 
-1. **Improved Weather & Environment**:
-   - Day/night cycle with lighting changes
-   - Weather effects (rain, snow, fog)
-   - Ambient creatures (birds, fish)
-   
-2. **UI Improvements**:
-   - Minimap for navigation
-   - Better mana and health displays
-   - Spell selection interface
-   
-3. **Multiplayer Enhancements**:
-   - Improved synchronization
-   - Player interaction features
-   - Shared world persistence
+```bash
+npm run build
+npm run smoke
+```
 
-### Future Features
+CI runs:
 
-1. **Quest System**:
-   - NPCs with dialog
-   - Quest objectives and rewards
-   - Story elements
-   
-2. **Expanded World**:
-   - More landmark types
-   - Dungeons and special locations
-   - Secret areas with unique rewards
-   
-3. **Carpet Customization**:
-   - Visual customization options
-   - Performance upgrades
-   - Special abilities
+1. `npm install`
+2. `npm run build`
+3. `npm run smoke`
 
-## Technical Debt
+## Deploy
 
-1. **Code Refactoring**:
-   - Standardize naming conventions
-   - Improve system coupling/cohesion
-   - Add comprehensive documentation
-   
-2. **Testing Framework**:
-   - Add unit tests for core systems
-   - Implement performance benchmarking
-   - Create stress tests for world generation
-   
-3. **Build Pipeline**:
-   - Optimize asset loading and bundling
-   - Implement proper versioning
-   - Create deployment automation
+Build the static app:
 
-## Conclusion
+```bash
+npm install
+npm run build
+```
 
-Skybloom has a solid foundation with key systems in place. The procedural world generation, flight mechanics, and visual effects create an engaging experience. By focusing on the priority tasks outlined above, the game can evolve into a fully-featured adventure with rich gameplay and visual appeal.
+Publish `dist/` to a static host. The optional `server.js` path is only for socket.io multiplayer:
 
-The most critical next step is completing the gameplay loop by implementing the spell system and objectives, giving purpose to the mana collection mechanic and providing players with goals beyond exploration.
+```bash
+npm start
+```
+
+## Practical Next PR
+
+Add the first deterministic verification prototype:
+
+- Capture initial race state in exported results.
+- Add fixed-timestep replay harness behind a developer command.
+- Re-run action logs for one pinned browser/runtime target.
+- Keep public exports marked unverified until the harness can reproduce times.

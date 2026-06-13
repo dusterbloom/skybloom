@@ -6,3 +6,8 @@ node_modules/
 .claude/settings.local.json
 .claude/pre-session-backup.patch
 .claude/scheduled_tasks.lock
+.codex/
+bot/
+dist/
+
+CLAUDE.md

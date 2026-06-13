@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System.js';
+import { SimpleBot } from '../../agents/SimpleBot.js';
+import { useGameState, GameStates } from '../state/gameState.js';
+import { ensureVibeTheme } from '../ui/theme.js';
 
 /**
  * RaceSystem — seeded gate time-trials with replays and ghost playback.
@@ -42,7 +45,7 @@ import { System } from '../core/System.js';
 const GATE_COUNT = 12;
 const GATE_RADIUS = 18;                 // torus major radius (world units)
 const PASS_MARGIN = 2;                  // pass when segment comes within radius + margin
-const FIRST_GATE_DISTANCE = 250;        // gate 0 sits this far along the player's heading
+const FIRST_GATE_DISTANCE = 330;        // gate 0 sits this far along the player's heading
 const GATE_SPACING_MIN = 450;           // min distance between consecutive gates
 const GATE_SPACING_SPREAD = 200;        // spacing = 450 + rand * 200 → [450, 650)
 const HEADING_DRIFT_MAX = 0.55;         // per-gate cumulative heading drift, ± radians
@@ -56,11 +59,16 @@ const SAMPLE_INTERVAL = 0.1;            // replay recording: 10 Hz
 const HUD_INTERVAL = 0.1;               // HUD refresh: ~10 Hz
 const REPLAY_STORE_KEY = 'vibecarpet.replays.v1';
 const REPLAY_STORE_CAP = 20;
+const RESULT_SCHEMA_VERSION = 2;
 
 const COLOR_UPCOMING = 0x66ffee;
 const COLOR_PASSED = 0x335555;
 const COLOR_NEXT = 0xffcc66;
 const COLOR_GHOST = 0x66ffee;
+
+const BUILD_VERSION = typeof __SKYBLOOM_BUILD_VERSION__ !== 'undefined'
+  ? __SKYBLOOM_BUILD_VERSION__
+  : 'dev';
 
 /**
  * mulberry32 — tiny deterministic PRNG. Same seed → same course, everywhere.
@@ -100,8 +108,10 @@ export class RaceSystem extends System {
 
     // --- Replay recording ----------------------------------------------------
     this._samples = [];         // [[tMs, x, y, z, heading], ...] at 10 Hz
+    this._actionLog = [];       // agent action/config metadata when available
     this._sampleAccum = 0;
     this.replays = [];          // in-memory mirror of the localStorage store
+    this._latestReplay = null;  // last finished replay in this session
     this._storageWarned = false;
 
     // --- Ghost playback -------------------------------------------------------
@@ -124,10 +134,21 @@ export class RaceSystem extends System {
     this._hudRoot = null;
     this._raceChip = null;
     this._ghostChip = null;
+    this._panelRoot = null;
+    this._panelToggle = null;
+    this._panelFields = {};
+    this._panelButtons = {};
+    this._panelOpen = false;
     this._hudAccum = 0;
     this._hudDirty = false;
+    this._panelDirty = false;
     this._lastRaceText = null;
     this._lastGhostText = null;
+    this._lastPanelText = {};
+
+    // --- Reference bot controls ---------------------------------------------------
+    this._simpleBot = null;
+    this._simpleBotRunning = false;
 
     // --- Reused temporaries (no per-frame allocations in steady state) -------------
     this._prevPlayerPos = new THREE.Vector3();
@@ -135,6 +156,7 @@ export class RaceSystem extends System {
     this._tmpB = new THREE.Vector3();
 
     this._onKeyDown = null;
+    this._onAgentActionQueued = null;
     this._hintTimer = null;
   }
 
@@ -150,7 +172,9 @@ export class RaceSystem extends System {
   async _initialize() {
     this._createSharedResources();
     this._createHud();
+    this._removePanelNodes();
     this.replays = this._loadReplayStore();
+    this._latestReplay = this.replays.length ? this.replays[this.replays.length - 1] : null;
 
     // KeyR starts a fresh race (deliberately NOT a restart while running, so a
     // stray keypress mid-race can't wipe a good run — call start() for that).
@@ -158,9 +182,13 @@ export class RaceSystem extends System {
       if (event.code !== 'KeyR' || event.repeat) return;
       const t = event.target;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (!this._isGamePlaying()) return;
       if (this.state !== 'running') this.start();
     };
     window.addEventListener('keydown', this._onKeyDown);
+
+    this._onAgentActionQueued = (event) => this.recordAgentAction(event);
+    this.engine.eventBus.on('agentActionQueued', this._onAgentActionQueued);
 
     // One-time discoverability hint, guarded — UI system may be absent.
     this._hintTimer = setTimeout(() => {
@@ -205,6 +233,7 @@ export class RaceSystem extends System {
       this._hudAccum = 0;
       this._hudDirty = false;
       this._updateHud();
+      this._updatePanel();
     }
   }
 
@@ -220,9 +249,25 @@ export class RaceSystem extends System {
     if (this._hudRoot && this._hudRoot.parentNode) {
       this._hudRoot.parentNode.removeChild(this._hudRoot);
     }
+    if (this._panelRoot && this._panelRoot.parentNode) {
+      this._panelRoot.parentNode.removeChild(this._panelRoot);
+    }
+    if (this._panelToggle && this._panelToggle.parentNode) {
+      this._panelToggle.parentNode.removeChild(this._panelToggle);
+    }
     this._hudRoot = null;
     this._raceChip = null;
     this._ghostChip = null;
+    this._panelRoot = null;
+    this._panelToggle = null;
+    this._panelFields = {};
+    this._panelButtons = {};
+
+    if (this._onAgentActionQueued) {
+      this.engine.eventBus.off('agentActionQueued', this._onAgentActionQueued);
+      this._onAgentActionQueued = null;
+    }
+    this.stopSimpleBot();
 
     if (this.courseGroup) {
       this.engine.scene.remove(this.courseGroup);
@@ -288,6 +333,7 @@ export class RaceSystem extends System {
     this._sawKeyboard = false;
     this._sawVirtual = false;
     this._samples = [];
+    this._actionLog = [];
     this._sampleAccum = 0;
     this._prevPlayerPos.copy(player.position);
 
@@ -298,6 +344,8 @@ export class RaceSystem extends System {
 
     this._refreshGateVisuals();
     this._hudDirty = true;
+    this._panelDirty = true;
+    this._toast(`Race seed ${seed} ready — fly through the lit ring`, '#ffcc66');
     this.engine.eventBus.emit('raceStarted', { courseSeed: seed });
     Logger.info(`RaceSystem: race started, courseSeed=${seed}`);
     return seed;
@@ -311,11 +359,15 @@ export class RaceSystem extends System {
     this.currentGateIndex = 0;
     this.splits.length = 0;
     this._samples = [];
+    this._actionLog = [];
     for (let i = 0; i < this.gates.length; i++) this.gates[i].passed = false;
     this._ghostActive = false;
     if (this.ghostMesh) this.ghostMesh.visible = false;
+    const api = typeof window !== 'undefined' ? window.agentAPI : null;
+    if (api && typeof api.release === 'function') api.release();
     this._refreshGateVisuals(); // idle preview: gate 0 lit as the start ring
     this._hudDirty = true;
+    this._panelDirty = true;
   }
 
   /**
@@ -350,7 +402,9 @@ export class RaceSystem extends System {
       date: r.date,
       finalTimeMs: r.finalTimeMs,
       splits: Array.isArray(r.splits) ? r.splits.slice() : [],
-      sampleCount: Array.isArray(r.samples) ? r.samples.length : 0
+      sampleCount: Array.isArray(r.samples) ? r.samples.length : 0,
+      actionLogCount: Array.isArray(r.actionLog) ? r.actionLog.length : 0,
+      verificationStatus: r.verificationStatus || (Array.isArray(r.actionLog) && r.actionLog.length > 0 ? 'action-log-present' : 'ghost-only')
     }));
   }
 
@@ -400,6 +454,101 @@ export class RaceSystem extends System {
     this._ghostActive = false;
     if (this.ghostMesh) this.ghostMesh.visible = false;
     this._hudDirty = true;
+  }
+
+  /** Most recent full replay saved in this browser session/store, or null. */
+  getLatestReplay() {
+    if (this._latestReplay) return this._latestReplay;
+    return this.replays.length ? this.replays[this.replays.length - 1] : null;
+  }
+
+  /** Best replay for the current seed, or the fastest stored replay when no seed is active. */
+  getPanelBestReplay() {
+    if (this.courseSeed) return this.getBestReplay(this.courseSeed);
+    let best = null;
+    for (let i = 0; i < this.replays.length; i++) {
+      const replay = this.replays[i];
+      if (!best || replay.finalTimeMs < best.finalTimeMs) best = replay;
+    }
+    return best;
+  }
+
+  /** Load the current seed's best local replay as a ghost. */
+  loadBestGhost() {
+    const replay = this.getPanelBestReplay();
+    const ok = this.loadGhost(replay);
+    this._toast(ok ? 'Best ghost loaded' : 'No saved ghost yet', ok ? '#66ffee' : '#ffcc66');
+    return ok;
+  }
+
+  /** Restart the current seed when available, otherwise start a fresh course. */
+  restartSameSeed() {
+    return this.start(this.courseSeed || undefined);
+  }
+
+  /** Start the bundled reference agent through the same public Agent API users get. */
+  runSimpleBot() {
+    if (this._simpleBotRunning) return true;
+    const api = typeof window !== 'undefined' ? window.agentAPI : null;
+    if (!api) {
+      this._toast('Agent API is not ready yet', '#ffcc66');
+      return false;
+    }
+    try {
+      this._simpleBot = new SimpleBot(api, {
+        courseSeed: this.courseSeed || undefined,
+        once: false,
+      });
+      this._simpleBot.start();
+      this._simpleBotRunning = true;
+      this._panelDirty = true;
+      this._toast('SimpleBot is flying', '#66ffee');
+      return true;
+    } catch (error) {
+      Logger.warn('RaceSystem: SimpleBot failed to start', error);
+      this._toast('SimpleBot failed to start', '#ff7777');
+      return false;
+    }
+  }
+
+  /** Stop the bundled reference agent and immediately return control to the human. */
+  stopSimpleBot() {
+    if (this._simpleBot) {
+      try { this._simpleBot.stop(); } catch (error) { /* best effort */ }
+    }
+    this._simpleBot = null;
+    this._simpleBotRunning = false;
+    this._panelDirty = true;
+    return true;
+  }
+
+  /**
+   * Record sanitized agent action metadata while the race clock is running.
+   * This is not deterministic verification; it is replay v2 groundwork.
+   */
+  recordAgentAction(event) {
+    if (!event || this.state !== 'running' || !this._clockRunning) return;
+    const action = event.action && typeof event.action === 'object' ? event.action : null;
+    if (!action) return;
+    this._actionLog.push({
+      tMs: Math.round(this.elapsedMs),
+      source: event.source || 'agentAPI',
+      action: JSON.parse(JSON.stringify(action)),
+      config: event.config ? JSON.parse(JSON.stringify(event.config)) : this._getFairnessConfig(),
+    });
+  }
+
+  /**
+   * Return an honest benchmark JSON object. With { download: true }, also
+   * downloads it in the browser. The current implementation records ghost path
+   * samples and optional agent action metadata; it does not verify by replaying.
+   */
+  exportResult(replayRef = null, options = {}) {
+    const replay = this._resolveReplayRef(replayRef) || this.getLatestReplay();
+    if (!replay) return null;
+    const result = this._buildExportResult(replay);
+    if (options && options.download) this._downloadJson(result, this._resultFilename(result));
+    return result;
   }
 
   // =========================================================================
@@ -622,6 +771,7 @@ export class RaceSystem extends System {
     gate.passed = true;
     this.currentGateIndex++;
     this.engine.eventBus.emit('gatePassed', { index: gate.index, splitMs });
+    this._toast(`Gate ${gate.index + 1}/${this.gateCount} passed`, gate.index + 1 >= this.gateCount ? '#66ffee' : '#ffcc66', 1800);
 
     if (this.currentGateIndex >= this.gates.length) {
       this._finishRace(player);
@@ -629,6 +779,7 @@ export class RaceSystem extends System {
       this._refreshGateVisuals();
     }
     this._hudDirty = true;
+    this._panelDirty = true;
   }
 
   _finishRace(player) {
@@ -639,23 +790,34 @@ export class RaceSystem extends System {
 
     const world = this.engine.systems.get('world');
     const worldSeed = (world && world.seed !== undefined && world.seed !== null) ? world.seed : 0;
+    const actionLog = this._actionLog.slice();
     const replay = {
-      version: 1,
+      version: RESULT_SCHEMA_VERSION,
+      schemaVersion: RESULT_SCHEMA_VERSION,
       pilot: this._resolvePilot(),
       worldSeed,
       courseSeed: this.courseSeed,
       date: new Date().toISOString(),
       finalTimeMs: this._finalTimeMs,
       splits: this.splits.slice(),
-      samples: this._samples
+      samples: this._samples,
+      actionLog,
+      fairnessConfig: this._getFairnessConfig(),
+      verificationStatus: actionLog.length > 0 ? 'action-log-present' : 'ghost-only',
+      buildVersion: BUILD_VERSION,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
     };
     this._samples = []; // the array now belongs to the replay
+    this._actionLog = [];
 
     // Save BEFORE emitting so listeners see the run via listReplays()/best.
     this._saveReplay(replay);
+    this._latestReplay = replay;
     this._refreshGateVisuals();
     this._hudDirty = true;
+    this._panelDirty = true;
     this.engine.eventBus.emit('raceFinished', { timeMs: this._finalTimeMs, replay });
+    this._toast(`Finished ${this._formatTime(this._finalTimeMs, 3)} — replay saved`, '#66ffee', 5000);
     Logger.info(`RaceSystem: race finished in ${this._finalTimeMs} ms (pilot: ${replay.pilot})`);
   }
 
@@ -879,6 +1041,274 @@ export class RaceSystem extends System {
       this._lastGhostText = ghostText;
       this._ghostChip.style.display = ghostText === null ? 'none' : 'block';
       if (ghostText !== null) this._ghostChip.textContent = ghostText;
+    }
+  }
+
+  _createPanel() {
+      if (this._panelRoot || !this._isGamePlaying()) return;
+      ensureVibeTheme();
+      const uiRoot = document.getElementById('ui-container') || document.body;
+
+      const root = document.createElement('div');
+      root.id = 'race-panel';
+      root.style.display = 'block';
+      root.style.pointerEvents = 'auto';
+
+    const head = document.createElement('div');
+    head.style.display = 'flex';
+    head.style.justifyContent = 'space-between';
+    head.style.alignItems = 'baseline';
+    head.style.gap = '10px';
+    head.style.marginBottom = '10px';
+    const title = document.createElement('div');
+    title.className = 'vc-label';
+    title.textContent = 'Race';
+    const sub = document.createElement('div');
+    sub.className = 'vc-num';
+    sub.textContent = 'R starts a run';
+    sub.style.fontSize = '11px';
+    sub.style.color = 'var(--vc-ink-dim)';
+    head.appendChild(title);
+    head.appendChild(sub);
+    root.appendChild(head);
+
+    const grid = document.createElement('div');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'minmax(68px, 0.8fr) minmax(0, 1.2fr)';
+    grid.style.gap = '4px 8px';
+    grid.style.fontSize = '12px';
+    grid.style.fontVariantNumeric = 'tabular-nums';
+    grid.style.marginBottom = '10px';
+    const fields = [
+      ['seed', 'Seed'],
+      ['gate', 'Gate'],
+      ['elapsed', 'Elapsed'],
+      ['best', 'Best'],
+      ['pilot', 'Pilot'],
+      ['ghost', 'Ghost'],
+    ];
+    for (const [key, labelText] of fields) {
+      const label = document.createElement('div');
+      label.className = 'vc-label';
+      label.style.fontSize = '10px';
+      label.textContent = labelText;
+      const value = document.createElement('div');
+      value.className = 'vc-num';
+      value.textContent = '--';
+      value.style.textAlign = 'right';
+      value.style.minWidth = '0';
+      value.style.overflow = 'hidden';
+      value.style.textOverflow = 'ellipsis';
+      value.style.whiteSpace = 'nowrap';
+      grid.appendChild(label);
+      grid.appendChild(value);
+      this._panelFields[key] = value;
+    }
+    root.appendChild(grid);
+
+    const actions = document.createElement('div');
+    actions.style.display = 'grid';
+    actions.style.gridTemplateColumns = '1fr 1fr';
+    actions.style.gap = '6px';
+    const addButton = (key, text, handler, primary = false) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = primary ? 'vc-btn-primary' : 'vc-btn-ghost';
+      button.textContent = text;
+      button.style.minHeight = '30px';
+      button.style.padding = primary ? '6px 8px' : '6px 8px';
+      button.style.fontSize = '12px';
+      button.style.borderRadius = '999px';
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        handler();
+      });
+      actions.appendChild(button);
+      this._panelButtons[key] = button;
+    };
+    addButton('start', 'Start Race', () => this.start(), true);
+    addButton('restart', 'Same Seed', () => this.restartSameSeed());
+    addButton('abort', 'Stop Race', () => {
+      this.abort();
+      this._toast('Race stopped');
+    });
+    addButton('loadGhost', 'Load Ghost', () => this.loadBestGhost());
+    addButton('clearGhost', 'Clear Ghost', () => {
+      this.clearGhost();
+      this._toast('Ghost cleared');
+    });
+    addButton('runBot', 'Run SimpleBot', () => this.runSimpleBot());
+    addButton('stopBot', 'Stop Bot', () => this.stopSimpleBot());
+    addButton('export', 'Export JSON', () => {
+      const result = this.exportResult(null, { download: true });
+      this._toast(result ? 'Benchmark JSON exported' : 'Finish a race before export', result ? '#66ffee' : '#ffcc66');
+    });
+    root.appendChild(actions);
+
+    const ui = this.engine.systems.get('ui');
+    if (!ui || typeof ui.registerSettingsPane !== 'function' || !ui.registerSettingsPane('race', root)) {
+      uiRoot.appendChild(root);
+    }
+    this._panelToggle = null;
+    this._panelRoot = root;
+    this._updatePanel();
+  }
+
+  _updatePanel() {
+    if (!this._panelRoot && this._isGamePlaying()) this._createPanel();
+    if (!this._panelRoot) return;
+    const playing = this._isGamePlaying();
+    if (!playing) {
+      this._panelRoot.style.display = 'none';
+      return;
+    }
+    this._panelRoot.style.display = 'block';
+
+    const best = this.courseSeed ? this.getBestReplay(this.courseSeed) : this.getPanelBestReplay();
+    const latest = this.getLatestReplay();
+    const ghost = this.ghostReplay;
+    const gateValue = this.gateCount
+      ? `${Math.min(this.currentGateIndex + 1, this.gateCount)} / ${this.gateCount}`
+      : '--';
+    const elapsed = this.state === 'finished'
+      ? this._finalTimeMs
+      : (this.state === 'running' ? this.elapsedMs : null);
+    const values = {
+      seed: this.courseSeed ? String(this.courseSeed) : '--',
+      gate: gateValue,
+      elapsed: elapsed === null ? '--' : this._formatTime(elapsed, 1),
+      best: best ? `${this._formatTime(best.finalTimeMs, 1)} ${best.pilot || 'unknown'}` : '--',
+      pilot: this._currentPilotLabel(),
+      ghost: ghost ? `${ghost.pilot || 'unknown'} ${this._formatTime(ghost.finalTimeMs, 1)}` : 'none',
+    };
+
+    for (const key of Object.keys(values)) {
+      if (this._lastPanelText[key] === values[key]) continue;
+      this._lastPanelText[key] = values[key];
+      if (this._panelFields[key]) this._panelFields[key].textContent = values[key];
+    }
+
+    const buttons = this._panelButtons;
+    if (buttons.restart) buttons.restart.disabled = !this.courseSeed;
+    if (buttons.abort) buttons.abort.disabled = this.state !== 'running';
+    if (buttons.loadGhost) buttons.loadGhost.disabled = !best;
+    if (buttons.clearGhost) buttons.clearGhost.disabled = !ghost;
+    if (buttons.runBot) buttons.runBot.disabled = this._simpleBotRunning;
+    if (buttons.stopBot) buttons.stopBot.disabled = !this._simpleBotRunning;
+    if (buttons.export) buttons.export.disabled = !latest;
+  }
+
+  _currentPilotLabel() {
+    if (this.state === 'finished' && this._latestReplay && this._latestReplay.courseSeed === this.courseSeed) {
+      return this._latestReplay.pilot || 'unknown';
+    }
+    if (this._sawKeyboard && this._sawVirtual) return 'mixed';
+    if (this._sawKeyboard) return 'human';
+    if (this._sawVirtual || this._simpleBotRunning) return 'agent';
+    return 'unknown';
+  }
+
+  _isGamePlaying() {
+    try {
+      return this.engine.gameStarted && useGameState.getState().currentState === GameStates.PLAYING;
+    } catch (error) {
+      return !!this.engine.gameStarted;
+    }
+  }
+
+  _removePanelNodes() {
+    if (typeof document === 'undefined') return;
+    document.querySelectorAll('#race-panel, #race-panel-toggle').forEach((node) => node.remove());
+    this._panelRoot = null;
+    this._panelToggle = null;
+    this._panelOpen = false;
+  }
+
+  _resolveReplayRef(replayRef) {
+    if (replayRef === null || replayRef === undefined) return null;
+    if (Number.isInteger(replayRef)) return this.replays[replayRef] || null;
+    if (replayRef && typeof replayRef === 'object') {
+      if (!Array.isArray(replayRef.samples) && Number.isInteger(replayRef.id)) {
+        return this.replays[replayRef.id] || null;
+      }
+      return replayRef;
+    }
+    return null;
+  }
+
+  _buildExportResult(replay) {
+    const actionLog = Array.isArray(replay.actionLog) ? replay.actionLog : [];
+    const verificationStatus = replay.verificationStatus ||
+      (actionLog.length > 0 ? 'action-log-present' : 'ghost-only');
+    return {
+      type: 'skybloom.benchmark-result',
+      version: RESULT_SCHEMA_VERSION,
+      game: 'SkyBloom',
+      buildVersion: replay.buildVersion || BUILD_VERSION,
+      date: replay.date,
+      exportedAt: new Date().toISOString(),
+      courseSeed: replay.courseSeed,
+      worldSeed: replay.worldSeed,
+      finalTimeMs: replay.finalTimeMs,
+      splits: Array.isArray(replay.splits) ? replay.splits.slice() : [],
+      pilot: replay.pilot || 'unknown',
+      fairnessConfig: replay.fairnessConfig || this._getFairnessConfig(),
+      verificationStatus,
+      trustModel: 'client-recorded path replay; not verified by deterministic re-simulation',
+      replay: {
+        sampleFormat: ['tMs', 'x', 'y', 'z', 'heading'],
+        pathSamples: Array.isArray(replay.samples) ? replay.samples : [],
+        actionLog,
+      },
+      userAgent: replay.userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'),
+    };
+  }
+
+  _getFairnessConfig() {
+    const api = typeof window !== 'undefined' ? window.agentAPI : null;
+    const config = api && typeof api.getConfig === 'function'
+      ? api.getConfig()
+      : { actionHz: 10, observationHz: 20, observationLatencyMs: 0, perceptionRadius: { mana: 800, landmarks: 2000 } };
+    return {
+      profile: this._fairnessProfile(config),
+      actionHz: config.actionHz,
+      observationHz: config.observationHz,
+      observationLatencyMs: config.observationLatencyMs,
+      perceptionRadius: config.perceptionRadius ? { ...config.perceptionRadius } : undefined,
+    };
+  }
+
+  _fairnessProfile(config) {
+    if (config.actionHz === 10 && config.observationLatencyMs === 150) return 'strict';
+    if (config.actionHz === 20 && config.observationLatencyMs === 0) return 'open';
+    return 'custom';
+  }
+
+  _downloadJson(data, filename) {
+    if (typeof document === 'undefined' || typeof Blob === 'undefined') return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  _resultFilename(result) {
+    const seed = result && result.courseSeed !== undefined ? result.courseSeed : 'unknown-seed';
+    const time = result && Number.isFinite(result.finalTimeMs) ? result.finalTimeMs : 'unfinished';
+    return `skybloom-${seed}-${time}.json`;
+  }
+
+  _toast(text, accentColor = '#66ffee', duration = 3000) {
+    try {
+      this.engine.systems.get('ui')?.showMessage?.(text, duration, accentColor);
+    } catch (error) {
+      // UI messages are best-effort.
     }
   }
 

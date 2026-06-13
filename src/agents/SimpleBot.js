@@ -12,10 +12,12 @@
  */
 
 // Tuning constants for the control law. Tweak these and watch what changes.
-const TURN_GAIN = 2.2;       // proportional steering: turn = bearing * gain
+const TURN_GAIN = 3.0;       // proportional steering: turn = bearing * gain
 const CLIMB_DIVISOR = 40;    // full climb/dive when gate is 40+ units above/below
-const HAIRPIN_BEARING = 1.1; // rad; a gate this far off the nose is a hairpin
-const HAIRPIN_DIST = 260;    // brake inside this distance when facing a hairpin
+const OFF_AXIS_BEARING = 0.45; // rad; start trading speed for turn radius
+const HAIRPIN_BEARING = 1.0; // rad; a gate this far off the nose is a hairpin
+const RECOVERY_BEARING = 1.55; // rad; target is mostly beside/behind us
+const HAIRPIN_DIST = 360;    // brake inside this distance when facing a hairpin
 const TERRAIN_LOOKOUT = 300; // react to terrain probes nearer than this
 const TERRAIN_MARGIN = 12;   // pull up if ground is within 12 units of altitude
 const CEILING_MARGIN = 50;   // stop climbing this close to the flight ceiling
@@ -107,10 +109,27 @@ export class SimpleBot {
     // Match the gate's height. elevation > 0 means the gate is ABOVE us.
     let climb = clamp(gate.elevation / CLIMB_DIVISOR, -1, 1);
 
-    // Full throttle by default; brake into hairpins to fly a wider, surer line.
-    const throttle = 1;
-    const hairpin = Math.abs(gate.bearing) > HAIRPIN_BEARING && gate.dist < HAIRPIN_DIST;
-    const brake = hairpin ? 0.5 : 0;
+    // Speed management matters: the carpet turns at a yaw-rate, so full speed
+    // makes a wide arc. Slow down when the gate is off-axis or already missed.
+    const bearingAbs = Math.abs(gate.bearing);
+    const speed = obs.self && Number.isFinite(obs.self.speed) ? obs.self.speed : 0;
+    const maxSpeed = obs.limits && Number.isFinite(obs.limits.maxSpeed) ? obs.limits.maxSpeed : 210;
+    const offAxis = bearingAbs > OFF_AXIS_BEARING;
+    const hairpin = bearingAbs > HAIRPIN_BEARING && gate.dist < HAIRPIN_DIST;
+    const recovery = bearingAbs > RECOVERY_BEARING;
+    const closeAndFast = gate.dist < 220 && speed > maxSpeed * 0.55;
+
+    let throttle = 1;
+    if (recovery) throttle = 0.1;
+    else if (hairpin) throttle = 0.25;
+    else if (offAxis) throttle = 0.55;
+    else if (closeAndFast) throttle = 0.65;
+
+    let brake = 0;
+    if (recovery) brake = 0.9;
+    else if (hairpin) brake = 0.7;
+    else if (offAxis && gate.dist < 300) brake = 0.35;
+    else if (closeAndFast && bearingAbs > 0.25) brake = 0.25;
 
     // Terrain safety overrides gate chasing: if any probe within 300 units is
     // near our altitude, climb hard now and sort the gate out afterwards.

@@ -95,9 +95,11 @@ export class AgentAPISystem extends System {
       startRace: this.startRace.bind(this),
       abortRace: this.abortRace.bind(this),
       listReplays: this.listReplays.bind(this),
+      getLatestReplay: this.getLatestReplay.bind(this),
       getBestReplay: this.getBestReplay.bind(this),
       loadGhost: this.loadGhost.bind(this),
       clearGhost: this.clearGhost.bind(this),
+      exportResult: this.exportResult.bind(this),
       setConfig: this.setConfig.bind(this),
       getConfig: this.getConfig.bind(this),
       connectAgent: this.connectAgent.bind(this),
@@ -541,6 +543,7 @@ export class AgentAPISystem extends System {
         selectSpell,
         cast: !!action.cast,
       };
+      this._emitActionQueued(this._pendingAction);
       return true;
     } catch (err) {
       return false;
@@ -602,11 +605,15 @@ export class AgentAPISystem extends System {
 
   listReplays() { return this._raceCall('listReplays', [], []); }
 
+  getLatestReplay() { return this._raceCall('getLatestReplay', [], null); }
+
   getBestReplay(courseSeed) { return this._raceCall('getBestReplay', [courseSeed], null); }
 
   loadGhost(replay) { return this._raceCall('loadGhost', [replay], null); }
 
   clearGhost() { return this._raceCall('clearGhost', [], null); }
+
+  exportResult(replayRef = null) { return this._raceCall('exportResult', [replayRef], null); }
 
   _raceCall(method, args, absentValue) {
     try {
@@ -616,6 +623,30 @@ export class AgentAPISystem extends System {
       return out === undefined ? absentValue : out;
     } catch (err) {
       return absentValue;
+    }
+  }
+
+  _emitActionQueued(pendingAction) {
+    try {
+      const action = {};
+      const pad = pendingAction.pad || {};
+      if (pad.throttle !== undefined) action.throttle = pad.throttle;
+      if (pad.brake !== undefined) action.brake = pad.brake;
+      if (pad.turn !== undefined) action.turn = pad.turn;
+      if (pad.climb !== undefined) action.climb = pad.climb;
+      if (pendingAction.selectSpell !== null) action.selectSpell = pendingAction.selectSpell;
+      if (pendingAction.cast) action.cast = true;
+      const bus = this.engine && this.engine.eventBus;
+      if (bus && typeof bus.emit === 'function') {
+        bus.emit('agentActionQueued', {
+          source: 'agentAPI',
+          action,
+          config: this.getConfig(),
+          gameTime: this._gameTime,
+        });
+      }
+    } catch (err) {
+      // Logging metadata must never affect control.
     }
   }
 

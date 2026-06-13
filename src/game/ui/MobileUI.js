@@ -491,10 +491,10 @@ export class MobileUI {
             if (minimapContainer) {
                 // Set explicit styles to ensure visibility
                 minimapContainer.style.position = 'absolute';
-                minimapContainer.style.top = '10px';
-                minimapContainer.style.left = '10px';
-                minimapContainer.style.width = '100px';
-                minimapContainer.style.height = '100px';
+                minimapContainer.style.top = 'var(--vc-left-stack-top)';
+                minimapContainer.style.left = 'var(--vc-safe-x)';
+                minimapContainer.style.width = 'var(--vc-minimap-size)';
+                minimapContainer.style.height = 'var(--vc-minimap-size)';
                 minimapContainer.style.zIndex = '1500'; // Higher z-index to ensure visibility
                 minimapContainer.style.display = 'block'; // Force display
                 minimapContainer.style.opacity = '1'; // Ensure it's not transparent
@@ -509,10 +509,10 @@ export class MobileUI {
                 tempContainer.id = 'minimap-container';
                 tempContainer.style.cssText = `
                     position: absolute;
-                    top: 10px;
-                    left: 10px;
-                    width: 100px;
-                    height: 100px;
+                    top: var(--vc-left-stack-top);
+                    left: var(--vc-safe-x);
+                    width: var(--vc-minimap-size);
+                    height: var(--vc-minimap-size);
                     border-radius: 50%;
                     overflow: hidden;
                     background-color: rgba(0, 0, 20, 0.5);

@@ -11,8 +11,8 @@
       overflow: hidden;
       width: 100vw;
       height: 100vh;
-      background: #0e3857;
-      font-family: "Helvetica Neue", Helvetica, sans-serif;
+      background: #0b1026;
+      font-family: 'Sora', 'Outfit', 'Segoe UI', system-ui, sans-serif;
     }
     #loading {
       position: absolute;
@@ -21,10 +21,28 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      color: #FFFFFF;
-      background: url("/assets/bg.png") no-repeat center center;
-      background-size: cover;
+      color: #f2f5ff;
+      background:
+        radial-gradient(1.5px 1.5px at 14% 16%, rgba(255,255,255,0.8), transparent 60%),
+        radial-gradient(1px 1px at 36% 8%, rgba(255,255,255,0.7), transparent 60%),
+        radial-gradient(1.5px 1.5px at 58% 24%, rgba(255,255,255,0.6), transparent 60%),
+        radial-gradient(1px 1px at 78% 12%, rgba(255,255,255,0.8), transparent 60%),
+        linear-gradient(180deg, #0b1026 0%, #2a2c5a 38%, #46518f 58%, #ff7744 74%, #2a1a3a 100%);
       z-index: 1000;
+    }
+    #loading .vc-kicker {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(242, 245, 255, 0.62);
+      margin-bottom: 14px;
+    }
+    #loading h1 {
+      margin: 0 0 22px;
+      font-weight: 800;
+      font-size: clamp(34px, 6vw, 58px);
+      letter-spacing: 0.16em;
+      text-shadow: 0 2px 24px rgba(13, 18, 38, 0.8);
     }
     canvas {
       display: block;
@@ -87,19 +105,19 @@
       }
     }
   </style>
-  <script type="module" crossorigin src="/assets/index-OcnXLSaN.js"></script>
+  <script type="module" crossorigin src="/assets/index-BJ6_H6mg.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/three-CH6znIGP.js">
-  <link rel="modulepreload" crossorigin href="/assets/game-BR23nFV7.js">
+  <link rel="modulepreload" crossorigin href="/assets/game--l1JnVXa.js">
 </head>
 <body>
   <div id="loading">
     <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
-      <img src="/assets/crescent.png" style="width: 140px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));">
-      <h1 style="font-size: 42px; font-weight: bold; color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); margin-bottom: 20px;">SkyBloom</h1>
-      <div id="progress-bar" style="width: 300px; height: 20px; background: rgba(0, 80, 150, 0.5); border-radius: 10px; overflow: hidden; margin-bottom: 20px;">
-        <div id="progress" style="width: 0%; height: 100%; background: #C87137; transition: width 0.3s;"></div>
+      <div class="vc-kicker">an open-sky game for humans and machines</div>
+      <h1>SkyBloom</h1>
+      <div id="progress-bar" style="width: 280px; height: 3px; background: rgba(255, 255, 255, 0.14); border-radius: 2px; overflow: hidden; margin-bottom: 16px;">
+        <div id="progress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ffcc66, #ff66cc); transition: width 0.3s;"></div>
       </div>
-      <p id="loading-text" style="color: #FFFFFF; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);">Preparing your carpet ride...</p>
+      <p id="loading-text" style="margin: 0; font-size: 13px; color: rgba(242, 245, 255, 0.62);">weaving the sky…</p>
     </div>
   </div>
   <div id="ui-container"></div>

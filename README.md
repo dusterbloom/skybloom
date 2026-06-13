@@ -1,26 +1,37 @@
-# SkyBloom 
+# SkyBloom
 
-A chill 3D flying-carpet game that plays entirely in your browser. Soar over an infinite procedurally generated world, chase mana through the air, discover glowing landmarks, cast wind magic, and climb above the clouds — vanilla JavaScript + Three.js, no game engine, no binaries.
+SkyBloom is a cozy browser flying game and a small benchmark for human-vs-agent racing. Fly a magic carpet through an infinite procedural world, press **R** to start a seeded 12-gate time trial, save local replays, race your best ghost, or let the bundled SimpleBot fly through the same public Agent API a researcher would use.
 
-![SkyBloom screenshot](https://github.com/dusterbloom/skybloom/screenshots/image.png)
+![SkyBloom screenshot](https://github.com/dusterbloom/skybloom/blob/main/screenshots/image.png)
 
-##  What it feels like
+## Research Mode
 
-You throttle up, the field of view stretches, procedural wind rises in your ears, and a gold-to-magenta ribbon twists behind your carpet as you bank between islands. Dive to trade altitude for speed, pull up and bleed it off, ride out to a beacon on the horizon at golden hour. That's the game.
+The research loop is visible in-game through the Race Panel:
 
-##  Features
+- **Start Race** creates a seeded 12-gate course.
+- **Load Ghost** loads the best local replay for that seed.
+- **Run SimpleBot** starts the reference agent through `window.agentAPI`.
+- **Export JSON** downloads an honest benchmark result with `courseSeed`, `worldSeed`, `finalTimeMs`, `splits`, `pilot`, fairness config, replay samples, optional action log, build version, and `verificationStatus`.
 
-- **Infinite procedural world** — chunked simplex-noise terrain: oceans, beaches, forests, mountains, all streamed around you as you fly
-- **A real flight model** — banked turns, dive-to-gain-speed energy, speed-reactive camera FOV, frame-rate-independent physics, altitude ceiling at 2,200 (the cloud band starts at 600 — go through it)
-- **Day/night cycle with keyframed lighting** — golden-hour sunsets, readable moonlit nights with stars, time presets and a time-scale slider in the HUD
-- **Mana & quests** — collect mana orbs spawned along your flight path; four starter quests (collect, explore, visit landmarks, cast a spell)
-- **Four spells** — Wind Glide (speed boost), Aether Shield, Mana Reveal (scan), Essence Surge (collection multiplier); select with 1-4, cast with E
-- **Landmark beacons** — ancient ruins, magical circles, and crystal formations, each marked by a colored light pillar visible from kilometers away
-- **Procedural audio** — wind that scales with your speed, collection chimes, spell whooshes; synthesized live with WebAudio, zero audio assets
-- **Mobile support** — touch joystick, auto-forward, adaptive quality scaling
-- **Multiplayer scaffold** — optional socket.io server for flying with friends (single-player works fully without it)
+Quick SimpleBot run from DevTools:
 
-##  Controls
+```js
+const { SimpleBot } = await import('/src/agents/SimpleBot.js');
+const bot = new SimpleBot(window.agentAPI, { once: true });
+bot.start();
+```
+
+More detail: [docs/BENCHMARK.md](docs/BENCHMARK.md), [docs/AGENT_QUICKSTART.md](docs/AGENT_QUICKSTART.md), and [docs/AGENT_API.md](docs/AGENT_API.md).
+
+## Play
+
+1. Open the deployed site or run locally.
+2. Press **Play** for free flight, **Race 12 gates** to start a race after loading, or **Run SimpleBot** to watch the reference agent.
+3. Fly through the lit ring to start the race clock.
+4. Follow the next-gate beacon until all 12 gates are passed.
+5. Finish to save a local replay, then load the ghost and race it.
+
+Controls:
 
 | Input | Action |
 |---|---|
@@ -28,88 +39,82 @@ You throttle up, the field of view stretches, procedural wind rises in your ears
 | **S** | Gentle brake |
 | **Shift** | Hard brake |
 | **A / D** | Banked turn left / right |
-| **Mouse** (click canvas to lock) | Steer and pitch |
-| **Space** | Climb (and charge your trail) |
-| **Ctrl** | Descend |
-| **1–4** | Select spell |
-| **E** | Cast selected spell |
+| **Mouse** | Steer and pitch after pointer lock |
+| **Space / Ctrl** | Climb / dive |
+| **1-4 / E** | Select / cast spell |
 | **M** | Toggle map |
-| **Esc** | Release mouse |
+| **R** | Start a race when not already racing |
 
-Tip: nose down to dive — you'll exceed the normal speed cap while you fall. That speed is yours to spend on the pull-out.
+Tip: diving trades altitude for speed. The first race is meant to be readable: follow the gold gate and beacon, use the Race Panel for status, and load a ghost after a clean finish.
 
-##  Run it
+## What Works
+
+- Infinite procedural terrain, water, day/night atmosphere, landmarks, mana, spells, and mobile touch controls.
+- Seeded 12-gate time trials with local splits, best times, replay storage, and ghost playback.
+- Agent API with information/action/tempo fairness constraints: `observe()`, `act()`, `startRace()`, replay/ghost helpers, config, WebSocket transport, and result export.
+- Reference SimpleBot that uses only `window.agentAPI`.
+- Optional socket.io multiplayer scaffold for casual local experimentation.
+- CI build check and local smoke script.
+
+## Known Limitations
+
+- Benchmark results are client-recorded and cooperative. `verificationStatus` is currently `ghost-only` or `action-log-present`; `verified` is not used because deterministic re-simulation does not exist yet.
+- Replays are path ghosts, not authoritative physics replays.
+- LocalStorage is the replay store, capped to a small number of recent/best runs.
+- Multiplayer is optional and untrusted for benchmark claims.
+- Mobile should load and fly, but the research panel is intentionally compact rather than a full mobile leaderboard UI.
+
+## Run Locally
 
 Requires Node 18+.
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/dusterbloom/skybloom.git
 cd skybloom
-yarn install        # or npm install
-npm run dev         # Vite dev server → http://localhost:5173
+npm install
+npm run dev
 ```
 
-Optional multiplayer server (Express + socket.io). Build first — it serves `dist/`:
+Open `http://localhost:5173`.
+
+Useful scripts:
 
 ```bash
 npm run build
-npm start           # http://localhost:4000 (game + socket server)
+npm run preview
+npm run smoke
 ```
 
-For LAN play (phones, friends on your network), copy `.env.example` to `.env` — `VITE_AUTO_IP=true` makes clients connect back to whatever host they loaded the page from.
+Optional multiplayer server:
 
-Other scripts: `npm run preview` (preview the production build).
-
-##  Built with
-
-- [Three.js](https://threejs.org/) — rendering
-- [simplex-noise](https://github.com/jwagner/simplex-noise) — terrain generation
-- [Vite](https://vitejs.dev/) — dev server & bundling
-- [zustand](https://github.com/pmndrs/zustand) — game state
-- [socket.io](https://socket.io/) — optional multiplayer
-- WebAudio API — procedural sound
-
-##  Architecture
-
-A lightweight system architecture: every feature is a `System` registered by name with the engine and updated in a fixed order each frame (`engine.systems.get('world')` or `engine.systems.world` both resolve).
-
-- `Engine` — game loop, renderer, quality management
-- `WorldSystem` — terrain chunks, mana nodes
-- `PlayerSystem` + `player/` — physics, input, camera, spells, state
-- `AtmosphereSystem` + `SunSystem` — keyframed sky, sun, moon, stars, clouds, fog
-- `SimpleTreeSystem` — vegetation with chunk-based lifecycle (bounded population)
-- `LandmarkSystem` — procedural points of interest with beacons
-- `QuestManager` — event-driven quest progression
-- `CarpetTrailSystem` — single-draw-call ribbon trail
-- `ProceduralAudioSystem` — WebAudio wind/chimes/whooshes
-- `NetworkManager` — optional multiplayer sync
-- `UISystem` — HUD, minimap, toasts
-
-In development, the engine is exposed as `window.gameEngine` — the whole game can be driven programmatically (state reads, synthetic input), which doubles as a primitive agent API.
-
-## 🏁 Racing & the Agent API (experimental, `AgentAPI` branch)
-
-Press **R** in-game to start a seeded 12-gate time-trial — follow the beacon to the next ring. Times, splits, and replays are stored locally; load any replay as a translucent ghost and race it.
-
-AI agents are first-class players. A frozen `window.agentAPI` exposes `observe()` (20 Hz information-parity snapshots: only what the human screen shows) and `act()` (10 Hz, the same control axes through the same input ramps and physics as the keyboard). Replays are provenance-tagged `human` / `agent` / `mixed`, so leaderboards can compare fairly. Full protocol, fairness model, and a reference autopilot in [docs/AGENT_API.md](docs/AGENT_API.md) — or try it from DevTools:
-
-```js
-const { SimpleBot } = await import('/src/agents/SimpleBot.js');
-new SimpleBot().start();   // .stop() to take the controls back
+```bash
+npm run build
+npm start
 ```
 
-##  Roadmap
+For LAN play, copy `.env.example` to `.env`; `VITE_AUTO_IP=true` makes clients connect back to the host that served the page.
 
-- **P2P live races** — WebRTC (no central server) kart-style circuits woven through the procedural world
-- **Verified leaderboards** — deterministic re-simulation of replays so ranked human-vs-agent times are provable
-- **WebSocket agent transport** — drive the carpet from any language, not just the page
+## Deploy
 
-##  Credits
+Any static host that can serve the Vite `dist/` output works:
 
-Created with ❤️ by Dusterbloom
+```bash
+npm install
+npm run build
+```
 
-Thanks to the Three.js community and everyone who test-flies the carpet.
+Publish `dist/`. For GitHub Pages, use a Pages workflow or upload `dist/` as the site artifact. The optional `server.js` is only needed for socket.io multiplayer.
 
-## 📄 License
+## Current Docs
 
-MIT — see [LICENSE](LICENSE).
+- [docs/BENCHMARK.md](docs/BENCHMARK.md): benchmark task and result format.
+- [docs/AGENT_QUICKSTART.md](docs/AGENT_QUICKSTART.md): SimpleBot, WebSocket agent, and export examples.
+- [docs/AGENT_API.md](docs/AGENT_API.md): full API contract.
+- [docs/VERIFIED_LEADERBOARD_ROADMAP.md](docs/VERIFIED_LEADERBOARD_ROADMAP.md): what real verification requires.
+- [docs/STATUS_AND_ROADMAP.md](docs/STATUS_AND_ROADMAP.md): release status and practical next steps.
+
+Older branch notes and task logs are archived under `bot/` and are not release documentation.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
