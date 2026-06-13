@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Logger } from '../../../utils/Logger.js';
+import { resolveAsset } from '../../../utils/assetPath.js';
 
 export class PlayerSpells {
   constructor(playerSystem) {
@@ -20,7 +21,7 @@ export class PlayerSpells {
   async initialize() {
     // Load particles texture
     const loader = new THREE.TextureLoader();
-    this.particlesTexture = loader.load('/assets/textures/particles.png');
+    this.particlesTexture = loader.load(resolveAsset('/assets/textures/particles.png'));
     
     // Precompute particles geometry
     this.particlesGeometry = new THREE.BufferGeometry();
@@ -34,7 +35,7 @@ export class PlayerSpells {
     
     // Load spells from JSON
     try {
-      const response = await fetch('/assets/spells.json');
+      const response = await fetch(resolveAsset('/assets/spells.json'));
       this.spells = await response.json();
       Logger.info('Spells loaded:', this.spells);
       

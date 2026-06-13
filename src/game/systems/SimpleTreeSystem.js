@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
+import { resolveAsset } from '../../utils/assetPath.js';
 
 /**
  * SimpleTreeSystem - Loads and spawns GLTF tree models
@@ -42,12 +43,12 @@ export class SimpleTreeSystem extends System {
 
     // Model paths - Kenney Nature Kit trees (CC0 License)
     this.modelPaths = [
-      '/assets/models/pine_tree.glb',
-      '/assets/models/oak_tree.glb',
-      '/assets/models/default_tree.glb',
-      '/assets/models/palm_tree.glb',
-      '/assets/models/detailed_tree.glb',
-      '/assets/models/fat_tree.glb',
+      resolveAsset('/assets/models/pine_tree.glb'),
+      resolveAsset('/assets/models/oak_tree.glb'),
+      resolveAsset('/assets/models/default_tree.glb'),
+      resolveAsset('/assets/models/palm_tree.glb'),
+      resolveAsset('/assets/models/detailed_tree.glb'),
+      resolveAsset('/assets/models/fat_tree.glb'),
     ];
 
     // Fallback to procedural if no models

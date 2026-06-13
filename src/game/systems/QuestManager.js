@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System.js';
+import { resolveAsset } from '../../utils/assetPath.js';
 
 export class QuestManager extends System {
   constructor(engine) {
@@ -21,7 +22,7 @@ export class QuestManager extends System {
 
   async loadQuests() {
     try {
-      const response = await fetch('/assets/quests.json');
+      const response = await fetch(resolveAsset('/assets/quests.json'));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

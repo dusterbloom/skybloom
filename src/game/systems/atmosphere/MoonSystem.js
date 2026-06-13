@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Logger } from '../../../utils/Logger.js';
+import { resolveAsset } from '../../../utils/assetPath.js';
 
 /**
  * MoonSystem - Manages the moon appearance and night lighting
@@ -30,7 +31,7 @@ export class MoonSystem {
     const textureLoader = new THREE.TextureLoader();
     const moonTexture = await new Promise((resolve) => {
       textureLoader.load(
-        "/assets/textures/moon.jpg",
+        resolveAsset("/assets/textures/moon.jpg"),
         (texture) => resolve(texture),
         undefined,
         () => {

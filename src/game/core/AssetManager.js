@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { resolveAsset } from '../../utils/assetPath.js';
 
 export class AssetManager {
   constructor() {
@@ -192,10 +193,10 @@ export class AssetManager {
   
   loadTextures() {
       const textureFiles = [
-        { name: 'carpet', path: '/assets/textures/carpet.jpg' },
-        { name: 'terrain', path: '/assets/textures/terrain.jpg' },
-        { name: 'sky', path: '/assets/textures/sky.jpg' },
-        { name: 'particles', path: '/assets/textures/particles.png' }
+        { name: 'carpet', path: resolveAsset('/assets/textures/carpet.jpg') },
+        { name: 'terrain', path: resolveAsset('/assets/textures/terrain.jpg') },
+        { name: 'sky', path: resolveAsset('/assets/textures/sky.jpg') },
+        { name: 'particles', path: resolveAsset('/assets/textures/particles.png') }
       ];
       
       textureFiles.forEach(async ({ name, path }) => {
@@ -220,8 +221,8 @@ export class AssetManager {
   
   loadModels() {
       const modelFiles = [
-        { name: 'carpet', path: '/assets/models/carpet.glb' },
-        { name: 'mana', path: '/assets/models/mana.glb' }
+        { name: 'carpet', path: resolveAsset('/assets/models/carpet.glb') },
+        { name: 'mana', path: resolveAsset('/assets/models/mana.glb') }
       ];
       
       modelFiles.forEach(async ({ name, path }) => {
@@ -245,9 +246,9 @@ export class AssetManager {
   
   loadAudio() {
       const audioFiles = [
-        { name: 'background', path: '/assets/audio/background.mp3' },
-        { name: 'spell', path: '/assets/audio/spell.mp3' },
-        { name: 'collect', path: '/assets/audio/collect.mp3' }
+        { name: 'background', path: resolveAsset('/assets/audio/background.mp3') },
+        { name: 'spell', path: resolveAsset('/assets/audio/spell.mp3') },
+        { name: 'collect', path: resolveAsset('/assets/audio/collect.mp3') }
       ];
       
       audioFiles.forEach(async ({ name, path }) => {

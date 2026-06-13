@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { Water } from 'three/examples/jsm/objects/Water.js';
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
+import { resolveAsset } from '../../utils/assetPath.js';
 
 /**
  * Water System - Enhanced with realistic reflections using Three.js Water
@@ -43,7 +44,7 @@ export class WaterSystem extends System {
 
     // Load water normal map texture
     const textureLoader = new THREE.TextureLoader();
-    const waterNormals = textureLoader.load('/textures/2waternormals.jpg', (texture) => {
+    const waterNormals = textureLoader.load(resolveAsset('/textures/2waternormals.jpg'), (texture) => {
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
     });
 

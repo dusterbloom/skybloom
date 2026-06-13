@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Logger } from '../../../utils/Logger.js';
 import { CLOUD_KEYFRAMES, sampleKeyframes } from '../../../config/SunConfig.js';
+import { resolveAsset } from '../../../utils/assetPath.js';
 
 /**
  * CloudSystem - Manages cloud formations and movement
@@ -46,7 +47,7 @@ export class CloudSystem {
     // Try to load cloud texture, with fallback
     return new Promise((resolve) => {
       textureLoader.load(
-        '/assets/textures/particles.png',
+        resolveAsset('/assets/textures/particles.png'),
         (texture) => {
           const material = new THREE.SpriteMaterial({
             map: texture,
