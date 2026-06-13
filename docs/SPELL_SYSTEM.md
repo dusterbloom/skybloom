@@ -1,8 +1,8 @@
-# Spell System Design for Magical Carpet
+# Spell System Design for Skybloom
 
 ## Overview
 
-The Spell System enhances the serene, magical exploration theme of Magical Carpet by providing non-combat spells that aid in mana collection, navigation, and world interaction. Spells consume collected mana, giving purpose to exploration, and integrate with existing systems like PlayerSystem for casting and WorldSystem for effects (e.g., terrain queries). Spells unlock progressively through mana thresholds or landmark visits, tying into the core loop: explore → collect mana → cast spells to explore further → progress quests.
+The Spell System enhances the serene, magical exploration theme of Skybloom by providing non-combat spells that aid in mana collection, navigation, and world interaction. Spells consume collected mana, giving purpose to exploration, and integrate with existing systems like PlayerSystem for casting and WorldSystem for effects (e.g., terrain queries). Spells unlock progressively through mana thresholds or landmark visits, tying into the core loop: explore → collect mana → cast spells to explore further → progress quests.
 
 Spells are defined in a extensible JSON data structure, loaded at runtime for easy modding. Casting flow: Player selects spell via UI, checks mana/cooldown, deducts mana, applies effect, triggers VFX, starts cooldown.
 

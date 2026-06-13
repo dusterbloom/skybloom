@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document provides a detailed implementation plan for refactoring the Magical Carpet game. The goal is to reduce complexity, eliminate code duplication, and improve maintainability while preserving all existing functionality and performance optimizations.
+This document provides a detailed implementation plan for refactoring the Skybloom game. The goal is to reduce complexity, eliminate code duplication, and improve maintainability while preserving all existing functionality and performance optimizations.
 
 ## Objectives
 
@@ -724,7 +724,7 @@ Create adapter functions where needed to maintain compatibility with any externa
 
 ## Conclusion
 
-This refactoring plan will significantly improve the maintainability and clarity of the Magical Carpet codebase while preserving all functionality. By breaking down complex systems, standardizing interfaces, and centralizing common functionality, we'll achieve a more modular architecture that's easier to extend and debug.
+This refactoring plan will significantly improve the maintainability and clarity of the Skybloom codebase while preserving all functionality. By breaking down complex systems, standardizing interfaces, and centralizing common functionality, we'll achieve a more modular architecture that's easier to extend and debug.
 
 The key principles guiding this refactoring are:
 1. **Separation of concerns** - Each class should have a single responsibility

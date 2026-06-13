@@ -58,4 +58,4 @@ The implementation of improved mobile motion controls has been completed success
 
 ### Conclusion:
 
-The implementation of sensor fusion and response curves has dramatically improved the mobile motion control experience. The controls are now more stable, precise, and responsive, making flying through the magical carpet world more intuitive and enjoyable on mobile devices.
+The implementation of sensor fusion and response curves has dramatically improved the mobile motion control experience. The controls are now more stable, precise, and responsive, making flying through the Skybloom world more intuitive and enjoyable on mobile devices.

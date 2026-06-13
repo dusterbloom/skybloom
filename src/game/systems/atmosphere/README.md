@@ -1,6 +1,6 @@
 # AtmosphereSystem
 
-This directory contains a complete rewrite of the Atmosphere system for the Magical Carpet game. The system has been rebuilt with a modular, component-based architecture for better maintainability and performance.
+This directory contains a complete rewrite of the Atmosphere system for the Skybloom game. The system has been rebuilt with a modular, component-based architecture for better maintainability and performance.
 
 ## Architecture
 

@@ -1,5 +1,5 @@
 /**
- * SimpleBot — reference autopilot for the Magical Carpet Agent API.
+ * SimpleBot — reference autopilot for the Skybloom Agent API.
  * Paste into the DevTools console of a running game:
  *   const { SimpleBot } = await import('/src/agents/SimpleBot.js');
  *   const bot = new SimpleBot();

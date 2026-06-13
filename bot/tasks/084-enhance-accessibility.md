@@ -55,7 +55,7 @@ export class AccessibilitySystem extends System {
     const canvas = this.engine.renderer.domElement;
     canvas.setAttribute('tabindex', '0');
     canvas.setAttribute('role', 'application');
-    canvas.setAttribute('aria-label', 'Magical Carpet Game');
+    canvas.setAttribute('aria-label', 'Skybloom Game');
 
     // Add focus styles
     this.addFocusStyles();

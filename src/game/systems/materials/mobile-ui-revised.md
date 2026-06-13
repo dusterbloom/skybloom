@@ -1,6 +1,6 @@
-# Revised Mobile Controls for Magical Carpet
+# Revised Mobile Controls for Skybloom
 
-This document outlines the refined control scheme for Magical Carpet on mobile devices, matching the web experience while optimizing for touch interfaces.
+This document outlines the refined control scheme for Skybloom on mobile devices, matching the web experience while optimizing for touch interfaces.
 
 ## Control Layout Overview
 
@@ -680,4 +680,4 @@ The controls are:
 - Match the web version's functionality
 - Optimized for one-handed play in landscape mode
 
-This implementation ensures that mobile players have the full Magical Carpet experience while enjoying intuitive touch controls that work well on smaller screens.
+This implementation ensures that mobile players have the full Skybloom experience while enjoying intuitive touch controls that work well on smaller screens.

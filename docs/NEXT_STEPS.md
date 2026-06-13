@@ -1,6 +1,6 @@
-# Magical Carpet: Future Development Roadmap
+# Skybloom: Future Development Roadmap
 
-This document outlines potential next steps and enhancements for the Magical Carpet game. These suggestions are organized by category and priority.
+This document outlines potential next steps and enhancements for the Skybloom game. These suggestions are organized by category and priority.
 
 ## 🎮 Gameplay Enhancements
 
@@ -195,7 +195,7 @@ This document outlines potential next steps and enhancements for the Magical Car
 
 ## 🔍 Final Thoughts
 
-The Magical Carpet game has a strong foundation with its procedural world generation, atmospheric elements, and flying mechanics. Focusing on the high-priority items in each category will create a more engaging and polished experience. 
+The Skybloom game has a strong foundation with its procedural world generation, atmospheric elements, and flying mechanics. Focusing on the high-priority items in each category will create a more engaging and polished experience. 
 
 The most impactful next steps would be:
 
@@ -204,4 +204,4 @@ The most impactful next steps would be:
 3. Adding performance optimizations to ensure smooth gameplay
 4. Creating more player interactions for multiplayer engagement
 
-These improvements would significantly enhance the core gameplay loop while maintaining the serene, exploration-focused experience that makes Magical Carpet unique.
+These improvements would significantly enhance the core gameplay loop while maintaining the serene, exploration-focused experience that makes Skybloom unique.

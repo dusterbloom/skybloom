@@ -194,7 +194,7 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     self.registration.showNotification(
-      data.title || 'Magical Carpet',
+      data.title || 'Skybloom',
       options
     )
   );
@@ -264,7 +264,7 @@ async function syncContent() {
 ```json
 // public/manifest.json
 {
-  "name": "Magical Carpet Game",
+  "name": "Skybloom Game",
   "short_name": "Magic Carpet",
   "description": "An immersive 3D flying carpet game with multiplayer support",
   "start_url": "/",

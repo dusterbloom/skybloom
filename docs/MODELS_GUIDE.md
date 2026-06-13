@@ -1,4 +1,4 @@
-# 3D Models Guide for Magical Carpet
+# 3D Models Guide for Skybloom
 
 ## 🎯 Where to Find Free 3D Models
 

@@ -1,8 +1,8 @@
-# Magical Carpet: Status & Development Roadmap
+# Skybloom: Status & Development Roadmap
 
 ## Current Status
 
-Magical Carpet is an immersive 3D flying carpet adventure game built with Three.js. The game enables players to explore a procedurally generated world, collect mana, and enjoy the experience of magical flight.
+Skybloom is an immersive 3D flying carpet adventure game built with Three.js. The game enables players to explore a procedurally generated world, collect mana, and enjoy the experience of magical flight.
 
 ### Core Systems Implemented
 
@@ -141,6 +141,6 @@ Engine
 
 ## Conclusion
 
-Magical Carpet has a solid foundation with key systems in place. The procedural world generation, flight mechanics, and visual effects create an engaging experience. By focusing on the priority tasks outlined above, the game can evolve into a fully-featured adventure with rich gameplay and visual appeal.
+Skybloom has a solid foundation with key systems in place. The procedural world generation, flight mechanics, and visual effects create an engaging experience. By focusing on the priority tasks outlined above, the game can evolve into a fully-featured adventure with rich gameplay and visual appeal.
 
 The most critical next step is completing the gameplay loop by implementing the spell system and objectives, giving purpose to the mana collection mechanic and providing players with goals beyond exploration.

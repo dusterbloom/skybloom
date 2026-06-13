@@ -1,4 +1,4 @@
-# Magical Carpet Agent API
+# Skybloom Agent API
 
 Protocol reference for `window.agentAPI` — the interface that lets a program fly the
 carpet. Everything an agent can know or do goes through this one object; no knowledge
@@ -6,7 +6,7 @@ of the game's source is required. Reference bot: [`src/agents/SimpleBot.js`](../
 
 ## Why
 
-Magical Carpet treats agents as first-class players, not as scripted NPCs or debug
+Skybloom treats agents as first-class players, not as scripted NPCs or debug
 tools. The design goal is a game where a human and a bot line up on the same seeded
 gate course, fly the same carpet under the same rules, and post times that are
 honestly comparable. Fair competition is the starting constraint, not a feature

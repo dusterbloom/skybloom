@@ -1,6 +1,6 @@
-# Magical Carpet - Terrain and Atmosphere Fixes
+# Skybloom - Terrain and Atmosphere Fixes
 
-This document explains the fixes made to address terrain glitches and cloud rendering issues in the Magical Carpet game.
+This document explains the fixes made to address terrain glitches and cloud rendering issues in the Skybloom game.
 
 ## Issues Fixed
 

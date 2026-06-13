@@ -2,7 +2,7 @@ import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
 
 /**
- * AgentAPISystem — the interface through which AI agents play Magical Carpet
+ * AgentAPISystem — the interface through which AI agents play Skybloom
  * as first-class players, under explicit FAIRNESS constraints:
  *
  *  - INFORMATION parity: observe() exposes only what a human could see or

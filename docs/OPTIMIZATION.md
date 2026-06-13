@@ -1,4 +1,4 @@
-# Magical Carpet: Mobile Optimization Plan
+# Skybloom: Mobile Optimization Plan
 
 ## Progress Report
 

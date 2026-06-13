@@ -30,7 +30,7 @@
 
 **Step 1: Update Main README**
 ```markdown
-# Magical Carpet Game
+# Skybloom Game
 
 A 3D web-based flying carpet game built with Three.js featuring multiplayer support and procedural world generation.
 
