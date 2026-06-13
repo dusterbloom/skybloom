@@ -3,13 +3,15 @@
 SkyBloom is a cozy browser flying game and a small benchmark for human-vs-agent racing. Fly a magic carpet through an infinite procedural world, press **R** to start a seeded 12-gate time trial, save local replays, race your best ghost, or let the bundled SimpleBot fly through the same public Agent API a researcher would use.
 
 <p align="center">
-  <a href="docs/media/agent-race-demo.mp4">
-    <img src="docs/media/agent-race-demo.jpg" alt="SimpleBot racing a 12-gate SkyBloom course through the public Agent API" width="900">
-  </a>
+  <video src="docs/media/agent-race-demo.mp4" poster="docs/media/agent-race-demo.jpg" controls preload="metadata" width="900" aria-label="SimpleBot racing a 12-gate SkyBloom course through the public Agent API">
+    <a href="docs/media/agent-race-demo.mp4">
+      <img src="docs/media/agent-race-demo.jpg" alt="SimpleBot racing a 12-gate SkyBloom course through the public Agent API" width="900">
+    </a>
+  </video>
 </p>
 
 <p align="center">
-  <strong>Agent race demo:</strong> SimpleBot flies through the public Agent API. <a href="docs/media/agent-race-demo.mp4">Watch the MP4</a>.
+  <strong>Agent race demo:</strong> press play in the frame above, or <a href="docs/media/agent-race-demo.mp4">open the MP4</a>.
 </p>
 
 ![SkyBloom screenshot](https://github.com/dusterbloom/skybloom/blob/main/screenshots/image.png)
