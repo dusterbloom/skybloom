@@ -29,6 +29,7 @@ import { LandmarkSystem } from "../systems/LandmarkSystem";
 import { MinimapSystem } from "../systems/MinimapSystem";
 import { AmbientLifeSystem } from "../systems/AmbientLifeSystem";
 import { ProceduralAudioSystem } from "../systems/ProceduralAudioSystem";
+import { ProceduralMusicSystem } from "../systems/ProceduralMusicSystem";
 import { AgentAPISystem } from "../systems/AgentAPISystem";
 import { RaceSystem } from "../systems/RaceSystem";
 import { OnboardingHints } from "../ui/OnboardingHints.js";
@@ -190,6 +191,7 @@ export class Engine {
       .register(new AmbientLifeSystem(this))
       .register(new UISystem(this))
       .register(new ProceduralAudioSystem(this))
+      .register(new ProceduralMusicSystem(this))
       .register(new CarpetTrailSystem(this))
       .register(new LandmarkSystem(this))
       .register(new AgentAPISystem(this))
@@ -239,6 +241,7 @@ export class Engine {
       "ambientLife", // Birds and butterflies for cozy world feel
       "ui", // UI needs player for HUD elements
       "proceduralAudio", // Procedural WebAudio sound (wind, chimes, whooshes)
+      "proceduralMusic", // Ennio Morricone-inspired procedural soundtrack
       "carpetTrail", // Trail system needs player
       "landmarks",   // Landmarks need world and player
       "minimap",    // Minimap needs world and player info
@@ -350,6 +353,9 @@ export class Engine {
 
       // Set game state to PLAYING to enable UI updates including minimap
       useGameState.getState().setGameState(GameStates.PLAYING);
+
+      // Notify systems that gameplay has started
+      this.eventBus.emit('gameStarted');
     });
 
     // Golden hour behind the title screen (atmosphere integrates timeOfDay forward from here)

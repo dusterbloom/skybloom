@@ -42,7 +42,7 @@ export class ProceduralAudioSystem extends System {
     // Wind tuning
     this.WIND_MIN_SPEED = 20;    // below this the wind is silent (hover)
     this.WIND_MAX_SPEED = 250;   // speed at which wind is at full strength
-    this.WIND_MAX_GAIN = 0.22;
+    this.WIND_MAX_GAIN = 0.12;   // tuned down so the procedural music can breathe
     this.WIND_FREQ_MIN = 300;    // bandpass centre (Hz) at min speed
     this.WIND_FREQ_MAX = 1100;   // bandpass centre (Hz) at max speed
     this.WIND_SMOOTHING = 0.15;  // setTargetAtTime timeConstant (seconds)
