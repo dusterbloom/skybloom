@@ -7,7 +7,7 @@ SkyBloom is a cozy browser flying game and a small benchmark for human-vs-agent 
 
 ## Play Fast
 
-- **No install:** play the GitHub Pages build at `https://dusterbloom.github.io/skybloom/` once Pages is enabled for this repo.
+- **No install:** play the GitHub Pages build at `https://dusterbloom.github.io/skybloom/`.
 - **From source:** `npm install && npm run play`, then open the printed local URL.
 - **Download-and-go release zip:** if the zip includes `dist/`, run `node scripts/play.mjs`. No `npm install` is needed for that path.
 - **Host a small multiplayer session:** `npm install && npm run host`, then share `http://YOUR_IP:4000` with players on the same LAN or tunnel.
@@ -127,11 +127,9 @@ For LAN play from source, copy `.env.example` to `.env`; `VITE_AUTO_IP=true` mak
 This repo includes `.github/workflows/pages.yml`. To publish:
 
 1. Merge the release branch to `main`.
-2. In GitHub, open **Settings -> Pages**.
-3. Set **Build and deployment -> Source** to **GitHub Actions**.
-4. Run **Deploy GitHub Pages** from the Actions tab, or push to `main`.
+2. Push to `main` or run **Deploy GitHub Pages** from the Actions tab.
 
-The workflow builds with `/skybloom/` as the Vite base path and publishes `dist/` to Pages.
+The workflow enables Pages on first run, builds with `/skybloom/` as the Vite base path, and publishes `dist/` to Pages.
 
 ### Other Static Hosts
 
