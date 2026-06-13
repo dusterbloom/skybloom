@@ -14,6 +14,7 @@ const requiredFiles = [
   '.github/workflows/ci.yml',
   '.github/workflows/pages.yml',
   'scripts/play.mjs',
+  'public/favicon.svg',
 ];
 
 function read(file) {
@@ -52,8 +53,13 @@ const readme = read('README.md');
 assert(readme.includes('Research Mode'), 'README must surface research mode');
 assert(readme.includes('SimpleBot'), 'README must explain SimpleBot');
 
+const html = read('index.html');
+assert(html.includes('rel="icon"'), 'index.html must define a favicon');
+
 if (fs.existsSync(path.join(root, 'dist/index.html'))) {
   const dist = read('dist/index.html');
+  assert(dist.includes('favicon.svg'), 'dist index must reference the favicon');
+  assert(fs.existsSync(path.join(root, 'dist', 'favicon.svg')), 'dist favicon missing');
   const assetRefs = Array.from(dist.matchAll(/(?:src|href)="\/([^"]+)"/g)).map((m) => m[1]);
   for (const asset of assetRefs) {
     if (asset.startsWith('src/')) continue;
