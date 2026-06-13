@@ -327,8 +327,8 @@ export class PlayerModels {
     // Logger.debug('PlayerModels.updateModels: Updating', playerState.players.size, 'players');
     playerState.players.forEach(player => {
       if (!player.model) {
-        Logger.warn('PlayerModels.updateModels: Player missing model:', player.id);
-        return;
+        player.model = this.createCarpetModel(player.id);
+        this.scene.add(player.model);
       }
       // Update model position
       player.model.position.copy(player.position);

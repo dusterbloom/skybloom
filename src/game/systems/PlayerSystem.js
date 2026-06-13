@@ -20,6 +20,7 @@ export class PlayerSystem extends System {
 
     // Last frame's position for swept mana collection (prevents tunneling)
     this.lastCollectionPosition = null;
+    this._networkBroadcastAccum = 0;
 
     // Keep spells and models internal
     this.spells = new PlayerSpells(this);
@@ -198,7 +199,31 @@ export class PlayerSystem extends System {
     this.checkManaCollection();
     this.checkLandmarkVisits();
     this.checkWorldBoundaries();
+    this.broadcastNetworkState(delta);
     // console.log('PlayerSystem._update: Finished');
+  }
+
+  broadcastNetworkState(delta) {
+    this._networkBroadcastAccum += delta;
+    if (this._networkBroadcastAccum < 0.1) return;
+    this._networkBroadcastAccum = 0;
+
+    const network = this.engine.systems.get('network');
+    const player = this.localPlayer || this.engine.systems.get('playerState')?.localPlayer;
+    if (!network || !network.isConnected || !player) return;
+
+    network.sendPlayerUpdate({
+      x: player.position.x,
+      y: player.position.y,
+      z: player.position.z,
+      rotationX: player.rotation.x,
+      rotationY: player.rotation.y,
+      rotationZ: player.rotation.z,
+      bankAngle: player.bankAngle || 0,
+      mana: player.mana || 0,
+      health: player.health || 100,
+      speed: player.velocity ? player.velocity.length() : 0,
+    });
   }
 
   

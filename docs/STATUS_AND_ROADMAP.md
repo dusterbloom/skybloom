@@ -13,8 +13,8 @@ This document is the current public status page for the small release. Older tas
 - Bundled `SimpleBot` reference agent using only public API calls.
 - JSON benchmark export with build version, fairness config, replay samples, optional action log, and honest verification status.
 - Optional WebSocket transport for external agents.
-- Optional socket.io multiplayer scaffold for casual play.
-- CI build check and local smoke script.
+- Optional socket.io multiplayer co-presence for casual play.
+- GitHub Pages deploy workflow, CI build check, local smoke script, and one-command local launcher.
 
 ## Known Limitations
 
@@ -22,18 +22,18 @@ This document is the current public status page for the small release. Older tas
 - Replays are path samples for ghost playback; deterministic action re-simulation is not implemented.
 - Client-side fairness is cooperative. A modified browser can lie about pilot tags, config, or times.
 - Replay storage is localStorage and capped.
-- Multiplayer is explicitly untrusted for benchmark claims.
+- Multiplayer is position-sync co-presence, not authoritative gameplay. It is explicitly untrusted for benchmark claims.
+- GitHub Pages is static hosting and does not run the socket.io multiplayer server.
 - The release has build/smoke CI, not full unit, integration, or browser automation coverage.
 - Some historical design docs and old task files remain in the repo for provenance, but are not release documentation.
 
 ## Run Locally
 
 ```bash
-npm install
-npm run dev
+npm install && npm run play
 ```
 
-Open `http://localhost:5173`.
+Open the printed local URL. For hot reload development, use `npm run dev` and open `http://localhost:5173`.
 
 ## Build And Check
 
@@ -57,10 +57,12 @@ npm install
 npm run build
 ```
 
-Publish `dist/` to a static host. The optional `server.js` path is only for socket.io multiplayer:
+For GitHub Pages, set repository Pages source to GitHub Actions and use `.github/workflows/pages.yml`. It builds with `/skybloom/` as the base path and publishes `dist/`.
+
+For other hosts, publish `dist/` to a static host. The optional `server.js` path is only for socket.io multiplayer:
 
 ```bash
-npm start
+npm run host
 ```
 
 ## Practical Next PR

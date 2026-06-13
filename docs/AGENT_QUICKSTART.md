@@ -99,6 +99,8 @@ Or auto-connect on page load:
 http://localhost:5173/?agent=ws://localhost:8765
 ```
 
+Use a local SkyBloom page (`npm run dev`, `npm run preview`, or `npm run play`) for `ws://localhost` agents. A GitHub Pages tab is HTTPS; depending on browser policy, local insecure WebSocket connections may be blocked. For hosted Pages experiments, use a `wss://` agent bridge or run the game locally.
+
 The browser is the WebSocket client. Your agent process receives:
 
 ```json

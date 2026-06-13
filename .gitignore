@@ -8,6 +8,5 @@ node_modules/
 .claude/scheduled_tasks.lock
 .codex/
 bot/
-dist/
 
 CLAUDE.md

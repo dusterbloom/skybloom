@@ -12,6 +12,8 @@ const requiredFiles = [
   'docs/AGENT_QUICKSTART.md',
   'docs/VERIFIED_LEADERBOARD_ROADMAP.md',
   '.github/workflows/ci.yml',
+  '.github/workflows/pages.yml',
+  'scripts/play.mjs',
 ];
 
 function read(file) {
@@ -31,6 +33,8 @@ for (const file of requiredFiles) {
 
 const pkg = JSON.parse(read('package.json'));
 assert(pkg.scripts?.build === 'vite build', 'package.json must expose npm run build');
+assert(typeof pkg.scripts?.play === 'string', 'package.json must expose npm run play');
+assert(typeof pkg.scripts?.['build:pages'] === 'string', 'package.json must expose npm run build:pages');
 assert(typeof pkg.scripts?.preview === 'string', 'package.json must expose npm run preview');
 assert(typeof pkg.scripts?.smoke === 'string', 'package.json must expose npm run smoke');
 
@@ -53,7 +57,9 @@ if (fs.existsSync(path.join(root, 'dist/index.html'))) {
   const assetRefs = Array.from(dist.matchAll(/(?:src|href)="\/([^"]+)"/g)).map((m) => m[1]);
   for (const asset of assetRefs) {
     if (asset.startsWith('src/')) continue;
-    assert(fs.existsSync(path.join(root, 'dist', asset)), `dist asset missing: ${asset}`);
+    const repoBase = `${pkg.name}/`;
+    const normalized = asset.startsWith(repoBase) ? asset.slice(repoBase.length) : asset;
+    assert(fs.existsSync(path.join(root, 'dist', normalized)), `dist asset missing: ${asset}`);
   }
 }
 

@@ -81,9 +81,10 @@ export class PlayerStateManager extends System {
     const player = {
       id: data.id,
       isLocal: false,
-      position: new THREE.Vector3(data.x || 0, data.y || 20, data.z || 0),
-      rotation: new THREE.Euler(0, 0, 0),
+      position: new THREE.Vector3(data.x || 0, data.y || 150, data.z || 0),
+      rotation: new THREE.Euler(data.rotationX || 0, data.rotationY || 0, data.rotationZ || 0, 'YXZ'),
       velocity: new THREE.Vector3(0, 0, 0),
+      bankAngle: data.bankAngle || 0,
       mana: 0,
       totalMana: 0,
       landmarksVisited: 0,
@@ -100,6 +101,9 @@ export class PlayerStateManager extends System {
   removePlayer(id) {
     const player = this.players.get(id);
     if (player) {
+      if (player.model && player.model.parent) {
+        player.model.parent.remove(player.model);
+      }
       this.players.delete(id);
       if (this.localPlayer && this.localPlayer.id === id) this.localPlayer = null;
       Logger.info(`Player removed with ID: ${id}`);
@@ -107,24 +111,32 @@ export class PlayerStateManager extends System {
   }
 
   updateNetworkPlayer(data) {
-    const player = this.players.get(data.id);
-    if (player && !player.isLocal) {
-      if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {
-        const targetPos = new THREE.Vector3(data.x, data.y, data.z);
-        player.position.lerp(targetPos, 0.3);
-      }
-
-      if (data.rotationY !== undefined) {
-        player.rotation.y = THREE.MathUtils.lerp(
-          player.rotation.y,
-          data.rotationY,
-          0.3
-        );
-      }
-
-      if (data.mana !== undefined) player.mana = data.mana;
-      if (data.health !== undefined) player.health = data.health;
+    let player = this.players.get(data.id);
+    if (!player) {
+      this.createNetworkPlayer(data);
+      player = this.players.get(data.id);
     }
+    if (!player || player.isLocal) return;
+
+    if (data.x !== undefined && data.y !== undefined && data.z !== undefined) {
+      const targetPos = new THREE.Vector3(data.x, data.y, data.z);
+      player.velocity.copy(targetPos).sub(player.position);
+      player.position.lerp(targetPos, 0.35);
+    }
+
+    if (data.rotationX !== undefined) {
+      player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, data.rotationX, 0.35);
+    }
+    if (data.rotationY !== undefined) {
+      player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, data.rotationY, 0.35);
+    }
+    if (data.rotationZ !== undefined) {
+      player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, data.rotationZ, 0.35);
+    }
+    if (data.bankAngle !== undefined) player.bankAngle = THREE.MathUtils.lerp(player.bankAngle || 0, data.bankAngle, 0.35);
+    if (data.mana !== undefined) player.mana = data.mana;
+    if (data.health !== undefined) player.health = data.health;
+    if (data.speed !== undefined) player.speed = data.speed;
   }
 
   getPlayer(id) {
