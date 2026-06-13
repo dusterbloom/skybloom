@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import { execSync } from 'node:child_process';
 
 function getBasePath() {
   if (process.env.VITE_BASE_PATH) return normalizeBasePath(process.env.VITE_BASE_PATH);
@@ -18,14 +17,8 @@ function normalizeBasePath(basePath) {
 }
 
 function getBuildVersion() {
-  if (process.env.VITE_GIT_SHA) return process.env.VITE_GIT_SHA;
-  try {
-    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
-      .toString()
-      .trim();
-  } catch (error) {
-    return 'dev';
-  }
+  const sha = process.env.VITE_GIT_SHA || process.env.GITHUB_SHA;
+  return sha ? sha.slice(0, 12) : 'local';
 }
 
 export default defineConfig({
