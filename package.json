@@ -10,8 +10,8 @@
     "play": "node scripts/play.mjs --build",
     "play:dist": "node scripts/play.mjs",
     "host": "npm run build && npm start",
-    "build": "vite build",
-    "build:pages": "vite build --base=/skybloom/",
+    "build": "vite build && node scripts/copy-docs.mjs",
+    "build:pages": "vite build --base=/skybloom/ && node scripts/copy-docs.mjs",
     "preview": "vite preview",
     "smoke": "node scripts/smoke.mjs",
     "test:smoke": "npm run smoke"

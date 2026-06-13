@@ -32,7 +32,7 @@ for (const file of requiredFiles) {
 }
 
 const pkg = JSON.parse(read('package.json'));
-assert(pkg.scripts?.build === 'vite build', 'package.json must expose npm run build');
+assert(pkg.scripts?.build?.includes('vite build'), 'package.json must expose npm run build');
 assert(typeof pkg.scripts?.play === 'string', 'package.json must expose npm run play');
 assert(typeof pkg.scripts?.['build:pages'] === 'string', 'package.json must expose npm run build:pages');
 assert(typeof pkg.scripts?.preview === 'string', 'package.json must expose npm run preview');
@@ -60,6 +60,10 @@ if (fs.existsSync(path.join(root, 'dist/index.html'))) {
     const repoBase = `${pkg.name}/`;
     const normalized = asset.startsWith(repoBase) ? asset.slice(repoBase.length) : asset;
     assert(fs.existsSync(path.join(root, 'dist', normalized)), `dist asset missing: ${asset}`);
+  }
+
+  for (const file of requiredFiles.filter((file) => file.startsWith('docs/'))) {
+    assert(fs.existsSync(path.join(root, 'dist', file)), `dist doc missing: ${file}`);
   }
 }
 

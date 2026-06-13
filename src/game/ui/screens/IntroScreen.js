@@ -143,7 +143,8 @@ export class IntroScreen {
     const apiLink = document.createElement('a');
     apiLink.className = 'vc-btn-ghost';
     apiLink.textContent = 'Agent API';
-    apiLink.href = '/docs/AGENT_API.md';
+    const basePath = import.meta.env.BASE_URL || '/';
+    apiLink.href = `${basePath.endsWith('/') ? basePath : `${basePath}/`}docs/AGENT_API.md`;
     apiLink.target = '_blank';
     apiLink.style.textDecoration = 'none';
     apiLink.style.display = 'inline-flex';
