@@ -18,7 +18,7 @@
  *   v.listen();              // push-to-talk one turn
  *   v.say('take me to the crystal formation');
  *
- * Voice (config.tts): 'browser' (default), 'kokoro', or 'supertonic'. Supertonic-3
+ * Voice (config.tts): 'supertonic' (default, English), 'kokoro', or 'browser'. Supertonic-3
  * extras: supertonicVoice 'F1'..'F5'/'M1'..'M5' (default 'M2'), supertonicSteps
  * (flow-matching denoise steps, default 4). A neural voice that fails to load
  * falls back to the browser voice — it never blocks the co-pilot.
@@ -56,7 +56,9 @@ export class VoiceCopilot {
   constructor(api = window.agentAPI, opts = {}) {
     this.api = api;
     this.config = opts.config || {};
-    this.tts = ['kokoro', 'supertonic'].includes(this.config.tts) ? this.config.tts : 'browser';
+    // Supertonic-3 (English) is the default voice; pass config.tts to override.
+    this.tts = ['browser', 'kokoro', 'supertonic'].includes(this.config.tts) ? this.config.tts : 'supertonic';
+    this.lang = this.config.lang || 'en-US';
     this.onText = opts.onText || (() => {});
     this.onState = opts.onState || (() => {});
     this.history = [];
@@ -99,7 +101,7 @@ export class VoiceCopilot {
     const SR = (typeof window !== 'undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
     if (!SR) { this._setState('no-mic'); this.onText({ role: 'system', text: 'Speech input not supported here — try Chrome, or call say("...") with text.' }); return; }
     const rec = new SR();
-    rec.lang = this.config.lang || 'en-US';
+    rec.lang = this.lang;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
     rec.onresult = (e) => { const t = e.results[0][0].transcript; if (t) this.say(t); };
@@ -239,6 +241,7 @@ export class VoiceCopilot {
       try {
         if (typeof window === 'undefined' || !window.speechSynthesis) return resolve();
         const u = new SpeechSynthesisUtterance(text);
+        u.lang = this.lang;
         u.rate = 1.0;
         u.onend = () => resolve();
         u.onerror = () => resolve();
@@ -270,7 +273,7 @@ export class VoiceCopilot {
     const { createSupertonicTTS } = await import('./supertonicTTS.js');
     this._supertonic = await createSupertonicTTS({
       voice: this.config.supertonicVoice || (this._voice && /^[FM][1-5]$/.test(this._voice) ? this._voice : 'M2'),
-      lang: this.config.lang ? String(this.config.lang).split('-')[0] : null,
+      lang: String(this.lang).split('-')[0] || 'en',
       steps: this.config.supertonicSteps || 4,
       onStatus: (s) => this.onText({ role: 'system', text: `(supertonic: ${s})` }),
     });
