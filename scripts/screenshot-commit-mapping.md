@@ -1,0 +1,1304 @@
+# Screenshot ↔ Commit Mapping
+
+## Screenshot 2025-03-22 171714.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 171714.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 174816.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 174816.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 175300.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 175300.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 175831.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 175831.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 180836.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 180836.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 182217.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 182217.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 182342.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 182342.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 182810.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 182810.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 184804.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 184804.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 185446.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 185446.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 190049.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 190049.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 190320.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 190320.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 191407.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 191407.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 194702.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 194702.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 203532.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 203532.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 211312.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 211312.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 212310.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 212310.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 213446.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 213446.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 213509.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 213509.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 214008.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 214008.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 214222.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 214222.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 214343.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 214343.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-22 234055.png
+- **Screenshot date:** 2025-03-22
+- **File:** screenshots/Screenshot 2025-03-22 234055.png
+- **Same-day commits:**
+  - `1daee9f0` 2025-03-22 — Updates
+  - `52d7c1d6` 2025-03-22 — Merge branch 'main' of https://github.com/dusterbloom/magical-carpet
+  - `e0886f6d` 2025-03-22 — V2.1
+  - `3ba54ef8` 2025-03-22 — readme update
+  - `1526696e` 2025-03-22 — Initial commit
+  - `0dda3ff2` 2025-03-22 — V2
+  - `08e049d4` 2025-03-22 — Initial commit
+  - `90cd3a54` 2025-03-22 — Initial commit
+
+## Screenshot 2025-03-23 115537.png
+- **Screenshot date:** 2025-03-23
+- **File:** screenshots/Screenshot 2025-03-23 115537.png
+- **Same-day commits:**
+  - `25641555` 2025-03-23 — Minimap map pon mobileUI
+  - `28e7f118` 2025-03-23 — Almost there on mobile for v1
+  - `a147f26e` 2025-03-23 — fix
+  - `c3ae2c18` 2025-03-23 — Mobile UI getting there . missing visibity for right hand control
+  - `aecca34f` 2025-03-23 — adding screeshots of game evolution
+  - `a1997723` 2025-03-23 — Optmization ended 60FPS everywhere
+  - `e793e4a1` 2025-03-23 — doc update
+  - `77ad4e34` 2025-03-23 — Network optimization for mobile
+  - `12b8ee66` 2025-03-23 — Optimization 5th of 8
+  - `853f5310` 2025-03-23 — Texture and asset opt / unsure
+  - `4a2b002d` 2025-03-23 — Carpet trail fix
+  - `446f2971` 2025-03-23 — world system LOD
+  - `1b827805` 2025-03-23 — first optmization task
+  - `872c2fbf` 2025-03-23 — start to optmized
+  - `ef4ed099` 2025-03-23 — WIP pre joystick
+
+## Screenshot 2025-03-23 162424.png
+- **Screenshot date:** 2025-03-23
+- **File:** screenshots/Screenshot 2025-03-23 162424.png
+- **Same-day commits:**
+  - `25641555` 2025-03-23 — Minimap map pon mobileUI
+  - `28e7f118` 2025-03-23 — Almost there on mobile for v1
+  - `a147f26e` 2025-03-23 — fix
+  - `c3ae2c18` 2025-03-23 — Mobile UI getting there . missing visibity for right hand control
+  - `aecca34f` 2025-03-23 — adding screeshots of game evolution
+  - `a1997723` 2025-03-23 — Optmization ended 60FPS everywhere
+  - `e793e4a1` 2025-03-23 — doc update
+  - `77ad4e34` 2025-03-23 — Network optimization for mobile
+  - `12b8ee66` 2025-03-23 — Optimization 5th of 8
+  - `853f5310` 2025-03-23 — Texture and asset opt / unsure
+  - `4a2b002d` 2025-03-23 — Carpet trail fix
+  - `446f2971` 2025-03-23 — world system LOD
+  - `1b827805` 2025-03-23 — first optmization task
+  - `872c2fbf` 2025-03-23 — start to optmized
+  - `ef4ed099` 2025-03-23 — WIP pre joystick
+
+## Screenshot 2025-03-23 162654.png
+- **Screenshot date:** 2025-03-23
+- **File:** screenshots/Screenshot 2025-03-23 162654.png
+- **Same-day commits:**
+  - `25641555` 2025-03-23 — Minimap map pon mobileUI
+  - `28e7f118` 2025-03-23 — Almost there on mobile for v1
+  - `a147f26e` 2025-03-23 — fix
+  - `c3ae2c18` 2025-03-23 — Mobile UI getting there . missing visibity for right hand control
+  - `aecca34f` 2025-03-23 — adding screeshots of game evolution
+  - `a1997723` 2025-03-23 — Optmization ended 60FPS everywhere
+  - `e793e4a1` 2025-03-23 — doc update
+  - `77ad4e34` 2025-03-23 — Network optimization for mobile
+  - `12b8ee66` 2025-03-23 — Optimization 5th of 8
+  - `853f5310` 2025-03-23 — Texture and asset opt / unsure
+  - `4a2b002d` 2025-03-23 — Carpet trail fix
+  - `446f2971` 2025-03-23 — world system LOD
+  - `1b827805` 2025-03-23 — first optmization task
+  - `872c2fbf` 2025-03-23 — start to optmized
+  - `ef4ed099` 2025-03-23 — WIP pre joystick
+
+## Screenshot 2025-11-07 093509.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 093509.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 093513.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 093513.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 093607.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 093607.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 094947.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 094947.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 095011.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 095011.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 095014.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 095014.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 095019.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 095019.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 100103.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 100103.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 100849.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 100849.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 101436.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 101436.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 101507.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 101507.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 105727.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 105727.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 113617.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 113617.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 114416.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 114416.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 120757.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 120757.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 124148.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 124148.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 140130.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 140130.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-07 140212.png
+- **Screenshot date:** 2025-11-07
+- **File:** screenshots/Screenshot 2025-11-07 140212.png
+- **Same-day commits:**
+  - `61a3af0c` 2025-11-07 — fix: Simplify moon positioning and improve visibility
+  - `b4a0ea23` 2025-11-07 — refactor: Simplify updateShaderUniforms to only handle time of day
+  - `e4ae664c` 2025-11-07 — refactor: Simplify skybox to pure gradient (Path 1 implementation)
+  - `9d3f190a` 2025-11-07 — fix: Remove shader sun disk and reduce glow intensity
+  - `91758030` 2025-11-07 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `ecc65d6a` 2025-11-07 — fix: Restore visibility of sun, moon, and clouds + improve fog
+  - `b99b3035` 2025-11-07 — feat: Add collision detection for trees and landmarks
+  - `2372c204` 2025-11-07 — feat: Increase tree density for lusher forests
+  - `df09a195` 2025-11-07 — feat: Adjust tree scale and density for cozy forest feel
+  - `ed9a39ce` 2025-11-07 — screenshot pt9
+  - `8e7adcee` 2025-11-07 — fix: Set worldSystem reference during initialization
+  - `74ed3c30` 2025-11-07 — fix: Use Map.get() to access player system
+  - `36cd5806` 2025-11-07 — debug: Add diagnostic logging for tree spawning issue
+  - `7dcd0867` 2025-11-07 — fix: Remove player dependency from SimpleTreeSystem
+  - `b584613f` 2025-11-07 — fix: Tree spawning and excessive debug logging
+  - `4457702b` 2025-11-07 — fix: Correct player property path in SimpleTreeSystem
+  - `c8d4193c` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `0257b62f` 2025-11-07 — fix: Fix tree spawning with proper scale, height range, and logging
+  - `9ddf7d1f` 2025-11-07 — feedback pt1
+  - `b2b3005b` 2025-11-07 — feat: Add 6 real tree models from Kenney Nature Kit (CC0)
+  - `af977299` 2025-11-07 — feat: Replace complex VegetationSystem with SimpleTreeSystem + model loading
+  - `eaee435f` 2025-11-07 — debug: Add tree generation logging to diagnose spawning issues
+  - `24cb0a82` 2025-11-07 — fix: Fix clouds, birds, and tree spawning issues
+  - `ae200548` 2025-11-07 — screenshot p8
+  - `114da4e9` 2025-11-07 — feat: Transform world into cozy, living landscape
+  - `5d3e611c` 2025-11-07 — screenshot p7
+  - `a56fea89` 2025-11-07 — fix: Restore working water from main branch
+  - `9214b846` 2025-11-07 — screenshot p6
+  - `34cec48d` 2025-11-07 — refactor: Replace with ultra-simple flat water - Magic Carpet 1994 style
+  - `5c74fe16` 2025-11-07 — screenshot p5
+  - `a2e4f1ea` 2025-11-07 — refactor: Replace complex Water.js with simplified Magic Carpet style water
+  - `f0a6cd72` 2025-11-07 — refactor: Remove SeaFloorSystem and UnderwaterEffectsSystem permanently
+  - `2816feb2` 2025-11-07 — screens pt4
+  - `14a7da21` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `b53c41c9` 2025-11-07 — debug: Temporarily disable SeaFloorSystem and UnderwaterEffectsSystem
+  - `df851379` 2025-11-07 — screenshot pt3
+  - `1592fbb3` 2025-11-07 — fix: Improve depth buffer precision by adjusting camera planes
+  - `7c7f2a5f` 2025-11-07 — screenshot pt2
+  - `67cbe3d7` 2025-11-07 — Merge branch 'claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH' of https://github.com/dusterbloom/magical-carpet into claude/merge-slow-mode-conflicts-011CUtA8fLyW1vbWEsc5LxZH
+  - `3c696ab3` 2025-11-07 — screenshots update
+  - `be287985` 2025-11-07 — fix: Add safety checks for optional skybox uniforms
+  - `6e5a42d2` 2025-11-07 — fix: Resolve skybox errors and water z-fighting issues
+  - `c20f7cfb` 2025-11-07 — fix: Handle legacy systems and renderer initialization issues
+  - `78dc4179` 2025-11-07 — Merge slow-mode branch into main - Architectural refactoring with mobile compatibility
+
+## Screenshot 2025-11-08 181408.png
+- **Screenshot date:** 2025-11-08
+- **File:** screenshots/Screenshot 2025-11-08 181408.png
+- **Same-day commits:**
+  - `bf2f3a40` 2025-11-08 — fix: Fix jagged shoreline and terrain bleeding through water
+  - `9be37686` 2025-11-08 — pt12
+  - `56695458` 2025-11-08 — fix: Prevent terrain bleeding through water at shoreline
+  - `5be72686` 2025-11-08 — screenshot pt11
+  - `3e8d5565` 2025-11-08 — feat: Replace simple water with Three.js Water for realistic reflections
+  - `dbe62c2a` 2025-11-08 — fix: Optimize water performance and add forest clustering
+  - `36f8b033` 2025-11-08 — fix: Implement proper bounce physics for collision response
+  - `697b6c19` 2025-11-08 — fix: Improve visual rendering for stars, clouds, and water
+  - `5421b328` 2025-11-08 — fix: Update star depth testing to fix visibility issues
+  - `c1d86962` 2025-11-08 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `7c9abd89` 2025-11-08 — screenshot pt10
+
+## Screenshot 2025-11-08 194628.png
+- **Screenshot date:** 2025-11-08
+- **File:** screenshots/Screenshot 2025-11-08 194628.png
+- **Same-day commits:**
+  - `bf2f3a40` 2025-11-08 — fix: Fix jagged shoreline and terrain bleeding through water
+  - `9be37686` 2025-11-08 — pt12
+  - `56695458` 2025-11-08 — fix: Prevent terrain bleeding through water at shoreline
+  - `5be72686` 2025-11-08 — screenshot pt11
+  - `3e8d5565` 2025-11-08 — feat: Replace simple water with Three.js Water for realistic reflections
+  - `dbe62c2a` 2025-11-08 — fix: Optimize water performance and add forest clustering
+  - `36f8b033` 2025-11-08 — fix: Implement proper bounce physics for collision response
+  - `697b6c19` 2025-11-08 — fix: Improve visual rendering for stars, clouds, and water
+  - `5421b328` 2025-11-08 — fix: Update star depth testing to fix visibility issues
+  - `c1d86962` 2025-11-08 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `7c9abd89` 2025-11-08 — screenshot pt10
+
+## Screenshot 2025-11-08 195956.png
+- **Screenshot date:** 2025-11-08
+- **File:** screenshots/Screenshot 2025-11-08 195956.png
+- **Same-day commits:**
+  - `bf2f3a40` 2025-11-08 — fix: Fix jagged shoreline and terrain bleeding through water
+  - `9be37686` 2025-11-08 — pt12
+  - `56695458` 2025-11-08 — fix: Prevent terrain bleeding through water at shoreline
+  - `5be72686` 2025-11-08 — screenshot pt11
+  - `3e8d5565` 2025-11-08 — feat: Replace simple water with Three.js Water for realistic reflections
+  - `dbe62c2a` 2025-11-08 — fix: Optimize water performance and add forest clustering
+  - `36f8b033` 2025-11-08 — fix: Implement proper bounce physics for collision response
+  - `697b6c19` 2025-11-08 — fix: Improve visual rendering for stars, clouds, and water
+  - `5421b328` 2025-11-08 — fix: Update star depth testing to fix visibility issues
+  - `c1d86962` 2025-11-08 — fix: Restore sun, moon, and stars visibility + fix shader artifacts
+  - `7c9abd89` 2025-11-08 — screenshot pt10
+
+## Screenshot 2026-06-12 231859.png
+- **Screenshot date:** 2026-06-12
+- **File:** screenshots/Screenshot 2026-06-12 231859.png
+- **Same-day commits:**
+  - `7d7d4609` 2026-06-12 — fix: replace blocking popups with corner toasts + quest tracker panel
+  - `666c7978` 2026-06-12 — tune: rein in top speed for controllability
+  - `1f90f8a0` 2026-06-12 — docs: onboarding fixes from cold-start audit
+  - `e69fbc1c` 2026-06-12 — feat: Agent API + fair human-vs-agent racing (seeded time-trials, ghosts)
+  - `424c5cbd` 2026-06-12 — Change game screenshot link in README
+  - `4cfee01f` 2026-06-12 — Add files via upload
+  - `70595e3a` 2026-06-12 — docs: rewrite README to match the shipped game, add MIT LICENSE
+  - `314552d2` 2026-06-12 — feat: overhaul gameplay loop, flight feel, atmosphere, and performance
+

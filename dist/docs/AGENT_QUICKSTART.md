@@ -21,6 +21,35 @@ Stop and return control to the human:
 bot.stop();
 ```
 
+## In-Browser LLM Pilot (no server)
+
+Let an LLM fly the carpet — entirely in the page, with no server to run. SimpleBot
+flies the 10 Hz floor so the run never crashes out; an LLM advisor sets high-level
+biases (racing line / speed / climb) every ~2 s, which the floor blends in. Two
+serverless providers:
+
+```js
+const { LLMPilot } = await import('/src/agents/LLMPilot.js');
+
+// Cloud: a direct browser fetch to the Claude API. Your key stays in THIS browser.
+new LLMPilot(window.agentAPI, {
+  config: { provider: 'cloud', apiKey: 'sk-ant-...', model: 'claude-haiku-4-5' },
+}).start();
+
+// Local: WebLLM on WebGPU, fully on-device (no key; downloads the model once).
+new LLMPilot(window.agentAPI, {
+  config: { provider: 'local', model: 'Llama-3.2-1B-Instruct-q4f32_1-MLC' },
+}).start();
+```
+
+Or just press the **LLM Pilot** button in the Race panel (MENU → Race) — it prompts
+once for provider/key/model and remembers them in `localStorage`. The pilot drives
+through `window.agentAPI.act()` like any agent, so the run is recorded and
+`agentAPI.exportResult()` reports `action-log-present`.
+
+> The cloud key lives client-side — fine for your own research, never a shared key.
+> Haiku is the fast/cheap default for the tight loop; Opus is the smartest.
+
 Load the best ghost for the same seed:
 
 ```js

@@ -3,6 +3,7 @@ node_modules/
 .env.DS_Store
 
 # Claude Code session-local artifacts
+.playwright-mcp/
 .claude/settings.local.json
 .claude/pre-session-backup.patch
 .claude/scheduled_tasks.lock

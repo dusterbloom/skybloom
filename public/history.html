@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Making of SkyBloom — A History</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sky-deep: #0b1026;
+      --sky-mid: #2a2c5a;
+      --sky-light: #46518f;
+      --sunset: #ff7744;
+      --sunset-soft: #ff9966;
+      --accent-gold: #ffcc66;
+      --accent-pink: #ff66cc;
+      --text: #f2f5ff;
+      --text-muted: rgba(242, 245, 255, 0.62);
+      --text-faint: rgba(242, 245, 255, 0.38);
+      --glass: rgba(11, 16, 38, 0.58);
+      --glass-strong: rgba(11, 16, 38, 0.78);
+      --glass-border: rgba(242, 245, 255, 0.12);
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Sora', 'Outfit', 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      background: var(--sky-deep);
+      min-height: 100vh;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      overflow: hidden;
+      padding: 2rem;
+    }
+
+    .hero__bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('screenshots/image.png');
+      background-size: cover;
+      background-position: center;
+      filter: brightness(0.75) saturate(1.05);
+      z-index: 0;
+    }
+
+    .hero__overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(1.5px 1.5px at 14% 16%, rgba(255,255,255,0.8), transparent 60%),
+        radial-gradient(1px 1px at 36% 8%, rgba(255,255,255,0.7), transparent 60%),
+        radial-gradient(1.5px 1.5px at 58% 24%, rgba(255,255,255,0.6), transparent 60%),
+        radial-gradient(1px 1px at 78% 12%, rgba(255,255,255,0.8), transparent 60%),
+        radial-gradient(1px 1px at 88% 34%, rgba(255,255,255,0.5), transparent 60%),
+        radial-gradient(1.5px 1.5px at 6% 44%, rgba(255,255,255,0.6), transparent 60%),
+        linear-gradient(180deg, rgba(11,16,38,0.25) 0%, rgba(42,44,90,0.55) 38%, rgba(70,81,143,0.65) 58%, rgba(255,119,68,0.35) 78%, rgba(11,16,38,0.95) 100%);
+      z-index: 1;
+    }
+
+    .hero__content {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      color: var(--text);
+      text-shadow: 0 2px 24px rgba(13, 18, 38, 0.8);
+    }
+
+    .hero__kicker {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+
+    .hero__title {
+      font-size: clamp(34px, 8vw, 78px);
+      font-weight: 800;
+      margin: 0 0 18px;
+      letter-spacing: 0.16em;
+      line-height: 1.05;
+      text-shadow: 0 2px 24px rgba(13, 18, 38, 0.8);
+    }
+
+    .hero__subtitle {
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      font-weight: 300;
+      margin: 0 auto 2.5rem;
+      max-width: 680px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .hero__cta {
+      display: inline-flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 0.85rem 1.7rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+      transition: transform 0.2s, box-shadow 0.2s, filter 0.2s;
+      backdrop-filter: blur(10px);
+      border: 1px solid transparent;
+    }
+
+    .btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+
+    .btn--primary {
+      background: linear-gradient(90deg, var(--accent-gold), var(--accent-pink));
+      color: var(--sky-deep);
+      box-shadow: 0 4px 20px rgba(255, 102, 204, 0.25);
+    }
+
+    .btn--ghost {
+      background: var(--glass);
+      color: var(--text);
+      border: 1px solid var(--glass-border);
+    }
+
+    .scroll-cue {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      color: var(--text-muted);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* Sections */
+    section {
+      padding: 6rem 1.5rem;
+      position: relative;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .intro {
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .intro h2 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      margin-bottom: 1rem;
+      color: var(--text);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .intro p {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    /* Timeline */
+    .timeline {
+      position: relative;
+      padding: 2rem 0;
+    }
+
+    .timeline__line {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, transparent, var(--sky-light), var(--sunset), var(--accent-pink), transparent);
+      transform: translateX(-50%);
+      opacity: 0.6;
+    }
+
+    .phase {
+      position: relative;
+      margin-bottom: 5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .phase:nth-child(even) .phase__content { grid-column: 2; }
+    .phase:nth-child(even) .phase__visual { grid-column: 1; grid-row: 1; }
+
+    .phase__dot {
+      position: absolute;
+      left: 50%;
+      top: 2rem;
+      width: 18px;
+      height: 18px;
+      background: var(--sky-deep);
+      border: 3px solid var(--sunset);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 0 0 5px rgba(255, 119, 68, 0.18);
+      z-index: 2;
+    }
+
+    .phase__content {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 2.2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .phase__date {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--sunset-soft);
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+
+    .phase__title {
+      font-size: clamp(1.4rem, 3vw, 1.9rem);
+      margin: 0 0 0.5rem;
+      color: var(--text);
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .phase__theme {
+      font-style: italic;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      font-weight: 300;
+    }
+
+    .phase__desc {
+      color: var(--text);
+      margin-bottom: 1.2rem;
+      font-weight: 300;
+    }
+
+    .phase__commits {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.2rem;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.78rem;
+    }
+
+    .phase__commits li {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(242, 245, 255, 0.1);
+      color: var(--text-muted);
+    }
+
+    .phase__commits li:last-child { border-bottom: none; }
+
+    .phase__visual {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .phase__visual--single {
+      grid-template-columns: 1fr;
+    }
+
+    .shot {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s;
+      cursor: zoom-in;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+    }
+
+    .shot:hover { transform: scale(1.02); }
+
+    .shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .shot__caption {
+      font-size: 0.7rem;
+      padding: 0.55rem 0.8rem;
+      background: var(--glass-strong);
+      color: var(--text-muted);
+      text-align: center;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    /* Proof gallery */
+    .proof {
+      background:
+        radial-gradient(1.5px 1.5px at 10% 10%, rgba(255,255,255,0.6), transparent 60%),
+        radial-gradient(1px 1px at 90% 20%, rgba(255,255,255,0.5), transparent 60%),
+        radial-gradient(1.5px 1.5px at 30% 80%, rgba(255,255,255,0.4), transparent 60%),
+        radial-gradient(1px 1px at 70% 70%, rgba(255,255,255,0.5), transparent 60%),
+        linear-gradient(180deg, var(--sky-deep) 0%, var(--sky-mid) 50%, var(--sky-deep) 100%);
+    }
+
+    .proof h2 {
+      text-align: center;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      margin-bottom: 0.5rem;
+      color: var(--text);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .proof__lead {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 3rem;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .proof__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .proof__card {
+      background: var(--glass-strong);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+      border: 1px solid var(--glass-border);
+    }
+
+    .proof__card:hover { transform: translateY(-4px); }
+
+    .proof__card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+      cursor: zoom-in;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .proof__meta {
+      padding: 1rem;
+    }
+
+    .proof__date {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--sunset-soft);
+      letter-spacing: 0.05em;
+    }
+
+    .proof__commit {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      word-break: break-word;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 4rem 1.5rem;
+      color: var(--text-muted);
+      background: var(--sky-deep);
+      border-top: 1px solid var(--glass-border);
+    }
+
+    footer .btn--ghost {
+      margin-top: 1rem;
+      display: inline-block;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 16, 38, 0.96);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 2rem;
+    }
+
+    .lightbox.active { display: flex; }
+
+    .lightbox img {
+      max-width: 100%;
+      max-height: 90vh;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      border: 1px solid var(--glass-border);
+    }
+
+    .lightbox__close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      color: var(--text);
+      font-size: 2rem;
+      cursor: pointer;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      .timeline__line { left: 1.5rem; }
+      .phase {
+        grid-template-columns: 1fr;
+        padding-left: 3rem;
+      }
+      .phase:nth-child(even) .phase__content,
+      .phase:nth-child(even) .phase__visual { grid-column: 1; grid-row: auto; }
+      .phase__dot { left: 1.5rem; }
+      .phase__visual { grid-template-columns: 1fr; }
+      .hero__bg { background-position: 60% center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .scroll-cue { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__bg" aria-hidden="true"></div>
+    <div class="hero__overlay" aria-hidden="true"></div>
+    <div class="hero__content">
+      <p class="hero__kicker">A Development Archaeology</p>
+      <h1 class="hero__title">THE MAKING OF SKYBLOOM</h1>
+      <p class="hero__subtitle">From a blue block over gray water to an open-sky benchmark where humans race machines.</p>
+      <div class="hero__cta">
+        <a href="#timeline" class="btn btn--primary">Explore the timeline</a>
+        <a href="https://github.com/dusterbloom/skybloom" class="btn btn--ghost" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+    </div>
+    <div class="scroll-cue">Scroll</div>
+  </header>
+
+  <section>
+    <div class="container">
+      <div class="intro">
+        <h2>A year of sky, water, and suns</h2>
+        <p>
+          Between March 2025 and June 2026, <em>SkyBloom</em> was built, broken, rebuilt, renamed, and finally released.
+          Every screenshot below is anchored to a real commit day — proof of the work, the pivots, and the quiet breakthroughs.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="timeline">
+    <div class="container">
+      <div class="timeline">
+        <div class="timeline__line" aria-hidden="true"></div>
+
+        <!-- Phase 0 -->
+        <article class="phase">
+          <div class="phase__dot" aria-hidden="true"></div>
+          <div class="phase__content">
+            <span class="phase__date">22 March 2025</span>
+            <h3 class="phase__title">Genesis</h3>
+            <p class="phase__theme">“A block, some water, and a dream.”</p>
+            <p class="phase__desc">
+              Two near-simultaneous commits create <code>magical-carpet</code>. The world is flat, the carpet is a blue block, and the water is a pale plane. The only goal: prove that flying feels good.
+            </p>
+            <ul class="phase__commits">
+              <li>1526696e — Initial commit</li>
+              <li>0dda3ff2 — V2</li>
+              <li>e0886f6d — V2.1</li>
+            </ul>
+          </div>
+          <div class="phase__visual">
+            <figure class="shot" data-src="screenshots/Screenshot 2025-03-22 171714.png">
+              <img src="screenshots/Screenshot 2025-03-22 171714.png" alt="First screenshot: a gray-blue world with a blue block carpet over flat water" loading="lazy">
+              <figcaption class="shot__caption">First known screenshot, 22 Mar</figcaption>
+            </figure>
+            <figure class="shot" data-src="screenshots/Screenshot 2025-03-22 190049.png">
+              <img src="screenshots/Screenshot 2025-03-22 190049.png" alt="Colorful islands inside a blocky sky dome" loading="lazy">
+              <figcaption class="shot__caption">First color sky dome, 22 Mar</figcaption>
+            </figure>
+          </div>
+        </article>
+
+        <!-- Phase 1 -->
+        <article class="phase">
+          <div class="phase__dot" aria-hidden="true"></div>
+          <div class="phase__content">
+            <span class="phase__date">23–31 March 2025</span>
+            <h3 class="phase__title">The Mobile Crusade</h3>
+            <p class="phase__theme">“Make it run everywhere, make it pretty, make it not crash.”</p>
+            <p class="phase__desc">
+              Over one hundred commits in a single month. The creator battles mobile FPS, water that flashes brown, terrain that glitches, and a sky that somehow ends up with three competing suns.
+            </p>
+            <ul class="phase__commits">
+              <li>23 Mar — Optmization ended 60FPS everywhere</li>
+              <li>29 Mar — Remove water system and references</li>
+              <li>30 Mar — Refactoring Atmosphere systems - cloud disabled</li>
+              <li>31 Mar — SUN VISIBILITY FIXED / side: THREE.FrontSide + 3</li>
+              <li>31 Mar — Consolidate multiple sun implementations</li>
+              <li>31 Mar — MULTIPLAYER V1</li>
+            </ul>
+          </div>
+          <div class="phase__visual">
+            <figure class="shot" data-src="screenshots/Screenshot 2025-03-23 162654.png">
+              <img src="screenshots/Screenshot 2025-03-23 162654.png" alt="Rugged mountains, deep blue water, and a red block carpet" loading="lazy">
+              <figcaption class="shot__caption">Rugged world + minimap, 23 Mar</figcaption>
+            </figure>
+            <figure class="shot" data-src="screenshots/Screenshot 2025-03-22 213446.png">
+              <img src="screenshots/Screenshot 2025-03-22 213446.png" alt="Teal carpet over dark water with simple clouds" loading="lazy">
+              <figcaption class="shot__caption">Water experiments, 22 Mar</figcaption>
+            </figure>
+          </div>
+        </article>
+
+        <!-- Phase 2 -->
+        <article class="phase">
+          <div class="phase__dot" aria-hidden="true"></div>
+          <div class="phase__content">
+            <span class="phase__date">April 2025</span>
+            <h3 class="phase__title">Refactoring Fever</h3>
+            <p class="phase__theme">“Tear it down and rebuild it cleanly.”</p>
+            <p class="phase__desc">
+              The prototype is re-architected with an ECS, SystemManager, state management, and dedicated renderer/quality managers. It is an attempt to turn a wild garden into a cathedral.
+            </p>
+            <ul class="phase__commits">
+              <li>ec76c05 — REFACTORING PLAN</li>
+              <li>bcd0ba2 — Implement ECS architecture with SystemManager</li>
+              <li>78dc417 — Merge slow-mode branch into main</li>
+            </ul>
+          </div>
+          <div class="phase__visual phase__visual--single">
+            <figure class="shot" data-src="screenshots/Screenshot 2025-03-23 162654.png">
+              <img src="screenshots/Screenshot 2025-03-23 162654.png" alt="The world during the refactoring period" loading="lazy">
+              <figcaption class="shot__caption">Architecture under the hood, same sky above</figcaption>
+            </figure>
+          </div>
+        </article>
+
+        <!-- Phase 3 -->
+        <article class="phase">
+          <div class="phase__dot" aria-hidden="true"></div>
+          <div class="phase__content">
+            <span class="phase__date">May – August 2025</span>
+            <h3 class="phase__title">The Quiet Season</h3>
+            <p class="phase__theme">“Rest and planning.”</p>
+            <p class="phase__desc">
+              The repository goes almost silent. No screenshots, no commits. The project waits, like a seed under winter soil.
+            </p>
+          </div>
+          <div class="phase__visual phase__visual--single">
+            <div class="shot" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, var(--sky-mid), var(--sky-deep));color:var(--text-muted);text-align:center;padding:2rem;min-height:180px;">
+              <p>“No commits. No screenshots. Just quiet.”</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Phase 4 -->
+        <article class="phase">
+          <div class="phase__dot" aria-hidden="true"></div>
+          <div class="phase__content">
+            <span class="phase__date">September – November 2025</span>
+            <h3 class="phase__title">The Cozy World Overhaul</h3>
+            <p class="phase__theme">“It is not an engine; it is a place.”</p>
+            <p class="phase__desc">
+              The game returns with a new goal: feel small, gentle, and alive. Water becomes simpler and more reflective. Real tree models arrive. Day, night, stars, and moon settle into place.
+            </p>
+            <ul class="phase__commits">
+              <li>7 Nov — Transform world into cozy, living landscape</li>
+              <li>7 Nov — Replace with ultra-simple flat water - Magic Carpet 1994 style</li>
+              <li>7 Nov — Restore working water from main branch</li>
+              <li>8 Nov — Add 6 real tree models from Kenney Nature Kit</li>
+              <li>8 Nov — Replace simple water with Three.js Water for realistic reflections</li>
+              <li>8 Nov — Fix jagged shoreline and terrain bleeding through water</li>
+            </ul>
+          </div>
+          <div class="phase__visual">
+            <figure class="shot" data-src="screenshots/Screenshot 2025-11-07 093509.png">
+              <img src="screenshots/Screenshot 2025-11-07 093509.png" alt="Calm reflective water with sandy beaches and distant snowy mountains" loading="lazy">
+              <figcaption class="shot__caption">Cozy water + trails, 7 Nov</figcaption>
+            </figure>
+            <figure class="shot" data-src="screenshots/Screenshot 2025-11-07 094947.png">
+              <img src="screenshots/Screenshot 2025-11-07 094947.png" alt="Night scene with stars, moonlit water, and time UI" loading="lazy">
+              <figcaption class="shot__caption">Night sky, 7 Nov</figcaption>
+            </figure>
+            <figure class="shot" data-src="screenshots/Screenshot 2025-11-07 120757.png">
+              <img src="screenshots/Screenshot 2025-11-07 120757.png" alt="Bright sun rays over deep blue ocean" loading="lazy">
+              <figcaption class="shot__caption">Sun rays, 7 Nov</figcaption>
+            </figure>
+            <figure class="shot" data-src="screenshots/Screenshot 2025-11-08 181408.png">
+              <img src="screenshots/Screenshot 2025-11-08 181408.png" alt="Moody night clouds and glowing moon" loading="lazy">
+              <figcaption class="shot__caption">Volumetric night clouds, 8 Nov</figcaption>
+            </figure>
+          </div>
+        </article>
+
+        <!-- Phase 5 -->
+        <article class="phase">
+          <div class="phase__dot" aria-hidden="true"></div>
+          <div class="phase__content">
+            <span class="phase__date">June 2026</span>
+            <h3 class="phase__title">The Agentic Arena</h3>
+            <p class="phase__theme">“From game to benchmark.”</p>
+            <p class="phase__desc">
+              The project is renamed <strong>SkyBloom</strong>. A polished title screen appears. Seeded 12-gate races, local ghosts, the <code>window.agentAPI</code>, and a reference SimpleBot turn the world into a public stage for human-vs-agent flight.
+            </p>
+            <ul class="phase__commits">
+              <li>6e85cec — rename project references to skybloom</li>
+              <li>e69fbc1 — Agent API + fair human-vs-agent racing</li>
+              <li>90a1692 — Twilight Glass design system + new title screen</li>
+              <li>18ff9f3 — prepare SkyBloom race and agent release loop</li>
+              <li>99d6578 — add pages deploy and friendly play setup</li>
+              <li>19b2dfb — add procedural Ennio Morricone-style music system</li>
+            </ul>
+          </div>
+          <div class="phase__visual">
+            <figure class="shot" data-src="screenshots/Screenshot 2026-06-12 231859.png">
+              <img src="screenshots/Screenshot 2026-06-12 231859.png" alt="Sunset ocean with a single bright carpet trail" loading="lazy">
+              <figcaption class="shot__caption">Sunset flight, 12 Jun</figcaption>
+            </figure>
+            <figure class="shot" data-src="screenshots/image.png">
+              <img src="screenshots/image.png" alt="Final SkyBloom title screen" loading="lazy">
+              <figcaption class="shot__caption">The finished title screen, 13 Jun</figcaption>
+            </figure>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="proof" id="proof">
+    <div class="container">
+      <h2>Proof of work</h2>
+      <p class="proof__lead">
+        Every screenshot below is matched to the commits that happened on or around the day it was captured.
+        This is the raw evidence behind the story.
+      </p>
+      <div class="proof__grid">
+        
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 171714.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 171714.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 174816.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 174816.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 175300.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 175300.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 175831.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 175831.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 180836.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 180836.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 182217.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 182217.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 182342.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 182342.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 182810.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 182810.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 184804.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 184804.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 185446.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 185446.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 190049.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 190049.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 190320.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 190320.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 191407.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 191407.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 194702.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 194702.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 203532.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 203532.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 211312.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 211312.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 212310.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 212310.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 213446.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 213446.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 213509.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 213509.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 214008.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 214008.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 214222.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 214222.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 214343.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 214343.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-22 234055.png" alt="Screenshot from 2025-03-22" loading="lazy" data-src="screenshots/Screenshot 2025-03-22 234055.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-22</div>
+        <span class="proof__commit">1daee9f0 — Updates</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-23 115537.png" alt="Screenshot from 2025-03-23" loading="lazy" data-src="screenshots/Screenshot 2025-03-23 115537.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-23</div>
+        <span class="proof__commit">25641555 — Minimap map pon mobileUI</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-23 162424.png" alt="Screenshot from 2025-03-23" loading="lazy" data-src="screenshots/Screenshot 2025-03-23 162424.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-23</div>
+        <span class="proof__commit">25641555 — Minimap map pon mobileUI</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-03-23 162654.png" alt="Screenshot from 2025-03-23" loading="lazy" data-src="screenshots/Screenshot 2025-03-23 162654.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-03-23</div>
+        <span class="proof__commit">25641555 — Minimap map pon mobileUI</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 093509.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 093509.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 093513.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 093513.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 093607.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 093607.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 094947.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 094947.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 095011.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 095011.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 095014.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 095014.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 095019.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 095019.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 100103.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 100103.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 100849.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 100849.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 101436.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 101436.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 101507.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 101507.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 105727.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 105727.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 113617.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 113617.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 114416.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 114416.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 120757.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 120757.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 124148.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 124148.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 140130.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 140130.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-07 140212.png" alt="Screenshot from 2025-11-07" loading="lazy" data-src="screenshots/Screenshot 2025-11-07 140212.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-07</div>
+        <span class="proof__commit">61a3af0c — fix: Simplify moon positioning and improve visibility</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-08 181408.png" alt="Screenshot from 2025-11-08" loading="lazy" data-src="screenshots/Screenshot 2025-11-08 181408.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-08</div>
+        <span class="proof__commit">bf2f3a40 — fix: Fix jagged shoreline and terrain bleeding through water</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-08 194628.png" alt="Screenshot from 2025-11-08" loading="lazy" data-src="screenshots/Screenshot 2025-11-08 194628.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-08</div>
+        <span class="proof__commit">bf2f3a40 — fix: Fix jagged shoreline and terrain bleeding through water</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2025-11-08 195956.png" alt="Screenshot from 2025-11-08" loading="lazy" data-src="screenshots/Screenshot 2025-11-08 195956.png">
+      <div class="proof__meta">
+        <div class="proof__date">2025-11-08</div>
+        <span class="proof__commit">bf2f3a40 — fix: Fix jagged shoreline and terrain bleeding through water</span>
+      </div>
+    </article>
+  
+
+    <article class="proof__card">
+      <img src="screenshots/Screenshot 2026-06-12 231859.png" alt="Screenshot from 2026-06-12" loading="lazy" data-src="screenshots/Screenshot 2026-06-12 231859.png">
+      <div class="proof__meta">
+        <div class="proof__date">2026-06-12</div>
+        <span class="proof__commit">7d7d4609 — fix: replace blocking popups with corner toasts + quest tracker panel</span>
+      </div>
+    </article>
+  
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>SkyBloom is an open-sky game for humans and machines.</p>
+      <a href="/" class="btn btn--ghost">Play SkyBloom</a>
+    </div>
+  </footer>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <div class="lightbox__close" aria-label="Close">&times;</div>
+    <img src="" alt="Screenshot preview" id="lightbox-img">
+  </div>
+
+  <script>
+    // Lightbox
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const closeBtn = lightbox.querySelector('.lightbox__close');
+
+    document.querySelectorAll('.shot[data-src], .proof__card img').forEach(el => {
+      el.addEventListener('click', () => {
+        const src = el.dataset.src || el.src;
+        lightboxImg.src = src;
+        lightbox.classList.add('active');
+        lightbox.setAttribute('aria-hidden', 'false');
+      });
+    });
+
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      lightbox.setAttribute('aria-hidden', 'true');
+      lightboxImg.src = '';
+    }
+
+    closeBtn.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', e => {
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    // Fade-in phases on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.phase').forEach(phase => {
+      phase.style.opacity = '0';
+      phase.style.transform = 'translateY(40px)';
+      phase.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+      observer.observe(phase);
+    });
+  </script>
+</body>
+</html>
