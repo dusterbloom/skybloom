@@ -14,11 +14,11 @@ export class PlayerPhysics extends System {
     this.altitudeDamping = 0.95; // Per-frame at 60fps; applied as pow(damping, delta * 60)
     this.bankingSensitivity = 0.08;
     this.turnDamping = 0.97;
-    this.velocityAlignRate = 2.5; // Velocity-to-facing easing: 1 - exp(-rate * delta)
+    this.velocityAlignRate = 5.0; // Velocity-to-facing easing: 1 - exp(-rate * delta). Higher = velocity follows the nose faster (less "supertanker" drift after turning past a gate)
     this.maxAltitudeVelocity = 90;
     this.divePower = 150; // Extra forward accel per unit of nose-down forward.y
     this.diveCapStretch = 0.4; // Speed cap stretches to 1.4x in a full dive
-    this.absoluteMaxSpeed = 420; // Hard ceiling regardless of boost/dive stacking
+    this.absoluteMaxSpeed = 280; // Hard ceiling regardless of boost/dive stacking (overridden live by the Rush slider)
     this.climbDragCoefficient = 0.5; // Extra drag per unit of nose-up forward.y
     
     // Add reusable vector objects to eliminate allocations

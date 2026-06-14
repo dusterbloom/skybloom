@@ -343,7 +343,7 @@ export class UISystem extends System {
   // every frame, so writes here apply live. Persisted per browser.
   // ---------------------------------------------------------------------
 
-  static FLIGHT_DEFAULTS = { cruise: 210, rush: 420, punch: 400 };
+  static FLIGHT_DEFAULTS = { cruise: 140, rush: 280, punch: 300 };
 
   loadFlightSettings() {
     try {

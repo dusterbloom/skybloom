@@ -15,7 +15,7 @@ export class PlayerInputSystem extends System {
     this.throttleSpeed = 1.0;
     this.bankingSensitivity = 0.3;
     this.rotationDamping = 0.92;
-    this.turnRate = 1.6; // rad/s yaw at full A/D or joystick deflection
+    this.turnRate = 2.0; // rad/s yaw at full A/D or joystick deflection
     this.maxBankAngle = Math.PI / 6; // 30 degrees while turning
     this.bankEaseRate = 8; // bank easing: 1 - exp(-rate * delta)
     this.currentThrottle = 0;
@@ -157,7 +157,7 @@ export class PlayerInputSystem extends System {
       }
     } else if (isBraking) {
       // Shift = strong brake, S = gentle slowdown
-      const brakeStrength = (keyboardHardBraking || padHardBraking) ? 3.0 : 1.5;
+      const brakeStrength = (keyboardHardBraking || padHardBraking) ? 3.0 : 1.2;
       this.currentThrottle = Math.max(0.0, this.currentThrottle - this.throttleSpeed * brakeStrength * delta);
     } else {
       // Natural throttle decay when no keys pressed (coast down gently)
