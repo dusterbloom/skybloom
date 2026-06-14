@@ -75,6 +75,11 @@ export class VoiceCopilot {
   }
 
   async start() {
+    // Create/unlock the AudioContext NOW, while we're still inside the user's
+    // click on the Talk button — browsers block audio created off a gesture, so
+    // a context made lazily after the async LLM call would stay suspended and
+    // Kokoro/Supertonic would render silently. This is the gesture that unlocks it.
+    this._ensureAudio();
     this._provider = await createProvider(this.config);
     try {
       if (this.tts === 'kokoro') await this._initKokoro();
@@ -96,8 +101,22 @@ export class VoiceCopilot {
     return this;
   }
 
+  // Create the WebAudio context and resume it if suspended. Only effective at
+  // unlocking audio when called synchronously inside a user gesture.
+  _ensureAudio() {
+    try {
+      if (typeof window === 'undefined') return null;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!this._audioCtx) this._audioCtx = new AC();
+      if (this._audioCtx.state === 'suspended') this._audioCtx.resume().catch(() => {});
+      return this._audioCtx;
+    } catch (e) { return null; }
+  }
+
   /** One push-to-talk turn: listen until silence, transcribe, then act + reply. */
   listen() {
+    this._ensureAudio(); // pressing Talk is a gesture — keep audio unlocked
     if (this._listening) return;
     const SR = (typeof window !== 'undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
     if (!SR) { this._setState('no-mic'); this.onText({ role: 'system', text: 'Speech input not supported here — try Chrome, or call say("...") with text.' }); return; }
@@ -286,8 +305,8 @@ export class VoiceCopilot {
   // Float32 PCM -> WebAudio, shared by Kokoro and Supertonic.
   async _playPCM(pcm, rate) {
     if (!pcm || !pcm.length) return;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    const ctx = this._audioCtx || (this._audioCtx = new AC());
+    const ctx = this._ensureAudio();
+    if (!ctx) return;
     if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) { /* ignore */ } }
     const buf = ctx.createBuffer(1, pcm.length, rate);
     buf.copyToChannel(pcm instanceof Float32Array ? pcm : Float32Array.from(pcm), 0);
