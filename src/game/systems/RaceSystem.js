@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System.js';
 import { SimpleBot } from '../../agents/SimpleBot.js';
+import { LLMPilot } from '../../agents/LLMPilot.js';
+import { VoiceCopilot } from '../../agents/VoiceCopilot.js';
 import { useGameState, GameStates } from '../state/gameState.js';
 import { ensureVibeTheme } from '../ui/theme.js';
 
@@ -519,6 +521,136 @@ export class RaceSystem extends System {
     this._simpleBot = null;
     this._simpleBotRunning = false;
     this._panelDirty = true;
+    return true;
+  }
+
+  /** Resolve pilot config from localStorage, prompting once on first use. */
+  _resolvePilotConfig() {
+    try {
+      const raw = localStorage.getItem('vc.pilot');
+      if (raw) return JSON.parse(raw);
+    } catch (error) { /* corrupted/unavailable storage — re-prompt below */ }
+    // ponytail: the browser already has prompt() + localStorage, so there's no
+    // settings form to build. Upgrade path: a proper in-panel form if this grows.
+    const provider = (window.prompt('LLM pilot — "cloud" (Claude API) or "local" (WebLLM)?', 'cloud') || '').trim().toLowerCase();
+    if (provider !== 'cloud' && provider !== 'local') { this._toast('Pilot cancelled'); return null; }
+    const cfg = { provider };
+    if (provider === 'cloud') {
+      const apiKey = (window.prompt('Anthropic API key (kept in THIS browser only):', '') || '').trim();
+      if (!apiKey) { this._toast('Pilot needs an API key', '#ffcc66'); return null; }
+      cfg.apiKey = apiKey;
+      cfg.model = (window.prompt('Model id (Haiku = fast/cheap, Opus = smartest):', 'claude-haiku-4-5') || 'claude-haiku-4-5').trim();
+    } else {
+      cfg.model = (window.prompt('WebLLM model id:', 'Llama-3.2-1B-Instruct-q4f32_1-MLC') || 'Llama-3.2-1B-Instruct-q4f32_1-MLC').trim();
+    }
+    try { localStorage.setItem('vc.pilot', JSON.stringify(cfg)); } catch (error) { /* private mode — run without persisting */ }
+    return cfg;
+  }
+
+  /** Start the in-browser hybrid LLM pilot (SimpleBot floor + LLM directive overrides). */
+  runLLMPilot() {
+    if (this._llmPilotRunning) return true;
+    const api = typeof window !== 'undefined' ? window.agentAPI : null;
+    if (!api) { this._toast('Agent API is not ready yet', '#ffcc66'); return false; }
+    const cfg = this._resolvePilotConfig();
+    if (!cfg) return false;
+    try {
+      this._llmPilot = new LLMPilot(api, {
+        config: { ...cfg, onStatus: (s) => this._toast(`Pilot: ${s}`, '#ffcc66') },
+        courseSeed: this.courseSeed || undefined,
+        onDirective: (d) => this._toast(`Pilot ▸ ${d.note || 'aggression ' + d.aggression}`, '#66ffee'),
+      });
+      this._llmPilotRunning = true;
+      this._panelDirty = true;
+      this._toast(cfg.provider === 'local' ? 'Loading on-device model…' : 'LLM pilot starting', '#66ffee');
+      this._llmPilot.start().catch((error) => {
+        Logger.warn('RaceSystem: LLM pilot failed', error);
+        this._toast(`Pilot failed: ${error && error.message ? error.message : 'error'}`, '#ff7777');
+        this.stopLLMPilot();
+      });
+      return true;
+    } catch (error) {
+      Logger.warn('RaceSystem: LLM pilot failed to start', error);
+      this._toast('LLM pilot failed to start', '#ff7777');
+      return false;
+    }
+  }
+
+  /** Stop the LLM pilot and return control to the human. */
+  stopLLMPilot() {
+    if (this._llmPilot) {
+      try { this._llmPilot.stop(); } catch (error) { /* best effort */ }
+    }
+    this._llmPilot = null;
+    this._llmPilotRunning = false;
+    this._panelDirty = true;
+    return true;
+  }
+
+  /** Resolve voice-copilot config from localStorage, prompting once on first use. */
+  _resolveVoiceConfig() {
+    try {
+      const raw = localStorage.getItem('vc.voice');
+      if (raw) return JSON.parse(raw);
+    } catch (error) { /* corrupted/unavailable storage — re-prompt below */ }
+    const provider = (window.prompt('Voice brain — "openai" (local/compatible server), "cloud" (Claude API), or "local" (WebLLM)?', 'openai') || '').trim().toLowerCase();
+    if (!['openai', 'cloud', 'local'].includes(provider)) { this._toast('Voice cancelled'); return null; }
+    const cfg = { provider };
+    if (provider === 'openai') {
+      cfg.baseURL = (window.prompt('OpenAI-compatible base URL (LM Studio :1234, Jan :1337, Ollama :11434/v1):', 'http://localhost:1234/v1') || 'http://localhost:1234/v1').trim();
+      cfg.model = (window.prompt('Model name:', 'local-model') || 'local-model').trim();
+      const key = (window.prompt('API key (blank if your server ignores it):', '') || '').trim();
+      if (key) cfg.apiKey = key;
+    } else if (provider === 'cloud') {
+      const key = (window.prompt('Anthropic API key (kept in THIS browser only):', '') || '').trim();
+      if (!key) { this._toast('Voice needs an API key', '#ffcc66'); return null; }
+      cfg.apiKey = key;
+      cfg.model = (window.prompt('Model id (Haiku = fast/cheap):', 'claude-haiku-4-5') || 'claude-haiku-4-5').trim();
+    } else {
+      cfg.model = (window.prompt('WebLLM model id:', 'Llama-3.2-1B-Instruct-q4f32_1-MLC') || 'Llama-3.2-1B-Instruct-q4f32_1-MLC').trim();
+    }
+    cfg.tts = (window.prompt('Voice output — "browser" (instant) or "kokoro" (natural, downloads a model once)?', 'browser') || 'browser').trim().toLowerCase() === 'kokoro' ? 'kokoro' : 'browser';
+    try { localStorage.setItem('vc.voice', JSON.stringify(cfg)); } catch (error) { /* private mode — run without persisting */ }
+    return cfg;
+  }
+
+  /** Talk to the carpet: one push-to-talk turn (configures + starts on first press). */
+  runVoiceChat() {
+    const api = typeof window !== 'undefined' ? window.agentAPI : null;
+    if (!api) { this._toast('Agent API is not ready yet', '#ffcc66'); return false; }
+    if (this._voiceCopilot) { this._voiceCopilot.listen(); return true; }
+    const cfg = this._resolveVoiceConfig();
+    if (!cfg) return false;
+    try {
+      const vc = new VoiceCopilot(api, {
+        config: cfg,
+        onText: ({ role, text }) => this._toast(`${role === 'user' ? 'You' : '🪄'}: ${text}`, role === 'user' ? '#ffffff' : '#66ffee'),
+        onState: (s) => { this._voiceState = s; },
+      });
+      this._voiceCopilot = vc;
+      this._toast(cfg.tts === 'kokoro' ? 'Loading voice model…' : 'Starting voice…', '#66ffee');
+      vc.start()
+        .then(() => { this._toast('Voice ready — press 🎙 Talk and speak', '#66ffee'); vc.listen(); })
+        .catch((error) => {
+          Logger.warn('RaceSystem: voice failed', error);
+          this._toast(`Voice failed: ${error && error.message ? error.message : 'error'}`, '#ff7777');
+          this.stopVoiceChat();
+        });
+      return true;
+    } catch (error) {
+      Logger.warn('RaceSystem: voice failed to start', error);
+      this._toast('Voice failed to start', '#ff7777');
+      return false;
+    }
+  }
+
+  /** Stop the voice co-pilot and silence any speech. */
+  stopVoiceChat() {
+    if (this._voiceCopilot) {
+      try { this._voiceCopilot.stop(); } catch (error) { /* best effort */ }
+    }
+    this._voiceCopilot = null;
+    this._toast('Voice off');
     return true;
   }
 
@@ -1140,6 +1272,10 @@ export class RaceSystem extends System {
     });
     addButton('runBot', 'Run SimpleBot', () => this.runSimpleBot());
     addButton('stopBot', 'Stop Bot', () => this.stopSimpleBot());
+    addButton('runPilot', 'LLM Pilot', () => this.runLLMPilot());
+    addButton('stopPilot', 'Stop Pilot', () => this.stopLLMPilot());
+    addButton('voiceTalk', '🎙 Talk', () => this.runVoiceChat());
+    addButton('voiceOff', 'Voice Off', () => this.stopVoiceChat());
     addButton('export', 'Export JSON', () => {
       const result = this.exportResult(null, { download: true });
       this._toast(result ? 'Benchmark JSON exported' : 'Finish a race before export', result ? '#66ffee' : '#ffcc66');
