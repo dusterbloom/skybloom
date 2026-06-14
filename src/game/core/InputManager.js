@@ -181,9 +181,14 @@ export class InputManager {
   }
 
   onTouchStart(event) {
-    // Check if the event target is an input or textarea element
-    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
-      return; // Do not prevent default behavior for input fields
+    // Let taps on HUD buttons/menus through: calling preventDefault here suppresses
+    // the synthesized click, which kills every click-based control (Menu, minimap
+    // zoom, tabs) on touch. The div pads (joystick, W/S) preventDefault in their own
+    // handlers, and inputs keep native behaviour.
+    const uiTarget = event.target;
+    if (uiTarget && uiTarget.closest &&
+        uiTarget.closest('button, a, input, textarea, select, #settings-menu-panel')) {
+      return;
     }
     event.preventDefault();
 
@@ -212,9 +217,14 @@ export class InputManager {
   }
 
   onTouchEnd(event) {
-    // Check if the event target is an input or textarea element
-    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
-      return; // Do not prevent default behavior for input fields
+    // Let taps on HUD buttons/menus through: calling preventDefault here suppresses
+    // the synthesized click, which kills every click-based control (Menu, minimap
+    // zoom, tabs) on touch. The div pads (joystick, W/S) preventDefault in their own
+    // handlers, and inputs keep native behaviour.
+    const uiTarget = event.target;
+    if (uiTarget && uiTarget.closest &&
+        uiTarget.closest('button, a, input, textarea, select, #settings-menu-panel')) {
+      return;
     }
     event.preventDefault();
 
@@ -239,9 +249,14 @@ export class InputManager {
   }
 
   onTouchMove(event) {
-    // Check if the event target is an input or textarea element
-    if (['INPUT', 'TEXTAREA'].includes(event.target.tagName)) {
-      return; // Do not prevent default behavior for input fields
+    // Let taps on HUD buttons/menus through: calling preventDefault here suppresses
+    // the synthesized click, which kills every click-based control (Menu, minimap
+    // zoom, tabs) on touch. The div pads (joystick, W/S) preventDefault in their own
+    // handlers, and inputs keep native behaviour.
+    const uiTarget = event.target;
+    if (uiTarget && uiTarget.closest &&
+        uiTarget.closest('button, a, input, textarea, select, #settings-menu-panel')) {
+      return;
     }
     event.preventDefault();
 

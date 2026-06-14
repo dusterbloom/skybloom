@@ -35,6 +35,7 @@ import { RaceSystem } from "../systems/RaceSystem";
 import { OnboardingHints } from "../ui/OnboardingHints.js";
 import { IntroScreen } from "../ui/screens/IntroScreen";
 import { useGameState, GameStates } from '../state/gameState.js';
+import { ensureVibeTheme } from '../ui/theme.js';
 import { Logger } from '../../utils/Logger.js';
 import { createTestRunner } from '../systems/tests';
 import { SystemManager } from './SystemManager.js';
@@ -364,6 +365,17 @@ export class Engine {
       menuAtmosphere.timeOfDay = 0.72;
     }
 
+    // Gameplay HUD (minimap, mobile controls, settings menu) is gated on the
+    // PLAYING state via a body class so the title screen isn't covered by live
+    // controls — the main mobile fit/clutter fix. The CSS lives in theme.js.
+    ensureVibeTheme();
+    const syncHudVisibility = () => {
+      const playing = useGameState.getState().currentState === GameStates.PLAYING;
+      document.body.classList.toggle('vc-playing', playing);
+    };
+    syncHudVisibility();
+    this._unsubscribeHud = useGameState.subscribe(syncHudVisibility);
+
     // Show intro screen and transition to INTRO state
     this.introScreen.show();
     useGameState.getState().setGameState(GameStates.INTRO);
@@ -494,6 +506,7 @@ export class Engine {
       document.body.removeChild(this.stats.dom);
       document.documentElement.style.removeProperty('--vc-dev-hud-offset');
     }
+    if (this._unsubscribeHud) this._unsubscribeHud();
     this.isRunning = false;
   }
 

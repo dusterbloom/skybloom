@@ -46,6 +46,7 @@ export function ensureVibeTheme() {
       --vc-safe-x: max(14px, env(safe-area-inset-left));
       --vc-safe-y: max(14px, env(safe-area-inset-top));
       --vc-safe-right: max(14px, env(safe-area-inset-right));
+      --vc-safe-bottom: max(20px, env(safe-area-inset-bottom));
       --vc-dev-hud-offset: 0px;
       --vc-minimap-size: 150px;
       --vc-left-stack-top: calc(var(--vc-safe-y) + var(--vc-dev-hud-offset));
@@ -143,9 +144,65 @@ export function ensureVibeTheme() {
       line-height: 1.35;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
+    /* Gameplay HUD is revealed only once the player presses Play. body.vc-playing
+       is toggled from the game state in Engine.js, so the title screen stays clean
+       (this matters most on phones, where the minimap + controls otherwise cover
+       the menu). !important overrides the inline display set by the HUD systems. */
+    body:not(.vc-playing) #minimap-container,
+    body:not(.vc-playing) #mobile-ui-container,
+    body:not(.vc-playing) #settings-menu-toggle { display: none !important; }
     @media (max-width: 640px) {
       :root {
         --vc-minimap-size: 108px;
+      }
+      /* The minimap reads as clutter and is hard to use on a phone — hide it. */
+      #minimap-container { display: none !important; }
+      /* Make the in-game settings menu readable + thumb-friendly on a phone: a
+         centred, wide, large-type modal with chunky sliders and 44px tap targets.
+         !important overrides the panel's inline sizing/positioning. */
+      #settings-menu-panel {
+        top: 50% !important;
+        bottom: auto !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translate(-50%, -50%) !important;
+        width: min(440px, calc(100vw - 20px)) !important;
+        max-height: 82vh !important;
+        padding: 18px 20px !important;
+        border-radius: 16px !important;
+        font-size: 16px !important;
+      }
+      #settings-menu-panel .vc-label { font-size: 14px !important; }
+      #settings-menu-panel .vc-num { font-size: 17px !important; }
+      #settings-menu-panel .vc-tabbar { gap: 6px !important; margin-bottom: 16px !important; }
+      #settings-menu-panel .vc-tab { font-size: 14px !important; min-height: 46px !important; }
+      #settings-menu-panel .vc-btn-ghost {
+        font-size: 14px !important;
+        padding: 12px 16px !important;
+        min-height: 44px !important;
+      }
+      #settings-menu-panel input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        background: transparent;
+        margin: 18px 0 !important;
+      }
+      #settings-menu-panel input[type="range"]::-webkit-slider-runnable-track {
+        height: 10px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      #settings-menu-panel input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        margin-top: -9px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--vc-gold);
+        border: 2px solid #1a1303;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
       }
       .vc-toast-stack {
         top: auto;

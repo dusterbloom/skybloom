@@ -164,8 +164,10 @@ export class PlayerInputSystem extends System {
       this.currentThrottle = Math.max(0.0, this.currentThrottle - this.throttleSpeed * 0.3 * delta);
     }
 
-    // Auto-forward for mobile
-    if (this.isMobile && this.mobileAutoForward && this.currentThrottle < 0.5) {
+    // Auto-forward for mobile: a gentle forward drift when idle, but NOT while the
+    // player is actively braking (S) — otherwise the 0.5 floor pins the throttle and
+    // the brake does nothing.
+    if (this.isMobile && this.mobileAutoForward && !isBraking && this.currentThrottle < 0.5) {
       this.currentThrottle = 0.5;
     }
 
@@ -279,8 +281,8 @@ export class PlayerInputSystem extends System {
     // Create virtual joystick container
     const joystickContainer = document.createElement('div');
     joystickContainer.style.position = 'fixed';
-    joystickContainer.style.bottom = '5%';
-    joystickContainer.style.right = '5%';
+    joystickContainer.style.bottom = 'calc(var(--vc-safe-bottom, 20px) + 12px)';
+    joystickContainer.style.right = 'max(5%, var(--vc-safe-right, 14px))';
     joystickContainer.style.width = '20vmin';
     joystickContainer.style.height = '20vmin';
     joystickContainer.style.borderRadius = '50%';
@@ -303,26 +305,9 @@ export class PlayerInputSystem extends System {
     joystick.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
     joystickContainer.appendChild(joystick);
 
-    // Create boost button
-    const boostButton = document.createElement('div');
-    boostButton.style.position = 'fixed';
-    boostButton.style.bottom = '5%';
-    boostButton.style.left = '5%';
-    boostButton.style.width = '15vmin';
-    boostButton.style.height = '15vmin';
-    boostButton.style.borderRadius = '50%';
-    boostButton.style.background = 'rgba(30, 144, 255, 0.7)';
-    boostButton.style.display = 'flex';
-    boostButton.style.alignItems = 'center';
-    boostButton.style.justifyContent = 'center';
-    boostButton.style.fontSize = 'min(28px, 4vmin)';
-    boostButton.innerHTML = '🚀';
-    boostButton.style.color = 'white';
-    boostButton.style.boxShadow = '0 0 15px rgba(30, 144, 255, 0.5)';
-    boostButton.style.zIndex = '1000';
-    boostButton.style.display = 'none';
-    document.body.appendChild(boostButton);
-    this.mobileControlElements.push(boostButton);
+    // Ascend/dive is the joystick's vertical axis. A separate boost button used
+    // to sit bottom-left, directly on top of the W/S throttle pad — it overlapped
+    // and was redundant, so it was removed to declutter the mobile layout.
 
     // Initialize joystick state
     this.joystick = {
@@ -334,19 +319,6 @@ export class PlayerInputSystem extends System {
         radius: 75
       }
     };
-
-    // Handle boost button events
-    boostButton.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      this.touchAltitude.up = true;
-      boostButton.style.background = 'rgba(0, 119, 255, 0.8)';
-    }, { passive: false });
-
-    boostButton.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      this.touchAltitude.up = false;
-      boostButton.style.background = 'rgba(30, 144, 255, 0.7)';
-    }, { passive: false });
 
     // Setup joystick events
     this.setupJoystickEvents(joystickContainer, joystick);
@@ -363,16 +335,15 @@ export class PlayerInputSystem extends System {
     const handleTouchStart = (e) => {
       if (joystickTouchId !== null) return;
 
+      const rect = container.getBoundingClientRect();
       for (let i = 0; i < e.touches.length; i++) {
         const touch = e.touches[i];
-        const rect = this.joystick.container.rect;
-
         if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
             touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
           e.preventDefault();
           joystickTouchId = touch.identifier;
           this.joystick.active = true;
-          this.updateJoystickPosition(touch, joystickElement);
+          updateJoystickPosition(touch, joystickElement);
           break;
         }
       }
@@ -384,7 +355,7 @@ export class PlayerInputSystem extends System {
       for (let i = 0; i < e.touches.length; i++) {
         if (e.touches[i].identifier === joystickTouchId) {
           e.preventDefault();
-          this.updateJoystickPosition(e.touches[i], joystickElement);
+          updateJoystickPosition(e.touches[i], joystickElement);
           break;
         }
       }
@@ -394,14 +365,17 @@ export class PlayerInputSystem extends System {
       for (let i = 0; i < e.changedTouches.length; i++) {
         if (e.changedTouches[i].identifier === joystickTouchId) {
           e.preventDefault();
-          this.resetJoystick(joystickElement);
+          resetJoystick(joystickElement);
           break;
         }
       }
     };
 
     const updateJoystickPosition = (touch, joystickElement) => {
-      const rect = this.joystick.container.rect;
+      // Live rect + real radius so the stick stays accurate after the mobile URL
+      // bar shows/hides or the page is zoomed (a stale cached rect broke this).
+      const rect = container.getBoundingClientRect();
+      const radius = rect.width / 2 || 1;
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
 
@@ -409,16 +383,16 @@ export class PlayerInputSystem extends System {
       let dy = touch.clientY - centerY;
 
       const distance = Math.sqrt(dx * dx + dy * dy);
-      if (distance > this.joystick.container.radius) {
-        dx *= this.joystick.container.radius / distance;
-        dy *= this.joystick.container.radius / distance;
+      if (distance > radius) {
+        dx *= radius / distance;
+        dy *= radius / distance;
       }
 
       joystickElement.style.left = `calc(33% + ${dx}px)`;
       joystickElement.style.top = `calc(33% + ${dy}px)`;
 
-      this.joystick.position.x = dx / this.joystick.container.radius;
-      this.joystick.position.y = dy / this.joystick.container.radius;
+      this.joystick.position.x = dx / radius;
+      this.joystick.position.y = dy / radius;
     };
 
     const resetJoystick = (joystickElement) => {

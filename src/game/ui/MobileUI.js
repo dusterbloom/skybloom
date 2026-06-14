@@ -47,10 +47,12 @@ export class MobileUI {
         // Create essential controls
         this.createSimpleControls();
         this.createBatterySavingToggle();
-        
-        // Setup invisible camera controls for right-side of screen
-        this.setupCameraControls();
-        
+
+        // NOTE: the old full-screen #camera-controls layer was removed — it only
+        // emitted 'mobileCameraMove'/'mobileTap' events that nothing listened to,
+        // while covering the whole screen and swallowing touches. Heading is
+        // controlled by the movement joystick instead.
+
         // Ensure the minimap is visible on mobile
         this.ensureMobileMinimapVisibility();
         
@@ -256,8 +258,8 @@ export class MobileUI {
         controlsContainer.id = 'simple-controls';
         controlsContainer.style.cssText = `
             position: fixed;
-            bottom: 40px;
-            left: 20px;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+            left: max(20px, env(safe-area-inset-left));
             display: flex;
             flex-direction: column;
             gap: 20px;

@@ -410,12 +410,14 @@ getHorizonLODDistance() {
     const waterSystem = this.engine.systems.water;
     const waterScaling = Math.max(this.distanceScalingFactor, this.minWaterScalingFactor);
     
-    waterSystem.setQuality({
-      reflectionEnabled: waterReflectionSetting,
-      quality: waterQuality,
-      renderDistance: this.baseLODDistances.water.reflection * waterScaling,
-      textureSize: this.getWaterTextureSize(waterQuality)
-    });
+    if (typeof waterSystem.setQuality === 'function') {
+      waterSystem.setQuality({
+        reflectionEnabled: waterReflectionSetting,
+        quality: waterQuality,
+        renderDistance: this.baseLODDistances.water.reflection * waterScaling,
+        textureSize: this.getWaterTextureSize(waterQuality)
+      });
+    }
   }
 }
 

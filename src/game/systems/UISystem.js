@@ -219,7 +219,9 @@ export class UISystem extends System {
       toggle.style.display = 'none';
       toggle.style.pointerEvents = 'auto';
       toggle.style.cursor = 'pointer';
-      toggle.style.fontSize = '11px';
+      toggle.style.fontSize = '13px';
+      toggle.style.padding = '10px 18px';
+      toggle.style.minHeight = '40px';
       toggle.style.letterSpacing = '0.08em';
       toggle.style.textTransform = 'uppercase';
       toggle.style.color = 'var(--vc-ink-dim)';
