@@ -22,16 +22,20 @@ import { Companion } from './Companion.js';
 
 const SYSTEM = `You are the voice of a magical flying carpet — a warm, witty co-pilot in the game SkyBloom, free to roam an open world, visit landmarks, gather mana, fly alongside the player, or race.
 Each turn you get the live GAME STATE. Reply with ONLY a JSON object, nothing else:
-{"reply":"<one or two short SPOKEN sentences — no markdown, no emoji>","intent":"chat|roam|goto|collect|race|hover|manual","target":<a landmark type for goto else null>}
-Intents:
+{"reply":"<one or two short SPOKEN sentences — no markdown, no emoji>","intent":"chat|roam|goto|collect|race|hover|manual","target":<a landmark type for goto else null>,"world":<null, or a creative world edit (see below)>}
+Intents (what to DO):
 - chat: just talk; keep doing whatever you were doing.
 - roam: wander and explore the world.
-- goto: fly to a landmark; set target to one of ancient_ruins, magical_circle, crystal_formation (pick the most sensible from the state).
+- goto: fly to a landmark; set target to one of ancient_ruins, magical_circle, crystal_formation.
 - collect: go gather nearby mana.
 - race: start or continue a gate race.
 - hover: stop and hold position.
 - manual: give control back to the human.
-Pick the intent that matches what the player asked; default to "chat" if they're just talking. Speak naturally; never read the JSON aloud.`;
+You can ALSO reshape the world (creative power). When the player asks for it, set "world" to:
+{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>}
+- raiseTerrain raises a hill/mountain; carveTerrain digs a crater/canyon; spawnMana drops a mana orb; setTimeOfDay changes the light; reroll regenerates the whole landscape; clearTerrain undoes your terrain edits.
+- "where" places terrain/mana ahead of the carpet (default) or here. Leave "world" null when not editing.
+Default intent to "chat" if they're only talking. Speak naturally; never read the JSON aloud.`;
 
 function parseJSON(text) {
   if (!text) return null;
@@ -112,6 +116,7 @@ export class VoiceCopilot {
     let reply = '';
     let intent = 'chat';
     let target = null;
+    let world = null;
     try {
       const raw = await this._provider.complete(messages);
       const obj = parseJSON(raw);
@@ -119,6 +124,7 @@ export class VoiceCopilot {
         reply = String(obj.reply || '').trim();
         intent = String(obj.intent || 'chat').trim().toLowerCase();
         target = typeof obj.target === 'string' ? obj.target : null;
+        world = obj.world && typeof obj.world === 'object' ? obj.world : null;
       } else {
         reply = (raw || '').trim(); // model ignored the format — just say it
       }
@@ -130,8 +136,9 @@ export class VoiceCopilot {
     this.history.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
     this.onText({ role: 'assistant', text: reply });
 
-    // Act first (start flying immediately), then speak over it.
+    // Act first (start flying / edit the world immediately), then speak over it.
     this._applyIntent(intent, target);
+    this._applyWorld(world);
     this._setState('speaking');
     await this._speak(reply);
     this._setState('ready');
@@ -152,6 +159,39 @@ export class VoiceCopilot {
       this.companion.start();
     }
     return this.companion;
+  }
+
+  _applyWorld(w) {
+    if (!w || typeof w !== 'object' || !w.op) return;
+    const api = (typeof window !== 'undefined') && window.worldAPI;
+    if (!api) { this.onText({ role: 'system', text: '(world editing not available)' }); return; }
+    const op = String(w.op);
+    try {
+      if (op === 'setTimeOfDay') { if (api.setTimeOfDay) api.setTimeOfDay(Number(w.t)); }
+      else if (op === 'reroll') { if (api.reroll) api.reroll(); }
+      else if (op === 'clearTerrain') { if (api.clearTerrain) api.clearTerrain(); }
+      else {
+        const p = this._worldPoint(w.where);
+        if (!p) { this.onText({ role: 'system', text: '(can’t place that yet — take off first)' }); return; }
+        if (op === 'raiseTerrain' && api.raiseTerrain) api.raiseTerrain(p.x, p.z, Number(w.radius) || 250, Math.abs(Number(w.amount) || 170));
+        else if (op === 'carveTerrain' && api.carveTerrain) api.carveTerrain(p.x, p.z, Number(w.radius) || 250, Math.abs(Number(w.amount) || 150));
+        else if (op === 'spawnMana' && api.spawnMana) api.spawnMana(p.x, p.z);
+      }
+      this.onText({ role: 'system', text: `(world: ${op})` });
+    } catch (e) { /* a world edit must never break the conversation */ }
+  }
+
+  // A world point ahead of the carpet (default) or right here, from the live state.
+  _worldPoint(where) {
+    try {
+      const o = this.api && this.api.observe && this.api.observe();
+      if (!o || !o.self || !o.self.pos) return null;
+      const p = o.self.pos;
+      if (where === 'here') return { x: p[0], z: p[2] };
+      const h = Number(o.self.heading) || 0;
+      const dist = 340;
+      return { x: p[0] + Math.sin(h) * dist, z: p[2] + Math.cos(h) * dist };
+    } catch (e) { return null; }
   }
 
   _stateSummary() {

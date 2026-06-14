@@ -15,6 +15,7 @@ export class WorldSystem extends System {
     // Initialize maps and collections
     this.currentChunks = new Map();
     this.manaNodes = [];
+    this.terrainEdits = []; // creative terraform brushes: sparse additive height edits
 
     // Height cache system
     this.heightCache = new Map(); // Key format: `${gridX},${gridZ}`
@@ -177,6 +178,7 @@ export class WorldSystem extends System {
           // Logger.debug("WorldSystem: Creating initial terrain...");
          this.createInitialTerrain();
           // Logger.debug("WorldSystem: Initial terrain created");
+         this._exposeWorldAPI(); // window.worldAPI — live creative world editing
 
          // Don't create mana nodes here - wait for player to be initialized
 
@@ -227,8 +229,124 @@ export class WorldSystem extends System {
   }
 
 
-  // --- getTerrainHeight method remains unchanged ---
+  // getTerrainHeight = procedural base + live creative terraform edits. Mesh, physics
+  // and the agent's own vision all read this ONE oracle, so an edit changes the whole
+  // world at once. The base is cached; the deform is recomputed live (cheap, and only
+  // when edits exist) so an edit never needs a base-cache flush.
   getTerrainHeight(x, z) {
+    const h = this._baseTerrainHeight(x, z);
+    return this.terrainEdits.length ? h + this._deformHeight(x, z) : h;
+  }
+
+  // Sum of smooth additive brushes. amount > 0 raises (hill/mountain), < 0 carves.
+  _deformHeight(x, z) {
+    let d = 0;
+    for (let i = 0; i < this.terrainEdits.length; i++) {
+      const e = this.terrainEdits[i];
+      const dx = x - e.x;
+      const dz = z - e.z;
+      const dist2 = dx * dx + dz * dz;
+      const r2 = e.radius * e.radius;
+      if (dist2 >= r2) continue;
+      const t = 1 - dist2 / r2;             // 1 at the centre -> 0 at the rim
+      d += e.amount * t * t * (3 - 2 * t);  // smoothstep -> rounded, seamless bump
+    }
+    return d;
+  }
+
+  // ===== Creative world editing — godmode, deliberately NOT the fair-play agentAPI
+  // (which never writes world state). Exposed as window.worldAPI for the companion. =====
+  _exposeWorldAPI() {
+    if (typeof window === 'undefined') return;
+    const atmo = () => this.engine.systemManager && this.engine.systemManager.get('atmosphere');
+    window.worldAPI = {
+      raiseTerrain: (x, z, radius, amount) => this.raiseTerrain(x, z, radius, amount),
+      carveTerrain: (x, z, radius, amount) => this.raiseTerrain(x, z, radius, -Math.abs(Number(amount) || 140)),
+      clearTerrain: () => this.clearTerrainEdits(),
+      reroll: (seed) => this.reroll(seed),
+      spawnMana: (x, z) => this.spawnManaAt(x, z),
+      terrainHeight: (x, z) => this.getTerrainHeight(x, z),
+      setTimeOfDay: (t) => { const a = atmo(); if (a) a.timeOfDay = Math.max(0, Math.min(0.999, Number(t))); return a ? a.timeOfDay : null; },
+      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay'] },
+    };
+  }
+
+  // Raise (amount>0) or carve (amount<0) terrain at a world point, then re-mesh the
+  // affected loaded chunks and flush physics heights so collision matches the new ground.
+  raiseTerrain(x, z, radius = 220, amount = 140) {
+    radius = Math.max(20, Math.min(1500, Number(radius) || 220));
+    amount = Math.max(-400, Math.min(400, Number(amount) || 0));
+    if (!amount) return { edits: this.terrainEdits.length };
+    const px = Number(x) || 0;
+    const pz = Number(z) || 0;
+    this.terrainEdits.push({ x: px, z: pz, radius, amount });
+    this._remeshRegion(px, pz, radius);
+    return { edits: this.terrainEdits.length, op: amount > 0 ? 'raise' : 'carve', at: [px, pz], radius, amount };
+  }
+
+  // Undo all terraform edits and restore the procedural ground.
+  clearTerrainEdits() {
+    if (!this.terrainEdits.length) return { edits: 0 };
+    const edits = this.terrainEdits.slice();
+    this.terrainEdits = [];
+    for (const e of edits) this._remeshRegion(e.x, e.z, e.radius);
+    return { edits: 0 };
+  }
+
+  // Re-roll the whole procedural world to a new seed, live.
+  reroll(seed) {
+    this.seed = (seed === undefined || seed === null) ? Math.random() * 1000 : Number(seed);
+    this.terrainEdits = [];
+    this.heightCache.clear(); this.cacheHits = 0; this.cacheMisses = 0;
+    this._remeshAll();
+    return { seed: this.seed };
+  }
+
+  // Drop a mana node at a world point (auto-placed above the ground).
+  spawnManaAt(x, z) {
+    const px = Number(x) || 0;
+    const pz = Number(z) || 0;
+    const py = this.getTerrainHeight(px, pz) + 30;
+    return this.spawnManaNode({ position: { x: px, y: py, z: pz }, value: 1 });
+  }
+
+  _remeshRegion(x, z, radius) {
+    const pad = this.chunkSize / 2;
+    for (const [key, mesh] of this.currentChunks.entries()) {
+      const c = key.split(',');
+      const cx = Number(c[0]);
+      const cz = Number(c[1]);
+      if (Math.abs(cx - x) <= radius + pad && Math.abs(cz - z) <= radius + pad) this._rebuildChunk(mesh, cx, cz);
+    }
+    this._invalidatePhysicsHeights();
+  }
+
+  _remeshAll() {
+    for (const [key, mesh] of this.currentChunks.entries()) {
+      const c = key.split(',');
+      this._rebuildChunk(mesh, Number(c[0]), Number(c[1]));
+    }
+    this._invalidatePhysicsHeights();
+  }
+
+  _rebuildChunk(mesh, cx, cz) {
+    try {
+      const geo = this.createChunkGeometry(cx, cz);
+      const old = mesh.geometry;
+      mesh.geometry = geo;
+      if (old && old.dispose) old.dispose();
+    } catch (e) { /* skip a bad chunk */ }
+  }
+
+  _invalidatePhysicsHeights() {
+    try {
+      const phys = this.engine && this.engine.physicsSystem;
+      if (phys && phys.heightCache && typeof phys.heightCache.clear === 'function') phys.heightCache.clear();
+    } catch (e) { /* ignore */ }
+  }
+
+  // --- base procedural height (cached) ------------------------------------------
+  _baseTerrainHeight(x, z) {
     const gridX = Math.floor(x / this.cacheResolution) * this.cacheResolution;
     const gridZ = Math.floor(z / this.cacheResolution) * this.cacheResolution;
     const cacheKey = `${gridX},${gridZ}`;
