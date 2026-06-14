@@ -1,31 +1,48 @@
 /**
- * VoiceCopilot — talk to the carpet, it talks back. Entirely in the browser, no
- * server: the browser's own Speech Recognition for ears, a pluggable LLM provider
- * (cloud Claude / OpenAI-compatible / on-device WebLLM) for the brain, and either
- * the browser's speechSynthesis or on-device Kokoro for the mouth.
+ * VoiceCopilot — talk to the carpet, it talks back AND does what you ask. Fully
+ * in the browser, no server: the browser's Speech Recognition for input, a
+ * pluggable LLM provider (cloud Claude / OpenAI-compatible / on-device WebLLM)
+ * for the brain, and browser speechSynthesis or on-device Kokoro for output.
  *
- * It's grounded: every turn it reads window.agentAPI.observe() and folds the live
- * flight state into the prompt, so it can talk about your race, not just chat.
+ * It is open-ended, not racing-only: each turn the LLM returns a spoken reply AND
+ * an intent, which it hands to a Companion controller — roam, go to a landmark,
+ * collect mana, race, hover, or hand control back. It's grounded: every turn it
+ * folds window.agentAPI.observe() (landmarks, mana, race, kinematics) into the
+ * prompt, so it talks and acts about the actual world.
  *
  * DevTools:
  *   const { VoiceCopilot } = await import('/src/agents/VoiceCopilot.js');
  *   const v = await new VoiceCopilot(window.agentAPI,
  *     { config: { provider:'openai', baseURL:'http://localhost:1234/v1', model:'local-model' } }).start();
- *   v.listen();        // push-to-talk one turn
- *   v.say('how am I doing?');  // or feed text directly
+ *   v.listen();              // push-to-talk one turn
+ *   v.say('take me to the crystal formation');
  */
 import { createProvider } from './llmProviders.js';
+import { Companion } from './Companion.js';
 
-const SYSTEM = `You are the voice of a magical flying carpet — a witty, warm co-pilot in the game SkyBloom.
-Reply in ONE or TWO short SPOKEN sentences. No lists, no markdown, no emoji, no stage directions — your words are read aloud.
-Each turn you are given the live GAME STATE (speed, altitude, race progress, the next gate's distance and which side it's on). Reference it naturally when it helps; don't recite it.
-If the player asks for something you can't do, say so briefly and move on.`;
+const SYSTEM = `You are the voice of a magical flying carpet — a warm, witty co-pilot in the game SkyBloom, free to roam an open world, visit landmarks, gather mana, fly alongside the player, or race.
+Each turn you get the live GAME STATE. Reply with ONLY a JSON object, nothing else:
+{"reply":"<one or two short SPOKEN sentences — no markdown, no emoji>","intent":"chat|roam|goto|collect|race|hover|manual","target":<a landmark type for goto else null>}
+Intents:
+- chat: just talk; keep doing whatever you were doing.
+- roam: wander and explore the world.
+- goto: fly to a landmark; set target to one of ancient_ruins, magical_circle, crystal_formation (pick the most sensible from the state).
+- collect: go gather nearby mana.
+- race: start or continue a gate race.
+- hover: stop and hold position.
+- manual: give control back to the human.
+Pick the intent that matches what the player asked; default to "chat" if they're just talking. Speak naturally; never read the JSON aloud.`;
+
+function parseJSON(text) {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch (e) {
+    const m = text.match(/\{[\s\S]*\}/); // tolerate prose around the JSON
+    if (m) { try { return JSON.parse(m[0]); } catch (e2) { /* give up */ } }
+  }
+  return null;
+}
 
 export class VoiceCopilot {
-  /**
-   * @param {object} api   Agent API (defaults to window.agentAPI).
-   * @param {object} opts  { config: {provider,...,tts:'browser'|'kokoro',voice}, onText({role,text}), onState(s) }
-   */
   constructor(api = window.agentAPI, opts = {}) {
     this.api = api;
     this.config = opts.config || {};
@@ -34,6 +51,7 @@ export class VoiceCopilot {
     this.onState = opts.onState || (() => {});
     this.history = [];
     this._provider = null;
+    this.companion = null;
     this._rec = null;
     this._listening = false;
     this._kokoro = null;
@@ -42,7 +60,6 @@ export class VoiceCopilot {
     this.state = 'idle';
   }
 
-  /** Build the provider (and load Kokoro if chosen), then be ready to listen. */
   async start() {
     this._provider = await createProvider(this.config);
     if (this.tts === 'kokoro') await this._initKokoro();
@@ -52,12 +69,13 @@ export class VoiceCopilot {
 
   stop() {
     this.stopListening();
+    if (this.companion) { try { this.companion.stop(); } catch (e) { /* ignore */ } this.companion = null; }
     try { if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
     this._setState('off');
     return this;
   }
 
-  /** One push-to-talk turn: listen until silence, transcribe, then reply. */
+  /** One push-to-talk turn: listen until silence, transcribe, then act + reply. */
   listen() {
     if (this._listening) return;
     const SR = (typeof window !== 'undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -80,7 +98,7 @@ export class VoiceCopilot {
     if (this._rec) { try { this._rec.stop(); } catch (e) { /* already stopped */ } this._rec = null; }
   }
 
-  /** Take a text turn (from speech or typed), get + speak a reply. Returns the reply. */
+  /** Take a text turn (from speech or typed): reason -> act on intent -> speak. */
   async say(text) {
     if (!text || !this._provider) return '';
     this.onText({ role: 'user', text });
@@ -90,30 +108,63 @@ export class VoiceCopilot {
       ...this.history.slice(-8),
       { role: 'user', content: `${text}\n\n[GAME STATE: ${this._stateSummary()}]` },
     ];
+
     let reply = '';
+    let intent = 'chat';
+    let target = null;
     try {
-      reply = (await this._provider.complete(messages) || '').trim();
+      const raw = await this._provider.complete(messages);
+      const obj = parseJSON(raw);
+      if (obj) {
+        reply = String(obj.reply || '').trim();
+        intent = String(obj.intent || 'chat').trim().toLowerCase();
+        target = typeof obj.target === 'string' ? obj.target : null;
+      } else {
+        reply = (raw || '').trim(); // model ignored the format — just say it
+      }
     } catch (e) {
       reply = `Comms trouble — ${e && e.message ? e.message : 'no answer'}.`;
     }
+    if (!reply) reply = '…';
+
     this.history.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
     this.onText({ role: 'assistant', text: reply });
+
+    // Act first (start flying immediately), then speak over it.
+    this._applyIntent(intent, target);
     this._setState('speaking');
     await this._speak(reply);
     this._setState('ready');
     return reply;
   }
 
+  _applyIntent(intent, target) {
+    if (!intent || intent === 'chat') return;
+    if (intent === 'manual') { if (this.companion) this.companion.setGoal('manual'); return; }
+    this._ensureCompanion().setGoal(intent, target);
+  }
+
+  _ensureCompanion() {
+    if (!this.companion) {
+      this.companion = new Companion(this.api, {
+        onGoal: (g) => this.onText({ role: 'system', text: `(flying: ${g.type}${g.target ? ' → ' + g.target : ''})` }),
+      });
+      this.companion.start();
+    }
+    return this.companion;
+  }
+
   _stateSummary() {
     try {
       const o = this.api && this.api.observe && this.api.observe();
       if (!o || !o.self) return 'on the title screen, not flying yet';
-      const parts = [`speed ${Math.round(o.self.speed)}`, `altitude ${Math.round(o.self.altitude)}`];
-      if (o.race) {
-        parts.push(`race ${o.race.state}, gate ${o.race.gateIndex + 1} of ${o.race.gateCount || '?'}`);
-        const g = o.race.nextGates && o.race.nextGates[0];
-        if (g) parts.push(`next gate ${Math.round(g.dist)} units away, ${g.bearing < 0 ? 'to the left' : 'to the right'}`);
-      }
+      const parts = [`speed ${Math.round(o.self.speed)}`, `altitude ${Math.round(o.self.altitude)}`, `mana ${Math.round(o.self.mana || 0)}`];
+      if (o.race && o.race.state && o.race.state !== 'idle') parts.push(`race ${o.race.state}, gate ${o.race.gateIndex + 1} of ${o.race.gateCount || '?'}`);
+      const lms = (o.nearby && o.nearby.landmarks) || [];
+      if (lms.length) parts.push('landmarks in sight: ' + lms.slice(0, 3).map((l) => `${l.type} (${Math.round(l.dist)} units, ${l.bearing < 0 ? 'left' : 'right'})`).join(', '));
+      const mn = (o.nearby && o.nearby.manaNodes) || [];
+      if (mn.length) parts.push(`${mn.length} mana node(s) nearby`);
+      parts.push(`current goal: ${this.companion ? this.companion.goal.type : 'manual (human flying)'}`);
       return parts.join('; ');
     } catch (e) { return 'unknown'; }
   }
@@ -139,8 +190,8 @@ export class VoiceCopilot {
     });
   }
 
-  // ponytail: Kokoro loads from a CDN only when the natural voice is chosen — no npm
-  // dep. Defensive about the kokoro-js return shape so a minor API bump won't break it.
+  // ponytail: Kokoro loads from a CDN only when chosen — no npm dep. Defensive
+  // about the kokoro-js return shape so a minor API bump won't break it.
   async _initKokoro() {
     const mod = await import(/* @vite-ignore */ 'https://esm.run/kokoro-js');
     const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS) || mod.default;
