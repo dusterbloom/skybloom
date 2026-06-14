@@ -61,6 +61,7 @@ export class VoiceCopilot {
     this.lang = this.config.lang || 'en-US';
     this.onText = opts.onText || (() => {});
     this.onState = opts.onState || (() => {});
+    this.onGoal = opts.onGoal || (() => {}); // host hook: fires when the companion's goal changes
     this.history = [];
     this._provider = null;
     this.companion = null;
@@ -170,7 +171,10 @@ export class VoiceCopilot {
   _ensureCompanion() {
     if (!this.companion) {
       this.companion = new Companion(this.api, {
-        onGoal: (g) => this.onText({ role: 'system', text: `(flying: ${g.type}${g.target ? ' → ' + g.target : ''})` }),
+        onGoal: (g) => {
+          this.onGoal(g); // let the host arbitrate control (stop other autonomous drivers)
+          this.onText({ role: 'system', text: `(flying: ${g.type}${g.target ? ' → ' + g.target : ''})` });
+        },
       });
       this.companion.start();
     }

@@ -488,6 +488,20 @@ export class RaceSystem extends System {
     return this.start(this.courseSeed || undefined);
   }
 
+  /**
+   * Only ONE autonomous driver may steer at a time. SimpleBot, the LLM pilot (which
+   * already embeds its own SimpleBot floor) and the voice companion all push actions
+   * through window.agentAPI.act(); if two run together they overwrite each other every
+   * frame and the carpet thrashes / loops. Starting any one stops the others first.
+   */
+  _stopOtherDrivers(keep) {
+    if (keep !== 'simpleBot' && this._simpleBotRunning) this.stopSimpleBot();
+    if (keep !== 'llmPilot' && this._llmPilotRunning) this.stopLLMPilot();
+    if (keep !== 'voice' && this._voiceCopilot && this._voiceCopilot.companion) {
+      try { this._voiceCopilot.companion.setGoal('manual'); } catch (error) { /* best effort */ }
+    }
+  }
+
   /** Start the bundled reference agent through the same public Agent API users get. */
   runSimpleBot() {
     if (this._simpleBotRunning) return true;
@@ -496,6 +510,7 @@ export class RaceSystem extends System {
       this._toast('Agent API is not ready yet', '#ffcc66');
       return false;
     }
+    this._stopOtherDrivers('simpleBot');
     try {
       this._simpleBot = new SimpleBot(api, {
         courseSeed: this.courseSeed || undefined,
@@ -554,6 +569,7 @@ export class RaceSystem extends System {
     if (!api) { this._toast('Agent API is not ready yet', '#ffcc66'); return false; }
     const cfg = this._resolvePilotConfig();
     if (!cfg) return false;
+    this._stopOtherDrivers('llmPilot');
     try {
       this._llmPilot = new LLMPilot(api, {
         config: { ...cfg, onStatus: (s) => this._toast(`Pilot: ${s}`, '#ffcc66') },
@@ -626,6 +642,8 @@ export class RaceSystem extends System {
         config: cfg,
         onText: ({ role, text }) => this._toast(`${role === 'user' ? 'You' : '🪄'}: ${text}`, role === 'user' ? '#ffffff' : '#66ffee'),
         onState: (s) => { this._voiceState = s; },
+        // When the companion actually takes the controls, stop any other autonomous driver.
+        onGoal: (g) => { if (g && g.type !== 'manual') this._stopOtherDrivers('voice'); },
       });
       this._voiceCopilot = vc;
       this._toast(cfg.tts === 'kokoro' ? 'Loading voice model…' : 'Starting voice…', '#66ffee');
