@@ -2,7 +2,8 @@
  * VoiceCopilot — talk to the carpet, it talks back AND does what you ask. Fully
  * in the browser, no server: the browser's Speech Recognition for input, a
  * pluggable LLM provider (cloud Claude / OpenAI-compatible / on-device WebLLM)
- * for the brain, and browser speechSynthesis or on-device Kokoro for output.
+ * for the brain, and a pluggable voice for output: the browser's speechSynthesis,
+ * or on-device neural TTS — Kokoro or Supertonic-3 — via config.tts.
  *
  * It is open-ended, not racing-only: each turn the LLM returns a spoken reply AND
  * an intent, which it hands to a Companion controller — roam, go to a landmark,
@@ -16,6 +17,11 @@
  *     { config: { provider:'openai', baseURL:'http://localhost:1234/v1', model:'local-model' } }).start();
  *   v.listen();              // push-to-talk one turn
  *   v.say('take me to the crystal formation');
+ *
+ * Voice (config.tts): 'browser' (default), 'kokoro', or 'supertonic'. Supertonic-3
+ * extras: supertonicVoice 'F1'..'F5'/'M1'..'M5' (default 'M2'), supertonicSteps
+ * (flow-matching denoise steps, default 4). A neural voice that fails to load
+ * falls back to the browser voice — it never blocks the co-pilot.
  */
 import { createProvider } from './llmProviders.js';
 import { Companion } from './Companion.js';
@@ -50,7 +56,7 @@ export class VoiceCopilot {
   constructor(api = window.agentAPI, opts = {}) {
     this.api = api;
     this.config = opts.config || {};
-    this.tts = this.config.tts === 'kokoro' ? 'kokoro' : 'browser';
+    this.tts = ['kokoro', 'supertonic'].includes(this.config.tts) ? this.config.tts : 'browser';
     this.onText = opts.onText || (() => {});
     this.onState = opts.onState || (() => {});
     this.history = [];
@@ -59,6 +65,7 @@ export class VoiceCopilot {
     this._rec = null;
     this._listening = false;
     this._kokoro = null;
+    this._supertonic = null;
     this._voice = this.config.voice || 'af_heart';
     this._audioCtx = null;
     this.state = 'idle';
@@ -66,7 +73,14 @@ export class VoiceCopilot {
 
   async start() {
     this._provider = await createProvider(this.config);
-    if (this.tts === 'kokoro') await this._initKokoro();
+    try {
+      if (this.tts === 'kokoro') await this._initKokoro();
+      else if (this.tts === 'supertonic') await this._initSupertonic();
+    } catch (e) {
+      // a TTS that won't load must not block the co-pilot — fall back to the browser voice
+      this.onText({ role: 'system', text: `(${this.tts} voice unavailable — using the browser voice)` });
+      this.tts = 'browser';
+    }
     this._setState('ready');
     return this;
   }
@@ -214,6 +228,9 @@ export class VoiceCopilot {
     if (this.tts === 'kokoro' && this._kokoro) {
       try { return await this._speakKokoro(text); } catch (e) { /* fall back to the browser voice */ }
     }
+    if (this.tts === 'supertonic' && this._supertonic) {
+      try { const out = await this._supertonic.generate(text); return await this._playPCM(out.audio, out.sampleRate); } catch (e) { /* fall back */ }
+    }
     return this._speakBrowser(text);
   }
 
@@ -245,9 +262,26 @@ export class VoiceCopilot {
     const out = await this._kokoro.generate(text, { voice: this._voice });
     const pcm = out.audio || out.waveform || (out.data && out.data.audio) || out;
     const rate = out.sampling_rate || out.sampleRate || 24000;
+    return this._playPCM(pcm, rate);
+  }
+
+  // ponytail: Supertonic-3 loads from a CDN/HF only when chosen — no npm dep.
+  async _initSupertonic() {
+    const { createSupertonicTTS } = await import('./supertonicTTS.js');
+    this._supertonic = await createSupertonicTTS({
+      voice: this.config.supertonicVoice || (this._voice && /^[FM][1-5]$/.test(this._voice) ? this._voice : 'M2'),
+      lang: this.config.lang ? String(this.config.lang).split('-')[0] : null,
+      steps: this.config.supertonicSteps || 4,
+      onStatus: (s) => this.onText({ role: 'system', text: `(supertonic: ${s})` }),
+    });
+  }
+
+  // Float32 PCM -> WebAudio, shared by Kokoro and Supertonic.
+  async _playPCM(pcm, rate) {
     if (!pcm || !pcm.length) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     const ctx = this._audioCtx || (this._audioCtx = new AC());
+    if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) { /* ignore */ } }
     const buf = ctx.createBuffer(1, pcm.length, rate);
     buf.copyToChannel(pcm instanceof Float32Array ? pcm : Float32Array.from(pcm), 0);
     await new Promise((resolve) => {
