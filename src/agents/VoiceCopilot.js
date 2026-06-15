@@ -38,9 +38,10 @@ Intents (what to DO):
 - hover: stop and hold position.
 - manual: give control back to the human.
 You can ALSO reshape the world (creative power). When the player asks for it, set "world" to:
-{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round"}
+{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setTrees|setLandmarks|setMana|setClouds|setSeaLevel","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round","level":<number, 1=normal>,"on":<true|false>}
 - raiseTerrain raises a hill/mountain; carveTerrain digs a crater/canyon; spawnMana drops a mana orb; setTimeOfDay changes the light; reroll regenerates the whole landscape; clearTerrain undoes your terrain edits.
-- setWorldShape flips the whole world between "flat" (endless plane) and "round" (a planet whose horizon curves away) — use it when the player asks to make the world flat or round/spherical/a planet.
+- setWorldShape flips the world between "flat" (endless plane) and "round" (a planet whose horizon curves away).
+- World knobs use "level" where 1 = normal, higher = more, 0 = none: setTrees (forest density — 0 barren, 1 normal, 3 jungle), setLandmarks (how many landmarks), setMana (how much mana to collect). setClouds takes "on": true/false. setSeaLevel uses "level": 0 normal, 1 floods the lowlands, 2 = a water planet, negative drains the sea.
 - "where" places terrain/mana ahead of the carpet (default) or here. Leave "world" null when not editing.
 Default intent to "chat" if they're only talking. Speak naturally; never read the JSON aloud.`;
 
@@ -209,6 +210,11 @@ export class VoiceCopilot {
     try {
       if (op === 'setTimeOfDay') { if (api.setTimeOfDay) api.setTimeOfDay(Number(w.t)); }
       else if (op === 'setWorldShape') { if (api.setWorldShape) api.setWorldShape(w.shape); }
+      else if (op === 'setTrees') { if (api.setTrees) api.setTrees(Number(w.level)); }
+      else if (op === 'setLandmarks') { if (api.setLandmarks) api.setLandmarks(Number(w.level)); }
+      else if (op === 'setMana') { if (api.setMana) api.setMana(Number(w.level)); }
+      else if (op === 'setClouds') { if (api.setClouds) api.setClouds(w.on === true || w.on === 'true' || w.on === 'on'); }
+      else if (op === 'setSeaLevel') { if (api.setSeaLevel) api.setSeaLevel(Number(w.level)); }
       else if (op === 'reroll') { if (api.reroll) api.reroll(); }
       else if (op === 'clearTerrain') { if (api.clearTerrain) api.clearTerrain(); }
       else {

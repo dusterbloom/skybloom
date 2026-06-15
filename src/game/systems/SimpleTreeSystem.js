@@ -376,6 +376,18 @@ export class SimpleTreeSystem extends System {
    * Spawn trees for a chunk using cluster-based generation.
    * Returns the array of tree groups spawned for this chunk (possibly empty).
    */
+  // Live forest density: 0 = none, 1 = normal, up to ~4 = jungle. Clears the live
+  // forest so nearby chunks respawn at the new density on the next update ticks.
+  setDensity(scale) {
+    this.densityScale = Math.max(0, Math.min(4, Number(scale)));
+    for (const entry of this.chunksWithTrees.values()) {
+      if (entry.trees) for (const t of entry.trees) this.scene.remove(t);
+    }
+    this.chunksWithTrees.clear();
+    this.spawnedTrees.length = 0;
+    return { density: this.densityScale };
+  }
+
   spawnTreesForChunk(chunkX, chunkZ) {
     const chunkTrees = [];
 
@@ -392,8 +404,13 @@ export class SimpleTreeSystem extends System {
 
     let treesSpawned = 0;
 
+    // Live density control (setDensity): scale clusters and the per-chunk cap.
+    const densityScale = this.densityScale ?? 1;
+    const clusters = Math.max(0, Math.round(this.clustersPerChunk * densityScale));
+    const maxTrees = Math.round(this.maxTreesPerChunk * densityScale);
+
     // Generate forest clusters
-    for (let c = 0; c < this.clustersPerChunk && treesSpawned < this.maxTreesPerChunk; c++) {
+    for (let c = 0; c < clusters && treesSpawned < maxTrees; c++) {
       // Random cluster center position in chunk
       const clusterCenterX = minX + Math.random() * chunkSize;
       const clusterCenterZ = minZ + Math.random() * chunkSize;
@@ -408,7 +425,7 @@ export class SimpleTreeSystem extends System {
       // Spawn trees around this cluster center
       const treesInThisCluster = Math.floor(this.treesPerCluster * (0.7 + Math.random() * 0.6)); // 70-130% variation
 
-      for (let t = 0; t < treesInThisCluster && treesSpawned < this.maxTreesPerChunk; t++) {
+      for (let t = 0; t < treesInThisCluster && treesSpawned < maxTrees; t++) {
         // Use exponential distribution for natural clustering (more trees near center)
         const distance = this.clusterRadius * Math.pow(Math.random(), 0.5);
         const angle = Math.random() * Math.PI * 2;

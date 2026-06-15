@@ -139,12 +139,20 @@ export class CloudSystem {
     Logger.info(`Created ${this.cloudCount} clouds`);
   }
   
+  /** Toggle all clouds on/off (the per-frame update only sets colour/opacity, so
+   * .visible sticks). */
+  setVisible(on) {
+    this._hidden = !on;
+    if (this.clouds) for (const cloud of this.clouds) cloud.visible = !!on;
+    return { clouds: on ? 'on' : 'off' };
+  }
+
   /**
    * Update the cloud system
    * @param {number} delta - Time delta in minutes
    */
   update(delta) {
-    if (!this.clouds || this.clouds.length === 0) return;
+    if (!this.clouds || this.clouds.length === 0 || this._hidden) return;
 
     // Tint clouds with the shared atmosphere keyframes: white by day, warm at
     // golden hour/sunset, dark blue-grey at night (sprites are unlit, so

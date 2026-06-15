@@ -112,6 +112,26 @@ export class LandmarkSystem extends System {
     }
   }
 
+  // Live landmark abundance. Lowering the cap culls the farthest landmarks now;
+  // raising it lets more spawn over the next updates.
+  setMaxLandmarks(n) {
+    this.maxLandmarks = Math.max(0, Math.min(60, Math.round(Number(n))));
+    const player = this.engine.systems.player?.localPlayer;
+    while (this.landmarks.size > this.maxLandmarks) {
+      // remove the landmark farthest from the player (or any, if no player yet)
+      let farId = null, farD = -1;
+      for (const [id, l] of this.landmarks.entries()) {
+        const d = player && l.position ? l.position.distanceToSquared(player.position) : 0;
+        if (d >= farD) { farD = d; farId = id; }
+      }
+      if (farId == null) break;
+      const l = this.landmarks.get(farId);
+      if (l && l.mesh) this.scene.remove(l.mesh);
+      this.landmarks.delete(farId);
+    }
+    return { maxLandmarks: this.maxLandmarks };
+  }
+
   async _initialize() {
     Logger.info('LandmarkSystem._initialize: Initializing landmark materials and configuration');
     Logger.info('LandmarkSystem: Landmark types configured:', this.landmarkTypes.map(t => t.name));

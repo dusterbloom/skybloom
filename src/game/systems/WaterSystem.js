@@ -153,4 +153,15 @@ export class WaterSystem extends System {
   getWaterLevel() {
     return this.waterLevel;
   }
+
+  // Raise/lower the sea live. Big positive values flood the lowlands into a
+  // "water planet"; negative values drain it. Keeps WorldSystem.waterLevel in
+  // sync so terrain/mana placement and landmarks agree.
+  setSeaLevel(y) {
+    this.waterLevel = Number(y) || 0;
+    if (this.water) this.water.position.y = this.waterLevel + 1.0;
+    const world = this.engine.systems.world || this.engine.systemManager.get('world');
+    if (world) world.waterLevel = this.waterLevel;
+    return { seaLevel: this.waterLevel };
+  }
 }

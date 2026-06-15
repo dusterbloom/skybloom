@@ -323,6 +323,42 @@ export class WorldSystem extends System {
     return { radius: r, shape: this.curvature.shape };
   }
 
+  // ===== "World DJ" knobs the companion can twist. Each takes a friendly LEVEL
+  // where 1 = normal, more/less scales around it; delegates to the owning system. =====
+  _setTrees(level) {
+    const trees = this.engine.systemManager.get('simpleTrees');
+    if (trees && trees.setDensity) return trees.setDensity(Number(level));
+    return null;
+  }
+
+  _setLandmarks(level) {
+    const lm = this.engine.systemManager.get('landmarks');
+    if (lm && lm.setMaxLandmarks) return lm.setMaxLandmarks(Math.round((Number(level) || 0) * 8));
+    return null;
+  }
+
+  _setMana(level) {
+    this.maxManaNodes = Math.max(0, Math.min(400, Math.round((Number(level) || 0) * 80)));
+    while (this.manaNodes.length > this.maxManaNodes) this.removeManaNode(this.manaNodes.pop());
+    if (this.manaNodes.length < this.maxManaNodes) this.topUpManaNodes();
+    return { maxMana: this.maxManaNodes };
+  }
+
+  _setClouds(on) {
+    const atmo = this.engine.systemManager.get('atmosphere');
+    const cs = atmo && atmo.cloudSystem;
+    if (cs && cs.setVisible) return cs.setVisible(!!on);
+    return null;
+  }
+
+  _setSeaLevel(level) {
+    const y = (Number(level) || 0) * 150; // level 1 ~ floods lowlands, 2 ~ water planet
+    const water = this.engine.systemManager.get('water');
+    if (water && water.setSeaLevel) return water.setSeaLevel(y);
+    this.waterLevel = y;
+    return { seaLevel: y };
+  }
+
 
   // getTerrainHeight = procedural base + live creative terraform edits. Mesh, physics
   // and the agent's own vision all read this ONE oracle, so an edit changes the whole
@@ -365,7 +401,12 @@ export class WorldSystem extends System {
       setWorldShape: (shape) => this.setWorldShape(shape),     // 'flat' | 'round'
       setCurveRadius: (r) => this.setCurveRadius(r),           // smaller = stronger curve
       worldShape: () => ({ shape: this.curvature.shape, radius: this.curvature.radius }),
-      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay', 'setWorldShape', 'setCurveRadius'] },
+      setTrees: (level) => this._setTrees(level),              // forest density, 1 = normal
+      setLandmarks: (level) => this._setLandmarks(level),      // landmark abundance, 1 = normal
+      setMana: (level) => this._setMana(level),                // mana abundance, 1 = normal
+      setClouds: (on) => this._setClouds(on),                  // clouds on/off
+      setSeaLevel: (level) => this._setSeaLevel(level),        // 0 normal, 1 flood, 2 water planet, <0 drains
+      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay', 'setWorldShape', 'setCurveRadius', 'setTrees', 'setLandmarks', 'setMana', 'setClouds', 'setSeaLevel'] },
     };
   }
 
