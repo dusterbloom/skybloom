@@ -42,7 +42,7 @@ export class WorldSystem extends System {
     this.minHeight = -50;
     this.viewDistance = 8;  // Increased view distance for better horizon rendering
     this.waterLevel = 0;    // Sea level (read by WaterSystem and LandmarkSystem)
-    this.maxManaNodes = 30; // Target number of live mana nodes around the player
+    this.maxManaNodes = 80; // Target number of live mana nodes around the player
 
     // Initialize frustum culling objects
     this._frustum = new THREE.Frustum();
@@ -823,9 +823,9 @@ export class WorldSystem extends System {
   // All positions sit safely above terrain and water, with minimum spacing enforced
   // against both each other and any existing nodes passed in.
   generateManaNodePositions(player, count, existingNodes = []) {
-    const minSpacing = 80;
-    const minDistance = 300;
-    const maxDistance = 1500;
+    const minSpacing = 70;
+    const minDistance = 250;
+    const maxDistance = 1200;
     const coneHalfAngle = THREE.MathUtils.degToRad(35);
     const heading = player.rotation ? player.rotation.y : 0; // forward = (sin(y), cos(y)) in XZ
     const positions = [];
@@ -2229,7 +2229,7 @@ updateLandmarks(delta, elapsed) {
 
     // Check if we need more mana nodes (top up without despawning live ones)
     const uncollectedNodes = this.manaNodes.filter(node => node.userData && !node.userData.collected).length;
-    if (uncollectedNodes < 10) {
+    if (uncollectedNodes < this.maxManaNodes * 0.6) {
        // Logger.debug(`[WorldSystem] Need more mana nodes. Uncollected: ${uncollectedNodes}, Total: ${this.manaNodes.length}`);
       this.topUpManaNodes();
     }

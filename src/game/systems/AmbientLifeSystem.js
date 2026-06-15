@@ -17,9 +17,10 @@ export class AmbientLifeSystem extends System {
     this.birdSpread = 1500;
     this.birdHeight = 150; // Base height for birds
 
-    // Butterfly swarms (optional, lighter weight)
+    // Butterfly swarms — disabled: as pink/purple gradient sprites they just read
+    // as pointless pink orbs in the sky. Set > 0 to bring them back.
     this.butterflies = [];
-    this.butterflyCount = 20;
+    this.butterflyCount = 0;
     this.butterflySpread = 500;
   }
 
@@ -110,6 +111,7 @@ export class AmbientLifeSystem extends System {
    * Create butterfly particles
    */
   createButterflies() {
+    if (this.butterflyCount <= 0) return; // disabled by default (see constructor)
     // Create a colorful butterfly shape
     const canvas = document.createElement('canvas');
     canvas.width = 32;

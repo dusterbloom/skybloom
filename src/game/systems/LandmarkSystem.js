@@ -10,6 +10,7 @@ export class LandmarkSystem extends System {
     
     // Landmarks configuration
     this.landmarks = new Map();
+    this.maxLandmarks = 8; // Hard cap on live landmarks — they were overcrowding the world
     this.landmarkTypes = [
       {
         name: "ancient_ruins",
@@ -25,9 +26,9 @@ export class LandmarkSystem extends System {
         name: "magical_circle",
         minHeight: 0,          // Lowered min height
         maxHeight: 120,        // Increased max height
-        minDistance: 600,      // Reduced minimum distance
+        minDistance: 1100,     // Spread out so they don't crowd
         maxSlope: 0.4,         // Increased allowed slope
-        frequency: 0.0004,     // 20x higher frequency
+        frequency: 0.0001,     // toned down — was overcrowding the world
         size: { min: 60, max: 120 },
         requiresWater: false
       },
@@ -35,9 +36,9 @@ export class LandmarkSystem extends System {
         name: "crystal_formation",
         minHeight: 20,          // Lowered min height
         maxHeight: 150,         // Increased max height
-        minDistance: 900,       // Reduced minimum distance
+        minDistance: 1300,      // Spread out so they don't crowd
         maxSlope: 0.8,          // Increased allowed slope
-        frequency: 0.0003,      // 20x higher frequency
+        frequency: 0.0001,      // toned down — was overcrowding the world
         size: { min: 80, max: 160 },
         requiresWater: false
       }
@@ -652,6 +653,9 @@ export class LandmarkSystem extends System {
         return; // Skip if worldSystem is not properly initialized
       }
       
+      // Hard cap: don't oversaturate the world with landmarks
+      if (this.landmarks.size >= this.maxLandmarks) return;
+
       // Check more frequently for landmarks
       if (Math.random() > 0.05) return; // 5% chance per call (increased from 1%)
 
