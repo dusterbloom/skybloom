@@ -220,25 +220,51 @@ export class VoiceCopilot {
       else if (op === 'reroll') { if (api.reroll) api.reroll(); }
       else if (op === 'clearTerrain') { if (api.clearTerrain) api.clearTerrain(); }
       else {
-        const p = this._worldPoint(w.where);
+        const radius = op === 'spawnMana' ? 0 : (Number(w.radius) || 250);
+        const p = this._worldPoint(w.where, radius);
         if (!p) { this.onText({ role: 'system', text: '(can’t place that yet — take off first)' }); return; }
         if (op === 'raiseTerrain' && api.raiseTerrain) api.raiseTerrain(p.x, p.z, Number(w.radius) || 250, Math.abs(Number(w.amount) || 170));
         else if (op === 'carveTerrain' && api.carveTerrain) api.carveTerrain(p.x, p.z, Number(w.radius) || 250, Math.abs(Number(w.amount) || 150));
         else if (op === 'spawnMana' && api.spawnMana) api.spawnMana(p.x, p.z);
       }
-      this.onText({ role: 'system', text: `(world: ${op})` });
+      // Tell the player what just happened, in plain words, so the change is legible.
+      this.onText({ role: 'system', text: `🪄 ${this._worldLabel(w, op)}` });
     } catch (e) { /* a world edit must never break the conversation */ }
   }
 
+  // Plain-language description of a world edit for the on-screen log.
+  _worldLabel(w, op) {
+    const dir = w.where === 'here' ? 'here' : 'ahead';
+    switch (op) {
+      case 'raiseTerrain': return `raised a mountain ${dir}`;
+      case 'carveTerrain': return `carved a canyon ${dir}`;
+      case 'spawnMana': return `dropped mana ${dir}`;
+      case 'setTimeOfDay': return 'shifted the time of day';
+      case 'setWorldShape': return `made the world ${w.shape === 'round' ? 'a planet' : 'flat'}`;
+      case 'setCurveRadius': return 'reshaped the planet';
+      case 'setTrees': return Number(w.level) <= 0 ? 'cleared the forest' : 'changed the forest';
+      case 'setLandmarks': return 'changed the landmarks';
+      case 'setMana': return 'changed how much mana there is';
+      case 'setClouds': return (w.on === true || w.on === 'true' || w.on === 'on') ? 'brought the clouds in' : 'cleared the clouds';
+      case 'setSeaLevel': return Number(w.level) >= 2 ? 'flooded it into a water planet' : 'changed the sea level';
+      case 'setSeason': return `turned it to ${w.season}`;
+      case 'reroll': return 'regenerated the whole world';
+      case 'clearTerrain': return 'undid the terrain edits';
+      default: return op;
+    }
+  }
+
   // A world point ahead of the carpet (default) or right here, from the live state.
-  _worldPoint(where) {
+  // For area edits, pushed far enough that the WHOLE brush (clearRadius) lands in
+  // front of and below the carpet — in view — instead of under its nose.
+  _worldPoint(where, clearRadius = 0) {
     try {
       const o = this.api && this.api.observe && this.api.observe();
       if (!o || !o.self || !o.self.pos) return null;
       const p = o.self.pos;
       if (where === 'here') return { x: p[0], z: p[2] };
-      const h = Number(o.self.heading) || 0;
-      const dist = 340;
+      const h = Number(o.self.heading) || 0; // forward xz = (sin h, cos h)
+      const dist = 450 + clearRadius;
       return { x: p[0] + Math.sin(h) * dist, z: p[2] + Math.cos(h) * dist };
     } catch (e) { return null; }
   }
