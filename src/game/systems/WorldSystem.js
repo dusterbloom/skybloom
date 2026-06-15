@@ -22,7 +22,11 @@ export class WorldSystem extends System {
     // heightfield. 'flat' = strength 0 (identical to before); 'round' = 1/(2R).
     // 'strength' eases toward 'targetStrength' so flipping the toggle morphs.
     this.curvature = { shape: 'flat', radius: 30000, strength: 0, targetStrength: 0 };
-    this._curvedMaterials = []; // materials whose vertex shader carries the bend
+    // Uniform sets ({uCurveCenter, uCurveAmount}) that WorldSystem re-centers and
+    // eases every frame. Terrain registers its own; water/vegetation pull a set via
+    // getCurveUniforms() and wire it into their own shaders, so the whole world
+    // shares ONE curvature value and centre.
+    this._curveUniformSets = [];
 
     // Height cache system
     this.heightCache = new Map(); // Key format: `${gridX},${gridZ}`
@@ -247,10 +251,7 @@ export class WorldSystem extends System {
   // you actually fly over still matches the flat collision heightfield.
   _patchCurvatureMaterial(material) {
     if (!material || material.userData.curveUniforms) return;
-    const uniforms = {
-      uCurveCenter: { value: new THREE.Vector3() },
-      uCurveAmount: { value: 0 },
-    };
+    const uniforms = this.getCurveUniforms();
     material.userData.curveUniforms = uniforms;
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uCurveCenter = uniforms.uCurveCenter;
@@ -268,10 +269,18 @@ export class WorldSystem extends System {
       );
     };
     material.needsUpdate = true;
-    this._curvedMaterials.push(material);
   }
 
-  // Per-frame: ease the bend toward its target and re-center it on the viewer.
+  // A fresh uniform set, registered so _updateCurvature keeps it in sync. Other
+  // systems (water, vegetation) call this and wire the uniforms into their shaders.
+  getCurveUniforms() {
+    const u = { uCurveCenter: { value: new THREE.Vector3() }, uCurveAmount: { value: 0 } };
+    this._curveUniformSets.push(u);
+    return u;
+  }
+
+  // Per-frame: ease the bend toward its target and re-center every registered set
+  // on the viewer, so terrain, water and vegetation all curve about the same point.
   _updateCurvature() {
     const c = this.curvature;
     // critically-damped-ish ease so flat<->round morphs smoothly instead of popping
@@ -279,9 +288,8 @@ export class WorldSystem extends System {
     if (Math.abs(c.strength - c.targetStrength) < 1e-9) c.strength = c.targetStrength;
     const cam = this.engine.camera;
     const center = cam ? cam.position : (this.engine.systems.player?.localPlayer?.position);
-    for (let i = 0; i < this._curvedMaterials.length; i++) {
-      const u = this._curvedMaterials[i].userData.curveUniforms;
-      if (!u) continue;
+    for (let i = 0; i < this._curveUniformSets.length; i++) {
+      const u = this._curveUniformSets[i];
       u.uCurveAmount.value = c.strength;
       if (center) u.uCurveCenter.value.set(center.x, center.y, center.z);
     }

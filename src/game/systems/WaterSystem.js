@@ -89,7 +89,35 @@ export class WaterSystem extends System {
 
     this.scene.add(this.water);
 
+    // Make the sea curve with the world (flat/round toggle) — shares WorldSystem's
+    // single curvature value/centre so the ocean bows exactly like the terrain.
+    this._applyCurvature();
+
     Logger.info("🌊 Ocean created with realistic reflections");
+  }
+
+  // Inject the world-curvature bend into the Water shader. Water uses its own
+  // ShaderMaterial (no <begin_vertex> include), so we recompute the vertex's view
+  // position from a world position that's been dropped by distance²/(2R). Near the
+  // viewer the drop is ~0; far out the sea falls away under the same horizon as the
+  // land. The bend is keyed off WorldSystem's shared uniforms, kept in sync there.
+  _applyCurvature() {
+    const world = this.engine.systemManager.get('world');
+    if (!world || typeof world.getCurveUniforms !== 'function' || !this.water) return;
+    const cu = world.getCurveUniforms();
+    const m = this.water.material;
+    if (!m || !m.uniforms) return;
+    m.uniforms.uCurveCenter = cu.uCurveCenter;
+    m.uniforms.uCurveAmount = cu.uCurveAmount;
+    m.vertexShader = 'uniform vec3 uCurveCenter;\nuniform float uCurveAmount;\n' + m.vertexShader;
+    m.vertexShader = m.vertexShader.replace(
+      /vec4 mvPosition\s*=\s*modelViewMatrix \* vec4\( position, 1\.0 \);/,
+      `vec4 _wp = modelMatrix * vec4( position, 1.0 );
+       _wp.y -= uCurveAmount * ((_wp.x - uCurveCenter.x) * (_wp.x - uCurveCenter.x) + (_wp.z - uCurveCenter.z) * (_wp.z - uCurveCenter.z));
+       worldPosition = _wp;
+       vec4 mvPosition = viewMatrix * _wp;`
+    );
+    m.needsUpdate = true;
   }
 
   _update(deltaTime) {
