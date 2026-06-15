@@ -151,8 +151,12 @@ export class StarSystem {
       const y = Math.cos(phi);
       const z = Math.sin(phi) * Math.sin(theta);
       
-      // Scale to place stars far away
-      const scale = isRegularField ? 6000 : (5500 + Math.random() * 500);
+      // Scale to place stars on a dome INSIDE the camera far plane — at 6000 the
+      // far half sat beyond the 5000 far plane and got clipped (sparse, "weird"
+      // stars). Tie it to the far plane so the whole field stays visible.
+      const far = (this.engine.camera && this.engine.camera.far) || 5000;
+      const r = far * 0.72;
+      const scale = isRegularField ? r : r * (0.9 + Math.random() * 0.08);
       positions.push(x * scale, y * scale, z * scale);
       
       // Vary the star sizes with more randomness

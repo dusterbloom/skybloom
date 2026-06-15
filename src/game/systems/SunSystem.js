@@ -173,12 +173,16 @@ export class SunSystem extends System {
     // so getSunDirection()/normalize() is unchanged.)
     const cam = this.engine.camera;
     if (this.sunMesh) {
-      if (cam) this.sunMesh.position.copy(cam.position).add(this.sunPosition);
-      else this.sunMesh.position.copy(this.sunPosition);
-
-      // Face camera for billboarding effect
       if (cam) {
+        // Place the disc along the sun DIRECTION at a fixed distance that stays
+        // inside the camera far plane (and sky dome) — otherwise the disc is
+        // clipped at low sun angles where the arc offset is far past the far plane.
+        const viewDist = (cam.far || 5000) * 0.72;
+        const dir = this.sunPosition.lengthSq() > 0 ? this.sunPosition.clone().normalize() : new THREE.Vector3(0, 1, 0);
+        this.sunMesh.position.copy(cam.position).addScaledVector(dir, viewDist);
         this.sunMesh.lookAt(cam.position);
+      } else {
+        this.sunMesh.position.copy(this.sunPosition);
       }
     }
 

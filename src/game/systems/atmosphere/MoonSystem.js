@@ -103,8 +103,10 @@ export class MoonSystem {
     // Moon is opposite to sun (PI radians offset)
     const moonAngle = sunAngle + Math.PI;
 
-    // Calculate moon position on arc
-    const moonDistance = 8000; // Distance from camera
+    // Calculate moon position on arc. Keep it INSIDE the camera far plane (and the
+    // sky dome) or it gets clipped and the moon vanishes — it's camera-anchored, so
+    // the absolute distance is arbitrary; only the direction matters.
+    const moonDistance = ((this.engine.camera && this.engine.camera.far) || 5000) * 0.72;
     const x = Math.cos(moonAngle) * moonDistance;
     const y = Math.max(0, Math.sin(moonAngle) * moonDistance); // Only show when above horizon
     const z = 0;
