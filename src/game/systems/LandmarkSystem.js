@@ -80,13 +80,29 @@ export class LandmarkSystem extends System {
       magical_circle: 0xcc66ff,
       crystal_formation: 0x66ffee
     };
-    this.beaconGeometry = new THREE.CylinderGeometry(2.5, 4, 300, 8, 1, true);
+    // A tall pillar that dissolves into the sky instead of ending in a hard edge:
+    // a vertical fade is baked into vertex colours (bright at the base, 0 at the
+    // top), so with additive blending the top simply adds nothing and fades to
+    // nothing — a beam reaching skyward, not a stopped laser.
+    this._beaconHeight = 1000;
+    this.beaconGeometry = new THREE.CylinderGeometry(1.2, 6, this._beaconHeight, 10, 24, true);
+    {
+      const pos = this.beaconGeometry.getAttribute('position');
+      const colors = new Float32Array(pos.count * 3);
+      for (let i = 0; i < pos.count; i++) {
+        const yNorm = pos.getY(i) / this._beaconHeight + 0.5; // 0 base .. 1 top
+        const f = Math.pow(Math.max(0, 1 - yNorm), 1.6);       // bright base, fades up
+        colors[i * 3] = f; colors[i * 3 + 1] = f; colors[i * 3 + 2] = f;
+      }
+      this.beaconGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    }
     this.beaconMaterials = {};
     for (const [typeName, color] of Object.entries(this.beaconColors)) {
       this.beaconMaterials[typeName] = new THREE.MeshBasicMaterial({
         color: color,
+        vertexColors: true, // grayscale gradient * type colour = tinted vertical fade
         transparent: true,
-        opacity: 0.22,
+        opacity: 0.5,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
@@ -303,7 +319,7 @@ export class LandmarkSystem extends System {
   createBeacon(typeName) {
     const material = this.beaconMaterials[typeName] || this.beaconMaterials.ancient_ruins;
     const beacon = new THREE.Mesh(this.beaconGeometry, material);
-    beacon.position.y = 150; // Pillar reaches ~300 units above the terrain
+    beacon.position.y = this._beaconHeight / 2; // base at the landmark, fading up into the sky
     return beacon;
   }
 
@@ -703,6 +719,12 @@ export class LandmarkSystem extends System {
 
       // Skip if not in scene or invalid
       if (!landmarkMesh || !landmarkMesh.parent) continue;
+
+      // Ride the curved ground: rigid objects subtract the visual drop at their base
+      // from their flat terrain height, so they sit on the slope in 'round' mode.
+      if (this.worldSystem && this.worldSystem.curveDropAt) {
+        landmarkMesh.position.y = landmark.position.y - this.worldSystem.curveDropAt(landmark.position.x, landmark.position.z);
+      }
 
       // Slow beacon pulse (scale only - beacon materials are shared per type)
       if (landmark.beacon) {

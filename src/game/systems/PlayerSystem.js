@@ -284,9 +284,17 @@ export class PlayerSystem extends System {
     const landmarks = landmarkSystem.landmarks;
     if (!landmarks) return;
 
-    const visitDistance = 50;
+    // Visit by flying OVER a landmark: a horizontal radius (scaled to its size) with
+    // a generous altitude band. The old 50-unit 3D test never fired because the
+    // carpet cruises far above ground-level landmarks, so quests never progressed.
     for (const [id, landmark] of landmarks) {
-      if (landmark.position && landmark.position.distanceTo(localPlayer.position) < visitDistance) {
+      if (!landmark.position) continue;
+      const dx = landmark.position.x - localPlayer.position.x;
+      const dz = landmark.position.z - localPlayer.position.z;
+      const distXZ = Math.sqrt(dx * dx + dz * dz);
+      const dy = Math.abs(localPlayer.position.y - landmark.position.y);
+      const visitRadius = Math.max(120, (landmark.size || 100) * 0.7);
+      if (distXZ < visitRadius && dy < 400) {
         if (!localPlayer.visitedLandmarks) localPlayer.visitedLandmarks = new Set();
         if (!localPlayer.visitedLandmarks.has(id)) {
           localPlayer.visitedLandmarks.add(id);

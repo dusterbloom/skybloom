@@ -265,28 +265,9 @@ export class PlayerPhysics extends System {
       }
     }
 
-    // Check landmark collisions
-    if (this.landmarkSystem && this.landmarkSystem.landmarks) {
-      for (const landmark of this.landmarkSystem.landmarks.values()) {
-        const dx = player.position.x - landmark.position.x;
-        const dz = player.position.z - landmark.position.z;
-        const distanceXZ = Math.sqrt(dx * dx + dz * dz);
-
-        // Landmark collision radius based on size
-        const landmarkRadius = landmark.size * 0.5;
-        const collisionDistance = this.playerRadius + landmarkRadius;
-
-        if (distanceXZ < collisionDistance && distanceXZ < closestDistance) {
-          // Check vertical distance (landmarks are on ground, player can fly over)
-          const dy = player.position.y - landmark.position.y;
-          if (dy < landmark.size * 0.8) { // Within landmark height
-            closestDistance = distanceXZ;
-            // Calculate collision normal (direction from landmark to player)
-            collisionNormal = new THREE.Vector3(dx, 0, dz).normalize();
-          }
-        }
-      }
-    }
+    // Landmarks are deliberately NOT solid: they're fly-through waypoints (visiting
+    // one by flying over it advances quests). Their old size-based collision bounced
+    // the carpet out of a 30-200 unit zone for no gameplay value, so it's gone.
 
     // Handle collision response with bounce
     if (collisionNormal) {

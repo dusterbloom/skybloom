@@ -21,7 +21,7 @@ export class WorldSystem extends System {
     // DOWN like a planet's horizon, while generation and physics stay a flat 2D
     // heightfield. 'flat' = strength 0 (identical to before); 'round' = 1/(2R).
     // 'strength' eases toward 'targetStrength' so flipping the toggle morphs.
-    this.curvature = { shape: 'flat', radius: 30000, strength: 0, targetStrength: 0 };
+    this.curvature = { shape: 'flat', radius: 30000, strength: 0, targetStrength: 0, centerX: 0, centerZ: 0 };
     // Uniform sets ({uCurveCenter, uCurveAmount}) that WorldSystem re-centers and
     // eases every frame. Terrain registers its own; water/vegetation pull a set via
     // getCurveUniforms() and wire it into their own shaders, so the whole world
@@ -288,11 +288,23 @@ export class WorldSystem extends System {
     if (Math.abs(c.strength - c.targetStrength) < 1e-9) c.strength = c.targetStrength;
     const cam = this.engine.camera;
     const center = cam ? cam.position : (this.engine.systems.player?.localPlayer?.position);
+    if (center) { c.centerX = center.x; c.centerZ = center.z; }
     for (let i = 0; i < this._curveUniformSets.length; i++) {
       const u = this._curveUniformSets[i];
       u.uCurveAmount.value = c.strength;
       if (center) u.uCurveCenter.value.set(center.x, center.y, center.z);
     }
+  }
+
+  // World-Y drop of the visual ground at (x,z) under the current curvature — the
+  // CPU twin of the shader bend. Rigid world objects (landmarks) subtract this from
+  // their base height so they ride the curved ground instead of floating.
+  curveDropAt(x, z) {
+    const c = this.curvature;
+    if (!c.strength) return 0;
+    const dx = x - c.centerX;
+    const dz = z - c.centerZ;
+    return c.strength * (dx * dx + dz * dz);
   }
 
   // Public: switch world shape. 'flat' | 'round' (aka 'sphere'/'spheric').
