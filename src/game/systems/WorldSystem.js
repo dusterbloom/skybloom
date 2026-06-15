@@ -28,6 +28,12 @@ export class WorldSystem extends System {
     // shares ONE curvature value and centre.
     this._curveUniformSets = [];
 
+    // Season recolour: a shared fragment-shader tint (luminance re-coloured toward a
+    // season hue, blended by mix). One shared uniform set drives terrain + trees, so
+    // setSeason() just mutates these values — no per-frame work, no respawn.
+    this.season = 'summer';
+    this._seasonUniforms = { uSeasonColor: { value: new THREE.Color(1, 1, 1) }, uSeasonMix: { value: 0 } };
+
     // Height cache system
     this.heightCache = new Map(); // Key format: `${gridX},${gridZ}`
     this.cacheResolution = 8; // Store heights at 1/8th resolution of actual terrain
@@ -252,6 +258,7 @@ export class WorldSystem extends System {
   _patchCurvatureMaterial(material) {
     if (!material || material.userData.curveUniforms) return;
     const uniforms = this.getCurveUniforms();
+    const season = this._seasonUniforms;
     material.userData.curveUniforms = uniforms;
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uCurveCenter = uniforms.uCurveCenter;
@@ -267,8 +274,44 @@ export class WorldSystem extends System {
           transformed.y -= uCurveAmount * (_cdx * _cdx + _cdz * _cdz);
         }`
       );
+      WorldSystem.applySeasonShader(shader, season);
     };
     material.needsUpdate = true;
+  }
+
+  // Shared season recolour: re-tint the lit fragment toward the season hue
+  // (luminance * season colour), blended by mix. Reused for terrain and trees so
+  // both recolour from the same shared uniforms. Static so other systems can call it.
+  static applySeasonShader(shader, seasonUniforms) {
+    shader.uniforms.uSeasonColor = seasonUniforms.uSeasonColor;
+    shader.uniforms.uSeasonMix = seasonUniforms.uSeasonMix;
+    shader.fragmentShader = 'uniform vec3 uSeasonColor;\nuniform float uSeasonMix;\n' + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <dithering_fragment>',
+      `#include <dithering_fragment>
+        {
+          float _slum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(_slum) * uSeasonColor, uSeasonMix);
+        }`
+    );
+  }
+
+  getSeasonUniforms() { return this._seasonUniforms; }
+
+  // Live season recolour: 'spring' | 'summer' | 'autumn' | 'winter'.
+  setSeason(name) {
+    const SEASONS = {
+      spring: { color: [0.78, 1.35, 0.72], mix: 0.40 },
+      summer: { color: [1.0, 1.0, 1.0], mix: 0.0 },
+      autumn: { color: [1.75, 1.0, 0.40], mix: 0.60 },
+      winter: { color: [1.15, 1.28, 1.55], mix: 0.50 },
+    };
+    const key = String(name || 'summer').toLowerCase();
+    const s = SEASONS[key] || SEASONS.summer;
+    this.season = SEASONS[key] ? key : 'summer';
+    this._seasonUniforms.uSeasonColor.value.setRGB(s.color[0], s.color[1], s.color[2]);
+    this._seasonUniforms.uSeasonMix.value = s.mix;
+    return { season: this.season };
   }
 
   // A fresh uniform set, registered so _updateCurvature keeps it in sync. Other
@@ -406,7 +449,8 @@ export class WorldSystem extends System {
       setMana: (level) => this._setMana(level),                // mana abundance, 1 = normal
       setClouds: (on) => this._setClouds(on),                  // clouds on/off
       setSeaLevel: (level) => this._setSeaLevel(level),        // 0 normal, 1 flood, 2 water planet, <0 drains
-      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay', 'setWorldShape', 'setCurveRadius', 'setTrees', 'setLandmarks', 'setMana', 'setClouds', 'setSeaLevel'] },
+      setSeason: (name) => this.setSeason(name),               // spring | summer | autumn | winter
+      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay', 'setWorldShape', 'setCurveRadius', 'setTrees', 'setLandmarks', 'setMana', 'setClouds', 'setSeaLevel', 'setSeason'] },
     };
   }
 

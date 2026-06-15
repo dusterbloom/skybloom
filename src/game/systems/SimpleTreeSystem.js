@@ -95,6 +95,7 @@ export class SimpleTreeSystem extends System {
     const world = this.worldSystem || this.engine.systemManager.get('world');
     if (!world || typeof world.getCurveUniforms !== 'function' || !Array.isArray(this.treeModels)) return;
     const cu = world.getCurveUniforms(); // one shared set for the whole forest
+    const season = world.getSeasonUniforms ? world.getSeasonUniforms() : null;
     const inject = `vec4 mvPosition = vec4( transformed, 1.0 );
         #ifdef USE_INSTANCING
           mvPosition = instanceMatrix * mvPosition;
@@ -118,6 +119,10 @@ export class SimpleTreeSystem extends System {
         shader.uniforms.uCurveAmount = cu.uCurveAmount;
         shader.vertexShader = 'uniform vec3 uCurveCenter;\nuniform float uCurveAmount;\n' + shader.vertexShader;
         shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', inject);
+        // recolour the forest with the season (shares WorldSystem's season uniforms)
+        if (season && world.constructor && world.constructor.applySeasonShader) {
+          world.constructor.applySeasonShader(shader, season);
+        }
       };
       m.needsUpdate = true;
     };
