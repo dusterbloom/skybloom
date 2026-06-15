@@ -167,17 +167,25 @@ export class SunSystem extends System {
     this.sunPosition.y = Math.max(-200, this.rawSunAltitude);
     this.sunPosition.z = 0;
 
-    // Update sun mesh position
+    // Anchor the disc to the camera: sunPosition is an arc OFFSET around the
+    // viewer, not a fixed world point, so the sun sits at infinity — you can fly
+    // forever and never reach it. (sunPosition stays the camera-relative offset,
+    // so getSunDirection()/normalize() is unchanged.)
+    const cam = this.engine.camera;
     if (this.sunMesh) {
-      this.sunMesh.position.copy(this.sunPosition);
+      if (cam) this.sunMesh.position.copy(cam.position).add(this.sunPosition);
+      else this.sunMesh.position.copy(this.sunPosition);
 
       // Face camera for billboarding effect
-      if (this.engine.camera) {
-        this.sunMesh.lookAt(this.engine.camera.position);
+      if (cam) {
+        this.sunMesh.lookAt(cam.position);
       }
     }
 
-    // Update light position
+    // The directional light only needs its DIRECTION, which (light at the arc
+    // offset, target at world origin) is constant wherever the camera flies, so
+    // the light is left origin-relative. Shadow-frustum centering is a separate,
+    // out-of-scope concern.
     if (this.sunLight) {
       this.sunLight.position.copy(this.sunPosition);
     }

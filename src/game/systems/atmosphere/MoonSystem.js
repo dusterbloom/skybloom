@@ -117,11 +117,15 @@ export class MoonSystem {
 
     // If visible, update position and appearance
     if (this.moonMesh.visible) {
-      this.moonMesh.position.copy(this.moonPosition);
+      // Anchor to the camera so the moon, like the sun, rides at infinity —
+      // moonPosition is an arc OFFSET around the viewer, never a world point.
+      const cam = this.engine.camera;
+      if (cam) this.moonMesh.position.copy(cam.position).add(this.moonPosition);
+      else this.moonMesh.position.copy(this.moonPosition);
 
       // Make moon face camera
-      if (this.engine.camera) {
-        this.moonMesh.lookAt(this.engine.camera.position);
+      if (cam) {
+        this.moonMesh.lookAt(cam.position);
       }
 
       // Update moon appearance based on phase and night factor
