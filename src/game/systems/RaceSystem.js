@@ -539,27 +539,38 @@ export class RaceSystem extends System {
     return true;
   }
 
-  /** Resolve pilot config from localStorage, prompting once on first use. */
-  _resolvePilotConfig() {
-    try {
-      const raw = localStorage.getItem('vc.pilot');
-      if (raw) return JSON.parse(raw);
-    } catch (error) { /* corrupted/unavailable storage — re-prompt below */ }
-    // ponytail: the browser already has prompt() + localStorage, so there's no
-    // settings form to build. Upgrade path: a proper in-panel form if this grows.
-    const provider = (window.prompt('LLM pilot — "cloud" (Claude API) or "local" (WebLLM)?', 'cloud') || '').trim().toLowerCase();
-    if (provider !== 'cloud' && provider !== 'local') { this._toast('Pilot cancelled'); return null; }
-    const cfg = { provider };
-    if (provider === 'cloud') {
-      const apiKey = (window.prompt('Anthropic API key (kept in THIS browser only):', '') || '').trim();
-      if (!apiKey) { this._toast('Pilot needs an API key', '#ffcc66'); return null; }
-      cfg.apiKey = apiKey;
-      cfg.model = (window.prompt('Model id (Haiku = fast/cheap, Opus = smartest):', 'claude-haiku-4-5') || 'claude-haiku-4-5').trim();
-    } else {
-      cfg.model = (window.prompt('WebLLM model id:', 'Llama-3.2-1B-Instruct-q4f32_1-MLC') || 'Llama-3.2-1B-Instruct-q4f32_1-MLC').trim();
+  /** Current agent/LLM config from the in-panel form (localStorage), with defaults. */
+  _agentConfig() {
+    let cfg = {};
+    try { const raw = localStorage.getItem('vc.voice'); if (raw) cfg = JSON.parse(raw); } catch (error) { /* defaults below */ }
+    const provider = cfg.provider || 'cloud';
+    return {
+      provider,
+      baseURL: cfg.baseURL || 'http://localhost:1234/v1',
+      apiKey: cfg.apiKey || '',
+      model: cfg.model || (provider === 'openai' ? 'local-model' : provider === 'local' ? 'Llama-3.2-1B-Instruct-q4f32_1-MLC' : 'claude-haiku-4-5'),
+      tts: cfg.tts || 'supertonic',
+    };
+  }
+
+  _saveAgentConfig(cfg) {
+    try { localStorage.setItem('vc.voice', JSON.stringify(cfg)); } catch (error) { /* private mode */ }
+    try { localStorage.setItem('vc.pilot', JSON.stringify(cfg)); } catch (error) { /* private mode */ }
+  }
+
+  /** A brain config needs a key for cloud; local/openai usually don't. */
+  _requireBrain(cfg) {
+    if (cfg.provider === 'cloud' && !cfg.apiKey) {
+      this._toast('Add your API key in MENU → Race → Agent settings', '#ffcc66', 4000);
+      return false;
     }
-    try { localStorage.setItem('vc.pilot', JSON.stringify(cfg)); } catch (error) { /* private mode — run without persisting */ }
-    return cfg;
+    return true;
+  }
+
+  /** Resolve pilot config from the saved agent settings (no prompts). */
+  _resolvePilotConfig() {
+    const cfg = this._agentConfig();
+    return this._requireBrain(cfg) ? cfg : null;
   }
 
   /** Start the in-browser hybrid LLM pilot (SimpleBot floor + LLM directive overrides). */
@@ -603,31 +614,85 @@ export class RaceSystem extends System {
     return true;
   }
 
-  /** Resolve voice-copilot config from localStorage, prompting once on first use. */
+  /** Resolve voice-copilot config from the saved agent settings (no prompts). */
   _resolveVoiceConfig() {
-    try {
-      const raw = localStorage.getItem('vc.voice');
-      if (raw) return JSON.parse(raw);
-    } catch (error) { /* corrupted/unavailable storage — re-prompt below */ }
-    const provider = (window.prompt('Voice brain — "openai" (local/compatible server), "cloud" (Claude API), or "local" (WebLLM)?', 'openai') || '').trim().toLowerCase();
-    if (!['openai', 'cloud', 'local'].includes(provider)) { this._toast('Voice cancelled'); return null; }
-    const cfg = { provider };
-    if (provider === 'openai') {
-      cfg.baseURL = (window.prompt('OpenAI-compatible base URL (LM Studio :1234, Jan :1337, Ollama :11434/v1):', 'http://localhost:1234/v1') || 'http://localhost:1234/v1').trim();
-      cfg.model = (window.prompt('Model name:', 'local-model') || 'local-model').trim();
-      const key = (window.prompt('API key (blank if your server ignores it):', '') || '').trim();
-      if (key) cfg.apiKey = key;
-    } else if (provider === 'cloud') {
-      const key = (window.prompt('Anthropic API key (kept in THIS browser only):', '') || '').trim();
-      if (!key) { this._toast('Voice needs an API key', '#ffcc66'); return null; }
-      cfg.apiKey = key;
-      cfg.model = (window.prompt('Model id (Haiku = fast/cheap):', 'claude-haiku-4-5') || 'claude-haiku-4-5').trim();
-    } else {
-      cfg.model = (window.prompt('WebLLM model id:', 'Llama-3.2-1B-Instruct-q4f32_1-MLC') || 'Llama-3.2-1B-Instruct-q4f32_1-MLC').trim();
-    }
-    cfg.tts = (window.prompt('Voice output — "browser" (instant) or "kokoro" (natural, downloads a model once)?', 'browser') || 'browser').trim().toLowerCase() === 'kokoro' ? 'kokoro' : 'browser';
-    try { localStorage.setItem('vc.voice', JSON.stringify(cfg)); } catch (error) { /* private mode — run without persisting */ }
-    return cfg;
+    const cfg = this._agentConfig();
+    if (!this._requireBrain(cfg)) return null;
+    return { ...cfg, lang: 'en-US' };
+  }
+
+  /** In-panel Agent/LLM settings form — edit provider, endpoint, key, model, voice
+   *  any time (no more prompt() chain). Saving restarts a running voice co-pilot. */
+  _createAgentConfigForm(root) {
+    if (typeof document === 'undefined') return;
+    const cfg = this._agentConfig();
+    const wrap = document.createElement('div');
+    wrap.style.marginTop = '12px';
+    wrap.style.borderTop = '1px solid rgba(255,255,255,0.15)';
+    wrap.style.paddingTop = '10px';
+
+    const title = document.createElement('div');
+    title.className = 'vc-label';
+    title.textContent = 'Agent / LLM';
+    title.style.marginBottom = '8px';
+    wrap.appendChild(title);
+
+    const style = (el) => {
+      el.style.width = '100%'; el.style.boxSizing = 'border-box'; el.style.fontSize = '12px';
+      el.style.padding = '5px 7px'; el.style.borderRadius = '8px';
+      el.style.border = '1px solid rgba(255,255,255,0.2)';
+      el.style.background = 'rgba(0,0,0,0.25)'; el.style.color = 'var(--vc-ink, #fff)';
+      return el;
+    };
+    const row = (labelText, el) => {
+      const r = document.createElement('div');
+      r.style.display = 'grid'; r.style.gridTemplateColumns = 'minmax(56px,0.7fr) minmax(0,1.3fr)';
+      r.style.gap = '4px 8px'; r.style.alignItems = 'center'; r.style.marginBottom = '6px';
+      const l = document.createElement('div'); l.className = 'vc-label'; l.style.fontSize = '10px'; l.textContent = labelText;
+      r.appendChild(l); r.appendChild(el); wrap.appendChild(r); return r;
+    };
+    const select = (opts, val) => {
+      const s = style(document.createElement('select'));
+      for (const o of opts) { const op = document.createElement('option'); op.value = o; op.textContent = o; if (o === val) op.selected = true; s.appendChild(op); }
+      return s;
+    };
+    const input = (val, type, ph) => { const i = style(document.createElement('input')); i.type = type || 'text'; i.value = val || ''; if (ph) i.placeholder = ph; return i; };
+
+    const provider = select(['cloud', 'openai', 'local'], cfg.provider);
+    const model = input(cfg.model, 'text', 'claude-haiku-4-5');
+    const baseURL = input(cfg.baseURL, 'text', 'http://localhost:1234/v1');
+    const apiKey = input(cfg.apiKey, 'password', 'sk-ant-… (blank for local)');
+    const tts = select(['supertonic', 'kokoro', 'browser'], cfg.tts);
+
+    row('Brain', provider);
+    const urlRow = row('Base URL', baseURL);
+    const keyRow = row('API key', apiKey);
+    row('Model', model);
+    row('Voice', tts);
+
+    const sync = () => {
+      urlRow.style.display = provider.value === 'openai' ? 'grid' : 'none';
+      keyRow.style.display = provider.value === 'local' ? 'none' : 'grid';
+    };
+    provider.addEventListener('change', sync); sync();
+
+    const save = document.createElement('button');
+    save.type = 'button'; save.className = 'vc-btn-primary';
+    save.textContent = 'Save agent settings';
+    save.style.width = '100%'; save.style.minHeight = '30px'; save.style.borderRadius = '999px';
+    save.style.fontSize = '12px'; save.style.marginTop = '4px';
+    save.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      this._saveAgentConfig({
+        provider: provider.value, baseURL: baseURL.value.trim(), apiKey: apiKey.value.trim(),
+        model: model.value.trim(), tts: tts.value,
+      });
+      const wasVoice = !!this._voiceCopilot;
+      if (wasVoice) this.stopVoiceChat();
+      this._toast(wasVoice ? 'Agent settings saved — press Talk to restart voice' : 'Agent settings saved', '#66ffee');
+    });
+    wrap.appendChild(save);
+    root.appendChild(wrap);
   }
 
   /** Talk to the carpet: one push-to-talk turn (configures + starts on first press). */
@@ -1299,6 +1364,9 @@ export class RaceSystem extends System {
       this._toast(result ? 'Benchmark JSON exported' : 'Finish a race before export', result ? '#66ffee' : '#ffcc66');
     });
     root.appendChild(actions);
+
+    // Editable Agent/LLM settings (replaces the old prompt() chain; reachable anytime).
+    this._createAgentConfigForm(root);
 
     const ui = this.engine.systems.get('ui');
     if (!ui || typeof ui.registerSettingsPane !== 'function' || !ui.registerSettingsPane('race', root)) {

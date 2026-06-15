@@ -330,13 +330,24 @@ export class VoiceCopilot {
   async _initKokoro() {
     const mod = await import(/* @vite-ignore */ 'https://esm.run/kokoro-js');
     const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS) || mod.default;
+    const model = this.config.kokoroModel || 'onnx-community/Kokoro-82M-v1.0-ONNX';
     const gpu = typeof navigator !== 'undefined' && !!navigator.gpu;
-    // The WebGPU backend can't run the q8-quantized weights — it needs fp32.
-    // Using q8 on WebGPU is the usual cause of Kokoro failing to speak.
-    this._kokoro = await KokoroTTS.from_pretrained(this.config.kokoroModel || 'onnx-community/Kokoro-82M-v1.0-ONNX', {
-      dtype: this.config.kokoroDtype || (gpu ? 'fp32' : 'q8'),
-      device: gpu ? 'webgpu' : 'wasm',
-    });
+    // Try the fast path first, then fall back. The WebGPU backend can't run the
+    // q8-quantized weights (it needs fp32) and some GPUs fail outright, so if
+    // WebGPU/fp32 errors we retry on wasm/q8 before giving up to the browser voice.
+    const attempts = [];
+    if (this.config.kokoroDtype) attempts.push({ dtype: this.config.kokoroDtype, device: gpu ? 'webgpu' : 'wasm' });
+    if (gpu) attempts.push({ dtype: 'fp32', device: 'webgpu' });
+    attempts.push({ dtype: 'q8', device: 'wasm' });
+    let lastErr;
+    for (const opt of attempts) {
+      try {
+        this.onText({ role: 'system', text: `(loading Kokoro on ${opt.device}…)` });
+        this._kokoro = await KokoroTTS.from_pretrained(model, opt);
+        return;
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('Kokoro failed to load');
   }
 
   async _speakKokoro(text) {

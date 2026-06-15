@@ -54,7 +54,9 @@ export class LLMPilot {
    */
   constructor(api = window.agentAPI, opts = {}) {
     this.api = api;
-    this.opts = { intervalMs: 100, advisorMs: 2000, courseSeed: undefined, ...opts };
+    // autoRace stays OFF by default: starting the pilot should NOT kick off a race.
+    // It arms and waits; it flies a race once one is started (Start Race / the user).
+    this.opts = { intervalMs: 100, advisorMs: 2000, courseSeed: undefined, autoRace: false, ...opts };
     this.config = opts.config || {};
     this.onDirective = opts.onDirective || (() => {});
     this._baseline = new SimpleBot(api, { autoStart: false }); // reuse its pure steer()
@@ -91,7 +93,8 @@ export class LLMPilot {
     const race = obs.race;
 
     if (!race || race.state === 'idle') {
-      if (!this._raceRequested) { this._raceRequested = true; this.api.startRace(this.opts.courseSeed); }
+      // Only auto-start a race when explicitly opted in; otherwise wait for one.
+      if (this.opts.autoRace && !this._raceRequested) { this._raceRequested = true; this.api.startRace(this.opts.courseSeed); }
       return;
     }
     if (race.state === 'finished') {
