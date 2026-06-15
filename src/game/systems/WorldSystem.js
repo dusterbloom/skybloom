@@ -1029,7 +1029,7 @@ export class WorldSystem extends System {
     );
     nodeMesh.add(glowMesh);
     nodeMesh.position.copy(posData.position);
-    nodeMesh.userData = { type: 'mana', value: posData.value, collected: false };
+    nodeMesh.userData = { type: 'mana', value: posData.value, collected: false, baseY: posData.position.y };
     this.manaNodes.push(nodeMesh);
     this.scene.add(nodeMesh);
     return nodeMesh;
@@ -2393,7 +2393,11 @@ updateLandmarks(delta, elapsed) {
     // Animate mana nodes
     this.manaNodes.forEach((node, index) => {
       if (node.userData && !node.userData.collected) {
-        node.position.y += Math.sin(elapsed * 2 + index * 0.5) * 0.03;
+        // Bob around the spawn height, then drop onto the curved ground so orbs
+        // don't hang in the air on a round/tiny planet (logic Y unchanged on flat).
+        const base = node.userData.baseY != null ? node.userData.baseY : node.position.y;
+        const bob = Math.sin(elapsed * 2 + index * 0.5) * 3;
+        node.position.y = base + bob - this.curveDropAt(node.position.x, node.position.z);
         node.rotation.y += delta * 0.5;
       }
     });

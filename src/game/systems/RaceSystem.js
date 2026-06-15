@@ -205,6 +205,11 @@ export class RaceSystem extends System {
   }
 
   _update(delta, elapsed) {
+    // Keep the rings on the curved ground (flat/round world shape): logic stays
+    // flat, only the visuals drop, so a far ring sits on the curve and rises back
+    // to its true spot as you approach. Without this the rings fly off a tiny planet.
+    this._applyCurvatureToGates();
+
     // Pulse the next-gate ring/beacon whenever a course exists (also in the
     // idle preview, where gate 0 stays lit as the start ring).
     if (this._nextGateMesh) this._animateNextGate(elapsed);
@@ -878,6 +883,24 @@ export class RaceSystem extends System {
     this.engine.scene.add(this.courseGroup);
   }
 
+  /** Drop each visible ring + the beacon onto the curved ground (no-op when flat).
+   *  Uses the logical flat gate Y as the base, so collision (gate.position) is
+   *  untouched and the ring rises to its true spot as the player nears it. */
+  _applyCurvatureToGates() {
+    const world = this.engine.systems.get('world');
+    if (!world || typeof world.curveDropAt !== 'function') return;
+    for (let i = 0; i < this._gateMeshes.length; i++) {
+      const mesh = this._gateMeshes[i];
+      const g = this.gates[i];
+      if (!mesh || !mesh.visible || !g) continue;
+      mesh.position.y = g.position.y - world.curveDropAt(g.position.x, g.position.z);
+    }
+    if (this._beaconMesh && this._beaconMesh.visible) {
+      const b = this._beaconMesh.position;
+      b.y = (this._beaconBaseY || 0) - world.curveDropAt(b.x, b.z);
+    }
+  }
+
   /** Position/orient the pooled tori along the freshly built course. */
   _layoutCourseMeshes(player) {
     for (let i = 0; i < this.gates.length; i++) {
@@ -923,6 +946,7 @@ export class RaceSystem extends System {
 
     if (this._nextGateMesh) {
       this._beaconMesh.position.copy(this.gates[nextIdx].position);
+      this._beaconBaseY = this.gates[nextIdx].position.y; // flat Y; curvature drops the visual
       this._beaconMesh.visible = true;
     } else {
       this._beaconMesh.visible = false;
