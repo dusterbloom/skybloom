@@ -267,11 +267,11 @@ export class UISystem extends System {
       tabbar.className = 'vc-tabbar';
       const panes = {};
       const tabs = {};
+      // 3 tabs max: Flight holds both the flight sliders and the time-of-day control.
       const defs = [
         ['race', 'Race'],
         ['agent', 'Agent'],
-        ['speed', 'Flight'],
-        ['time', 'Time'],
+        ['flight', 'Flight'],
       ];
 
       defs.forEach(([key, label]) => {
@@ -306,6 +306,14 @@ export class UISystem extends System {
       this.elements.settingsPanel = panel;
       this.elements.settingsTabs = tabs;
       this.elements.settingsPanes = panes;
+
+      // Flush any panes that registered before the menu existed (init-order safe).
+      if (this._pendingPanes && this._pendingPanes.length) {
+        for (const p of this._pendingPanes) {
+          if (panes[p.key] && p.node.parentElement !== panes[p.key]) panes[p.key].appendChild(p.node);
+        }
+        this._pendingPanes = [];
+      }
     }
 
     setSettingsVisible(visible) {
@@ -333,10 +341,18 @@ export class UISystem extends System {
       });
     }
 
+    // Append a panel into a tab pane. Multiple panels can share a tab (e.g. the
+    // flight sliders + the time-of-day control both live under 'flight'). If the
+    // settings menu isn't built yet, the registration is queued and flushed once
+    // it is — so callers don't depend on init order.
     registerSettingsPane(key, node) {
-      const pane = this.elements.settingsPanes && this.elements.settingsPanes[key];
-      if (!pane || !node) return false;
-      pane.replaceChildren(node);
+      if (!node) return false;
+      const panes = this.elements.settingsPanes;
+      if (panes && panes[key]) {
+        if (node.parentElement !== panes[key]) panes[key].appendChild(node);
+        return true;
+      }
+      (this._pendingPanes = this._pendingPanes || []).push({ key, node });
       return true;
     }
 
@@ -452,7 +468,7 @@ export class UISystem extends System {
     });
     panel.appendChild(reset);
 
-      this.registerSettingsPane('speed', panel);
+      this.registerSettingsPane('flight', panel);
       this.elements.flightPanel = panel;
     }
 
@@ -1733,7 +1749,7 @@ export class UISystem extends System {
       container.appendChild(toggleContainer);
     }
 
-      this.registerSettingsPane('time', container);
+      this.registerSettingsPane('flight', container);
       this.elements.timePanel = container;
     }
 
@@ -1862,7 +1878,7 @@ export class UISystem extends System {
      */
     showTimeControls() {
       this.setSettingsVisible(true);
-      this.openSettingsMenu('time');
+      this.openSettingsMenu('flight');
     }
 
 }
