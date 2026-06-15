@@ -155,8 +155,12 @@ export class VoiceCopilot {
     let intent = 'chat';
     let target = null;
     let world = null;
+    // Bound the brain call so a hung/unreachable endpoint surfaces as a clear
+    // message instead of dead silence. Providers forward {signal} to fetch.
+    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), 45000) : null;
     try {
-      const raw = await this._provider.complete(messages);
+      const raw = await this._provider.complete(messages, ctrl ? { signal: ctrl.signal } : {});
       const obj = parseJSON(raw);
       if (obj) {
         reply = String(obj.reply || '').trim();
@@ -167,7 +171,11 @@ export class VoiceCopilot {
         reply = (raw || '').trim(); // model ignored the format — just say it
       }
     } catch (e) {
-      reply = `Comms trouble — ${e && e.message ? e.message : 'no answer'}.`;
+      reply = (e && e.name === 'AbortError')
+        ? 'No answer — the brain timed out. Check the provider/endpoint and key, then try again.'
+        : `Comms trouble — ${e && e.message ? e.message : 'no answer'}.`;
+    } finally {
+      if (timer) clearTimeout(timer);
     }
     if (!reply) reply = '…';
 
@@ -287,12 +295,20 @@ export class VoiceCopilot {
   async _speak(text) {
     if (!text) return;
     if (this.tts === 'kokoro' && this._kokoro) {
-      try { return await this._speakKokoro(text); } catch (e) { /* fall back to the browser voice */ }
+      try { return await this._speakKokoro(text); } catch (e) { this._ttsFellBack('Kokoro', e); }
     }
     if (this.tts === 'supertonic' && this._supertonic) {
-      try { const out = await this._supertonic.generate(text); return await this._playPCM(out.audio, out.sampleRate); } catch (e) { /* fall back */ }
+      try { const out = await this._supertonic.generate(text); return await this._playPCM(out.audio, out.sampleRate); } catch (e) { this._ttsFellBack('Supertonic', e); }
     }
     return this._speakBrowser(text);
+  }
+
+  // Surface a neural-voice failure once, then fall back to the browser voice.
+  _ttsFellBack(name, err) {
+    if (!this._ttsWarned) {
+      this._ttsWarned = true;
+      this.onText({ role: 'system', text: `(${name} voice failed — using the browser voice. ${err && err.message ? err.message : ''})`.trim() });
+    }
   }
 
   _speakBrowser(text) {
@@ -314,9 +330,12 @@ export class VoiceCopilot {
   async _initKokoro() {
     const mod = await import(/* @vite-ignore */ 'https://esm.run/kokoro-js');
     const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS) || mod.default;
+    const gpu = typeof navigator !== 'undefined' && !!navigator.gpu;
+    // The WebGPU backend can't run the q8-quantized weights — it needs fp32.
+    // Using q8 on WebGPU is the usual cause of Kokoro failing to speak.
     this._kokoro = await KokoroTTS.from_pretrained(this.config.kokoroModel || 'onnx-community/Kokoro-82M-v1.0-ONNX', {
-      dtype: this.config.kokoroDtype || 'q8',
-      device: (typeof navigator !== 'undefined' && navigator.gpu) ? 'webgpu' : 'wasm',
+      dtype: this.config.kokoroDtype || (gpu ? 'fp32' : 'q8'),
+      device: gpu ? 'webgpu' : 'wasm',
     });
   }
 
