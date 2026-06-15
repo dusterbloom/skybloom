@@ -178,9 +178,14 @@ export class SunSystem extends System {
         // inside the camera far plane (and sky dome) — otherwise the disc is
         // clipped at low sun angles where the arc offset is far past the far plane.
         const viewDist = (cam.far || 5000) * 0.72;
+        const trueDist = Math.max(1, this.sunPosition.length()); // the real arc distance
         const dir = this.sunPosition.lengthSq() > 0 ? this.sunPosition.clone().normalize() : new THREE.Vector3(0, 1, 0);
         this.sunMesh.position.copy(cam.position).addScaledVector(dir, viewDist);
         this.sunMesh.lookAt(cam.position);
+        // Shrink the disc to the angular size it WOULD have at its true distance,
+        // so pulling it inside the far plane doesn't make it loom large at the
+        // horizon (where it used to be ~15000 away and small).
+        this._sunSizeScale = viewDist / trueDist;
       } else {
         this.sunMesh.position.copy(this.sunPosition);
       }
@@ -213,8 +218,9 @@ export class SunSystem extends System {
       this.sunGlow.material.opacity = this.config.GLOW_OPACITY * glowBoost * belowHorizonFactor;
     }
 
-    // Scale at horizon for more dramatic effect
-    const scale = 1.0 + (horizonProximity * 0.2);
+    // Scale at horizon for more dramatic effect, then shrink to the disc's true
+    // angular size (so it doesn't loom large now that it sits inside the far plane).
+    const scale = (1.0 + horizonProximity * 0.2) * (this._sunSizeScale || 1);
     this.sunMesh.scale.set(scale, scale, 1);
 
     // Update colors based on time of day
