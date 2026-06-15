@@ -80,7 +80,56 @@ export class SimpleTreeSystem extends System {
       this.createProceduralTreeModels();
     }
 
+    // Curve the forest with the world (flat/round toggle)
+    this.applyCurvatureToModels();
+
     Logger.info(`Simple Tree System initialized with ${this.treeModels.length} tree types`);
+  }
+
+  // Inject the world-curvature bend into every tree material. Trees are rigid, so we
+  // drop the WHOLE tree by distance²/(2R) evaluated at its base (the mesh origin)
+  // rather than bending each vertex — it stays upright and just settles onto the
+  // curved ground. Spawned trees are clones that share these template materials, so
+  // patching the models patches every tree. Keyed off WorldSystem's shared uniforms.
+  applyCurvatureToModels() {
+    const world = this.worldSystem || this.engine.systemManager.get('world');
+    if (!world || typeof world.getCurveUniforms !== 'function' || !Array.isArray(this.treeModels)) return;
+    const cu = world.getCurveUniforms(); // one shared set for the whole forest
+    const inject = `vec4 mvPosition = vec4( transformed, 1.0 );
+        #ifdef USE_INSTANCING
+          mvPosition = instanceMatrix * mvPosition;
+        #endif
+        {
+          vec4 _vwp = modelMatrix * mvPosition;
+          vec3 _io = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+          float _cdx = _io.x - uCurveCenter.x;
+          float _cdz = _io.z - uCurveCenter.z;
+          _vwp.y -= uCurveAmount * (_cdx * _cdx + _cdz * _cdz);
+          mvPosition = viewMatrix * _vwp;
+        }
+        gl_Position = projectionMatrix * mvPosition;`;
+    const patched = new Set();
+    const patch = (m) => {
+      if (!m || patched.has(m) || m.userData.curveUniforms) return;
+      patched.add(m);
+      m.userData.curveUniforms = cu;
+      m.onBeforeCompile = (shader) => {
+        shader.uniforms.uCurveCenter = cu.uCurveCenter;
+        shader.uniforms.uCurveAmount = cu.uCurveAmount;
+        shader.vertexShader = 'uniform vec3 uCurveCenter;\nuniform float uCurveAmount;\n' + shader.vertexShader;
+        shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', inject);
+      };
+      m.needsUpdate = true;
+    };
+    for (const model of this.treeModels) {
+      if (!model || !model.traverse) continue;
+      model.traverse((node) => {
+        if (node.isMesh && node.material) {
+          if (Array.isArray(node.material)) node.material.forEach(patch);
+          else patch(node.material);
+        }
+      });
+    }
   }
 
   /**
