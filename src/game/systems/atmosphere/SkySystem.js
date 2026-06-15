@@ -9,6 +9,9 @@ import {
   sampleKeyframes
 } from "../../../config/SunConfig.js";
 
+// Scratch white reused when softening the sun-glow tint (no per-frame allocation)
+const _glowWhite = new THREE.Color(0xffffff);
+
 /**
  * SkySystem - Manages the sky background and fog
  */
@@ -28,9 +31,11 @@ export class SkySystem {
     // Scratch colors reused every frame (no per-frame allocation)
     this._zenithColor = new THREE.Color(0x77bbff);
     this._horizonColor = new THREE.Color(0xbcdfff);
+    this._sunGlowColor = new THREE.Color(0xffd9a0); // warm halo tint, refreshed per frame
 
-    // Per-vertex zenith/horizon blend factors for the gradient fallback sky
+    // Per-vertex zenith/horizon blend factors + unit directions for the gradient sky
     this._skyGradientFactors = null;
+    this._skyVertexDirs = null;
   }
 
   /**
@@ -119,10 +124,16 @@ export class SkySystem {
     const positions = geometry.getAttribute('position');
     const vertexCount = positions.count;
     this._skyGradientFactors = new Float32Array(vertexCount);
+    this._skyVertexDirs = new Float32Array(vertexCount * 3); // unit dir per vertex, for sun glow
     for (let i = 0; i < vertexCount; i++) {
+      const px = positions.getX(i) / skyboxRadius;
       const ny = positions.getY(i) / skyboxRadius; // -1 (below) .. 1 (zenith)
+      const pz = positions.getZ(i) / skyboxRadius;
       const f = Math.max(0, Math.min(1, ny / 0.55)); // horizon band ~0..33 degrees
       this._skyGradientFactors[i] = Math.pow(f, 0.8);
+      this._skyVertexDirs[i * 3] = px;
+      this._skyVertexDirs[i * 3 + 1] = ny;
+      this._skyVertexDirs[i * 3 + 2] = pz;
     }
     geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(vertexCount * 3), 3));
 
@@ -154,15 +165,48 @@ export class SkySystem {
 
     const arr = colorAttr.array;
     const factors = this._skyGradientFactors;
+    const dirs = this._skyVertexDirs;
     const h = this._horizonColor;
     const z = this._zenithColor;
+
+    // Sun-direction glow: a warm halo blooming around where the sun actually is,
+    // strongest when it sits low (sunrise/sunset) and gone once it's below the
+    // horizon. This is what makes the sky read as lit from a real, distant sun
+    // instead of a flat vertical gradient.
+    const sun = this.atmosphereSystem.sunSystem;
+    let sx = 0, sy = 1, sz = 0, glowGate = 0;
+    const TIGHTNESS = 3.5;   // higher = tighter halo around the sun
+    const GLOW_MAX = 0.6;    // peak blend toward the glow colour
+    if (sun && dirs && sun.getSunDirection) {
+      const sd = sun.getSunDirection();
+      sx = sd.x; sy = sd.y; sz = sd.z;
+      // Full halo whenever the sun is at/above the horizon; fade only as it sinks
+      // below (twilight afterglow), off at night.
+      glowGate = Math.max(0, Math.min(1, sy / 0.15 + 1.0));
+      if (sun.sunMesh && sun.sunMesh.material) {
+        this._sunGlowColor.copy(sun.sunMesh.material.color).lerp(_glowWhite, 0.25);
+      }
+    }
+    const g = this._sunGlowColor;
 
     for (let i = 0; i < factors.length; i++) {
       const f = factors[i];
       const j = i * 3;
-      arr[j] = h.r + (z.r - h.r) * f;
-      arr[j + 1] = h.g + (z.g - h.g) * f;
-      arr[j + 2] = h.b + (z.b - h.b) * f;
+      let r = h.r + (z.r - h.r) * f;
+      let gg = h.g + (z.g - h.g) * f;
+      let b = h.b + (z.b - h.b) * f;
+      if (glowGate > 0) {
+        const dot = dirs[j] * sx + dirs[j + 1] * sy + dirs[j + 2] * sz;
+        if (dot > 0) {
+          const amt = Math.pow(dot, TIGHTNESS) * GLOW_MAX * glowGate;
+          r += (g.r - r) * amt;
+          gg += (g.g - gg) * amt;
+          b += (g.b - b) * amt;
+        }
+      }
+      arr[j] = r;
+      arr[j + 1] = gg;
+      arr[j + 2] = b;
     }
     colorAttr.needsUpdate = true;
   }
