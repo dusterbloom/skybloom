@@ -38,8 +38,9 @@ Intents (what to DO):
 - hover: stop and hold position.
 - manual: give control back to the human.
 You can ALSO reshape the world (creative power). When the player asks for it, set "world" to:
-{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>}
+{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round"}
 - raiseTerrain raises a hill/mountain; carveTerrain digs a crater/canyon; spawnMana drops a mana orb; setTimeOfDay changes the light; reroll regenerates the whole landscape; clearTerrain undoes your terrain edits.
+- setWorldShape flips the whole world between "flat" (endless plane) and "round" (a planet whose horizon curves away) — use it when the player asks to make the world flat or round/spherical/a planet.
 - "where" places terrain/mana ahead of the carpet (default) or here. Leave "world" null when not editing.
 Default intent to "chat" if they're only talking. Speak naturally; never read the JSON aloud.`;
 
@@ -207,6 +208,7 @@ export class VoiceCopilot {
     const op = String(w.op);
     try {
       if (op === 'setTimeOfDay') { if (api.setTimeOfDay) api.setTimeOfDay(Number(w.t)); }
+      else if (op === 'setWorldShape') { if (api.setWorldShape) api.setWorldShape(w.shape); }
       else if (op === 'reroll') { if (api.reroll) api.reroll(); }
       else if (op === 'clearTerrain') { if (api.clearTerrain) api.clearTerrain(); }
       else {
