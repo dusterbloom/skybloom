@@ -204,9 +204,11 @@ export function ensureVibeTheme() {
         border: 2px solid #1a1303;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
       }
+      /* Keep toasts at the TOP on phones so they never sit over the thumb
+         controls (joystick / W-S / camera) along the bottom edge. */
       .vc-toast-stack {
-        top: auto;
-        bottom: max(92px, calc(env(safe-area-inset-bottom) + 18px));
+        top: calc(var(--vc-safe-y) + 96px);
+        bottom: auto;
         width: min(340px, calc(100vw - 28px));
       }
     }

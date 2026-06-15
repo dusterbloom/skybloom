@@ -1345,17 +1345,22 @@ export class RaceSystem extends System {
     }
     root.appendChild(grid);
 
-    const actions = document.createElement('div');
-    actions.style.display = 'grid';
-    actions.style.gridTemplateColumns = '1fr 1fr';
-    actions.style.gap = '6px';
-    const addButton = (key, text, handler, primary = false) => {
+    const mkActionGrid = () => {
+      const g = document.createElement('div');
+      g.style.display = 'grid';
+      g.style.gridTemplateColumns = '1fr 1fr';
+      g.style.gap = '6px';
+      return g;
+    };
+    const actions = mkActionGrid();        // Race tab
+    const agentActions = mkActionGrid();   // Agent tab
+    const addButton = (key, text, handler, primary = false, container = actions) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = primary ? 'vc-btn-primary' : 'vc-btn-ghost';
       button.textContent = text;
       button.style.minHeight = '30px';
-      button.style.padding = primary ? '6px 8px' : '6px 8px';
+      button.style.padding = '6px 8px';
       button.style.fontSize = '12px';
       button.style.borderRadius = '999px';
       button.addEventListener('click', (event) => {
@@ -1363,26 +1368,16 @@ export class RaceSystem extends System {
         event.stopPropagation();
         handler();
       });
-      actions.appendChild(button);
+      container.appendChild(button);
       this._panelButtons[key] = button;
     };
+
+    // --- Race tab: just the race + ghost + planet + export controls ---
     addButton('start', 'Start Race', () => this.start(), true);
     addButton('restart', 'Same Seed', () => this.restartSameSeed());
-    addButton('abort', 'Stop Race', () => {
-      this.abort();
-      this._toast('Race stopped');
-    });
+    addButton('abort', 'Stop Race', () => { this.abort(); this._toast('Race stopped'); });
     addButton('loadGhost', 'Load Ghost', () => this.loadBestGhost());
-    addButton('clearGhost', 'Clear Ghost', () => {
-      this.clearGhost();
-      this._toast('Ghost cleared');
-    });
-    addButton('runBot', 'Run SimpleBot', () => this.runSimpleBot());
-    addButton('stopBot', 'Stop Bot', () => this.stopSimpleBot());
-    addButton('runPilot', 'LLM Pilot', () => this.runLLMPilot());
-    addButton('stopPilot', 'Stop Pilot', () => this.stopLLMPilot());
-    addButton('voiceTalk', '🎙 Talk', () => this.runVoiceChat());
-    addButton('voiceOff', 'Voice Off', () => this.stopVoiceChat());
+    addButton('clearGhost', 'Clear Ghost', () => { this.clearGhost(); this._toast('Ghost cleared'); });
     addButton('export', 'Export JSON', () => {
       const result = this.exportResult(null, { download: true });
       this._toast(result ? 'Benchmark JSON exported' : 'Finish a race before export', result ? '#66ffee' : '#ffcc66');
@@ -1399,13 +1394,29 @@ export class RaceSystem extends System {
     });
     root.appendChild(actions);
 
-    // Editable Agent/LLM settings (replaces the old prompt() chain; reachable anytime).
-    this._createAgentConfigForm(root);
+    // --- Agent tab: bot/pilot as single toggles + voice + the LLM settings form ---
+    addButton('bot', 'Run SimpleBot', () => { this._simpleBotRunning ? this.stopSimpleBot() : this.runSimpleBot(); }, false, agentActions);
+    addButton('pilot', 'LLM Pilot', () => { this._llmPilotRunning ? this.stopLLMPilot() : this.runLLMPilot(); }, false, agentActions);
+    addButton('voiceTalk', '🎙 Talk', () => this.runVoiceChat(), true, agentActions);
+    addButton('voiceOff', 'Voice Off', () => this.stopVoiceChat(), false, agentActions);
+
+    const agentRoot = document.createElement('div');
+    agentRoot.id = 'agent-panel';
+    agentRoot.style.pointerEvents = 'auto';
+    const aHead = document.createElement('div');
+    aHead.style.cssText = 'display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px;';
+    const aTitle = document.createElement('div'); aTitle.className = 'vc-label'; aTitle.textContent = 'Agent';
+    const aSub = document.createElement('div'); aSub.className = 'vc-num'; aSub.textContent = 'talk, fly or race the machines';
+    aSub.style.fontSize = '11px'; aSub.style.color = 'var(--vc-ink-dim)';
+    aHead.appendChild(aTitle); aHead.appendChild(aSub); agentRoot.appendChild(aHead);
+    agentRoot.appendChild(agentActions);
+    this._createAgentConfigForm(agentRoot);
+    this._agentRoot = agentRoot;
 
     const ui = this.engine.systems.get('ui');
-    if (!ui || typeof ui.registerSettingsPane !== 'function' || !ui.registerSettingsPane('race', root)) {
-      uiRoot.appendChild(root);
-    }
+    const canRegister = ui && typeof ui.registerSettingsPane === 'function';
+    if (!canRegister || !ui.registerSettingsPane('race', root)) uiRoot.appendChild(root);
+    if (!canRegister || !ui.registerSettingsPane('agent', agentRoot)) uiRoot.appendChild(agentRoot);
     this._panelToggle = null;
     this._panelRoot = root;
     this._updatePanel();
@@ -1450,8 +1461,8 @@ export class RaceSystem extends System {
     if (buttons.abort) buttons.abort.disabled = this.state !== 'running';
     if (buttons.loadGhost) buttons.loadGhost.disabled = !best;
     if (buttons.clearGhost) buttons.clearGhost.disabled = !ghost;
-    if (buttons.runBot) buttons.runBot.disabled = this._simpleBotRunning;
-    if (buttons.stopBot) buttons.stopBot.disabled = !this._simpleBotRunning;
+    if (buttons.bot) buttons.bot.textContent = this._simpleBotRunning ? 'Stop Bot' : 'Run SimpleBot';
+    if (buttons.pilot) buttons.pilot.textContent = this._llmPilotRunning ? 'Stop Pilot' : 'LLM Pilot';
     if (buttons.export) buttons.export.disabled = !latest;
   }
 

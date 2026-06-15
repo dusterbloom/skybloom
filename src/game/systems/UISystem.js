@@ -269,7 +269,8 @@ export class UISystem extends System {
       const tabs = {};
       const defs = [
         ['race', 'Race'],
-        ['speed', 'Speed'],
+        ['agent', 'Agent'],
+        ['speed', 'Flight'],
         ['time', 'Time'],
       ];
 
