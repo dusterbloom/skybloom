@@ -1363,6 +1363,16 @@ export class RaceSystem extends System {
       const result = this.exportResult(null, { download: true });
       this._toast(result ? 'Benchmark JSON exported' : 'Finish a race before export', result ? '#66ffee' : '#ffcc66');
     });
+    addButton('savePlanet', 'Save Planet', () => {
+      const api = typeof window !== 'undefined' ? window.worldAPI : null;
+      if (api && api.savePlanet) { api.savePlanet(); this._toast('Planet saved', '#66ffee'); }
+      else this._toast('World not ready yet', '#ffcc66');
+    });
+    addButton('loadPlanet', 'Load Planet', () => {
+      const api = typeof window !== 'undefined' ? window.worldAPI : null;
+      const snap = api && api.loadPlanet ? api.loadPlanet() : null;
+      this._toast(snap ? 'Planet restored' : 'No saved planet yet', snap ? '#66ffee' : '#ffcc66');
+    });
     root.appendChild(actions);
 
     // Editable Agent/LLM settings (replaces the old prompt() chain; reachable anytime).

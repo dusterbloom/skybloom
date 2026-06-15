@@ -58,6 +58,8 @@ export class UISystem extends System {
 
     // Quest tracker toggle (Q) — panel is non-blocking, gameplay never pauses
     this._questKeyHandler = (e) => {
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
       if (e.code === 'KeyQ' && !e.repeat && this.engine.gameStarted) {
         this.showQuestLog();
       }
@@ -553,6 +555,8 @@ export class UISystem extends System {
 
     // Listen for key presses to select spells
     window.addEventListener('keydown', (event) => {
+      const t = event.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
       if (event.key >= '1' && event.key <= '3') {
         const index = parseInt(event.key) - 1;
         this.selectSpell(index);

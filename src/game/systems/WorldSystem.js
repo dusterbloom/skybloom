@@ -428,6 +428,59 @@ export class WorldSystem extends System {
     return d;
   }
 
+  // ===== Save / load the whole creative planet state to localStorage =====
+  savePlanet() {
+    const sm = this.engine.systemManager;
+    const atmo = sm.get('atmosphere');
+    const trees = sm.get('simpleTrees');
+    const lm = sm.get('landmarks');
+    const cs = atmo && atmo.cloudSystem;
+    const snap = {
+      v: 1,
+      seed: this.seed,
+      terrainEdits: this.terrainEdits.map((e) => ({ x: e.x, z: e.z, radius: e.radius, amount: e.amount })),
+      shape: this.curvature.shape,
+      curveRadius: this.curvature.radius,
+      season: this.season,
+      seaLevel: this.waterLevel,
+      trees: trees && trees.densityScale != null ? trees.densityScale : 1,
+      landmarks: lm ? lm.maxLandmarks : 8,
+      clouds: cs ? !cs._hidden : true,
+      timeOfDay: atmo ? atmo.timeOfDay : 0.5,
+      maxMana: this.maxManaNodes,
+    };
+    try { localStorage.setItem('vc.planet', JSON.stringify(snap)); } catch (e) { /* private mode */ }
+    return snap;
+  }
+
+  loadPlanet(snap) {
+    if (!snap) { try { snap = JSON.parse(localStorage.getItem('vc.planet')); } catch (e) { return null; } }
+    if (!snap || typeof snap !== 'object') return null;
+    const sm = this.engine.systemManager;
+    // terrain: restore seed + edits, then re-mesh everything from the flat oracle
+    if (snap.seed !== undefined && snap.seed !== null) this.seed = Number(snap.seed);
+    this.terrainEdits = Array.isArray(snap.terrainEdits)
+      ? snap.terrainEdits.map((e) => ({ x: +e.x, z: +e.z, radius: +e.radius, amount: +e.amount }))
+      : [];
+    this.heightCache.clear();
+    this._remeshAll();
+    // world shape + curve tightness
+    if (snap.curveRadius) this.curvature.radius = Number(snap.curveRadius);
+    this.setWorldShape(snap.shape === 'round' ? 'round' : 'flat');
+    if (snap.season) this.setSeason(snap.season);
+    if (snap.seaLevel !== undefined) { const w = sm.get('water'); if (w && w.setSeaLevel) w.setSeaLevel(Number(snap.seaLevel)); else this.waterLevel = Number(snap.seaLevel); }
+    if (snap.trees !== undefined) { const t = sm.get('simpleTrees'); if (t && t.setDensity) t.setDensity(Number(snap.trees)); }
+    if (snap.landmarks !== undefined) { const l = sm.get('landmarks'); if (l && l.setMaxLandmarks) l.setMaxLandmarks(Number(snap.landmarks)); }
+    if (snap.clouds !== undefined) { const a = sm.get('atmosphere'); if (a && a.cloudSystem && a.cloudSystem.setVisible) a.cloudSystem.setVisible(!!snap.clouds); }
+    if (snap.timeOfDay !== undefined) { const a = sm.get('atmosphere'); if (a) a.timeOfDay = Number(snap.timeOfDay); }
+    if (snap.maxMana !== undefined) { this.maxManaNodes = Math.max(0, Math.min(400, Number(snap.maxMana))); this.topUpManaNodes(); }
+    return snap;
+  }
+
+  hasSavedPlanet() {
+    try { return !!localStorage.getItem('vc.planet'); } catch (e) { return false; }
+  }
+
   // ===== Creative world editing — godmode, deliberately NOT the fair-play agentAPI
   // (which never writes world state). Exposed as window.worldAPI for the companion. =====
   _exposeWorldAPI() {
@@ -450,7 +503,10 @@ export class WorldSystem extends System {
       setClouds: (on) => this._setClouds(on),                  // clouds on/off
       setSeaLevel: (level) => this._setSeaLevel(level),        // 0 normal, 1 flood, 2 water planet, <0 drains
       setSeason: (name) => this.setSeason(name),               // spring | summer | autumn | winter
-      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay', 'setWorldShape', 'setCurveRadius', 'setTrees', 'setLandmarks', 'setMana', 'setClouds', 'setSeaLevel', 'setSeason'] },
+      savePlanet: () => this.savePlanet(),                     // persist the whole world to localStorage
+      loadPlanet: (snap) => this.loadPlanet(snap),             // restore it
+      hasSavedPlanet: () => this.hasSavedPlanet(),
+      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay', 'setWorldShape', 'setCurveRadius', 'setTrees', 'setLandmarks', 'setMana', 'setClouds', 'setSeaLevel', 'setSeason', 'savePlanet', 'loadPlanet'] },
     };
   }
 

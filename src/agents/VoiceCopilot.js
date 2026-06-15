@@ -38,10 +38,10 @@ Intents (what to DO):
 - hover: stop and hold position.
 - manual: give control back to the human.
 You can ALSO reshape the world (creative power). When the player asks for it, set "world" to:
-{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setCurveRadius|setTrees|setLandmarks|setMana|setClouds|setSeaLevel|setSeason","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round","level":<number, 1=normal>,"on":<true|false>,"season":"spring|summer|autumn|winter"}
+{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setCurveRadius|setTrees|setLandmarks|setMana|setClouds|setSeaLevel|setSeason|savePlanet|loadPlanet","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round","level":<number, 1=normal>,"on":<true|false>,"season":"spring|summer|autumn|winter"}
 - raiseTerrain raises a hill/mountain; carveTerrain digs a crater/canyon; spawnMana drops a mana orb; setTimeOfDay changes the light; reroll regenerates the whole landscape; clearTerrain undoes your terrain edits.
 - setWorldShape flips the world between "flat" (endless plane) and "round" (a planet whose horizon curves away). setCurveRadius rounds the world and sets how tight the planet is via "level": 1 = gentle Earth-like curve, higher = a tiny planet, lower = subtler.
-- World knobs use "level" where 1 = normal, higher = more, 0 = none: setTrees (forest density — 0 barren, 1 normal, 3 jungle), setLandmarks (how many landmarks), setMana (how much mana to collect). setClouds takes "on": true/false. setSeaLevel uses "level": 0 normal, 1 floods the lowlands, 2 = a water planet, negative drains the sea. setSeason recolours the land and trees via "season": spring/summer/autumn/winter.
+- World knobs use "level" where 1 = normal, higher = more, 0 = none: setTrees (forest density — 0 barren, 1 normal, 3 jungle), setLandmarks (how many landmarks), setMana (how much mana to collect). setClouds takes "on": true/false. setSeaLevel uses "level": 0 normal, 1 floods the lowlands, 2 = a water planet, negative drains the sea. setSeason recolours the land and trees via "season": spring/summer/autumn/winter. savePlanet stores the whole world and loadPlanet brings it back — use them when asked to save or restore the planet.
 - "where" places terrain/mana ahead of the carpet (default) or here. Leave "world" null when not editing.
 Default intent to "chat" if they're only talking. Speak naturally; never read the JSON aloud.`;
 
@@ -225,6 +225,8 @@ export class VoiceCopilot {
       else if (op === 'setSeaLevel') { if (api.setSeaLevel) api.setSeaLevel(Number(w.level)); }
       else if (op === 'setCurveRadius') { const lvl = Math.max(0.2, Number(w.level) || 1); if (api.setWorldShape) api.setWorldShape('round'); if (api.setCurveRadius) api.setCurveRadius(30000 / lvl); }
       else if (op === 'setSeason') { if (api.setSeason) api.setSeason(w.season); }
+      else if (op === 'savePlanet') { if (api.savePlanet) api.savePlanet(); }
+      else if (op === 'loadPlanet') { if (api.loadPlanet) api.loadPlanet(); }
       else if (op === 'reroll') { if (api.reroll) api.reroll(); }
       else if (op === 'clearTerrain') { if (api.clearTerrain) api.clearTerrain(); }
       else {
@@ -256,6 +258,8 @@ export class VoiceCopilot {
       case 'setClouds': return (w.on === true || w.on === 'true' || w.on === 'on') ? 'brought the clouds in' : 'cleared the clouds';
       case 'setSeaLevel': return Number(w.level) >= 2 ? 'flooded it into a water planet' : 'changed the sea level';
       case 'setSeason': return `turned it to ${w.season}`;
+      case 'savePlanet': return 'saved this planet';
+      case 'loadPlanet': return 'restored your saved planet';
       case 'reroll': return 'regenerated the whole world';
       case 'clearTerrain': return 'undid the terrain edits';
       default: return op;

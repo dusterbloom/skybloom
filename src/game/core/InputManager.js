@@ -101,13 +101,23 @@ export class InputManager {
     window.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
+  // Typing into a form field (settings inputs, etc.) must reach the field, not the
+  // game — otherwise letters trigger flight/menu keys and copy/paste is swallowed.
+  _isEditableTarget(t) {
+    if (!t) return false;
+    const tag = t.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable === true;
+  }
+
   // Input event handlers
   onKeyDown(event) {
+    if (this._isEditableTarget(event.target)) return; // let the field handle typing/paste
     this.keys[event.code] = true;
     this.emit('keydown', event);
   }
 
   onKeyUp(event) {
+    if (this._isEditableTarget(event.target)) return;
     this.keys[event.code] = false;
     this.emit('keyup', event);
   }
