@@ -17,6 +17,13 @@ export class WorldSystem extends System {
     this.manaNodes = [];
     this.terrainEdits = []; // creative terraform brushes: sparse additive height edits
 
+    // World shape: a camera-relative visual curvature that bends distant terrain
+    // DOWN like a planet's horizon, while generation and physics stay a flat 2D
+    // heightfield. 'flat' = strength 0 (identical to before); 'round' = 1/(2R).
+    // 'strength' eases toward 'targetStrength' so flipping the toggle morphs.
+    this.curvature = { shape: 'flat', radius: 30000, strength: 0, targetStrength: 0 };
+    this._curvedMaterials = []; // materials whose vertex shader carries the bend
+
     // Height cache system
     this.heightCache = new Map(); // Key format: `${gridX},${gridZ}`
     this.cacheResolution = 8; // Store heights at 1/8th resolution of actual terrain
@@ -226,6 +233,74 @@ export class WorldSystem extends System {
         this.materials.terrainLOD.polygonOffset = true;
         this.materials.terrainLOD.polygonOffsetFactor = -2;
         this.materials.terrainLOD.polygonOffsetUnits = -2;
+
+    // Give both terrain materials the world-curvature bend (a no-op at strength 0).
+    this._patchCurvatureMaterial(this.materials.terrain);
+    this._patchCurvatureMaterial(this.materials.terrainLOD);
+  }
+
+  // Inject a camera-relative downward bend into a material's vertex shader. Chunk
+  // meshes are translation-only (no rotation/scale), so local Y equals world Y and
+  // we can lower `transformed.y` directly. The drop is distance² / (2R) — the
+  // parabolic approximation of a sphere — so the ground falls away like a horizon.
+  // Generation and physics are untouched; near the camera the drop is ~0, so what
+  // you actually fly over still matches the flat collision heightfield.
+  _patchCurvatureMaterial(material) {
+    if (!material || material.userData.curveUniforms) return;
+    const uniforms = {
+      uCurveCenter: { value: new THREE.Vector3() },
+      uCurveAmount: { value: 0 },
+    };
+    material.userData.curveUniforms = uniforms;
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.uCurveCenter = uniforms.uCurveCenter;
+      shader.uniforms.uCurveAmount = uniforms.uCurveAmount;
+      shader.vertexShader = 'uniform vec3 uCurveCenter;\nuniform float uCurveAmount;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        {
+          vec3 _cwp = (modelMatrix * vec4(transformed, 1.0)).xyz;
+          float _cdx = _cwp.x - uCurveCenter.x;
+          float _cdz = _cwp.z - uCurveCenter.z;
+          transformed.y -= uCurveAmount * (_cdx * _cdx + _cdz * _cdz);
+        }`
+      );
+    };
+    material.needsUpdate = true;
+    this._curvedMaterials.push(material);
+  }
+
+  // Per-frame: ease the bend toward its target and re-center it on the viewer.
+  _updateCurvature() {
+    const c = this.curvature;
+    // critically-damped-ish ease so flat<->round morphs smoothly instead of popping
+    c.strength += (c.targetStrength - c.strength) * 0.08;
+    if (Math.abs(c.strength - c.targetStrength) < 1e-9) c.strength = c.targetStrength;
+    const cam = this.engine.camera;
+    const center = cam ? cam.position : (this.engine.systems.player?.localPlayer?.position);
+    for (let i = 0; i < this._curvedMaterials.length; i++) {
+      const u = this._curvedMaterials[i].userData.curveUniforms;
+      if (!u) continue;
+      u.uCurveAmount.value = c.strength;
+      if (center) u.uCurveCenter.value.set(center.x, center.y, center.z);
+    }
+  }
+
+  // Public: switch world shape. 'flat' | 'round' (aka 'sphere'/'spheric').
+  setWorldShape(shape) {
+    const round = /^(round|sphere|spheric|spherical|curved)$/i.test(String(shape));
+    this.curvature.shape = round ? 'round' : 'flat';
+    this.curvature.targetStrength = round ? 1 / (2 * this.curvature.radius) : 0;
+    return { shape: this.curvature.shape, radius: this.curvature.radius };
+  }
+
+  // Public: tune how aggressively the world curves (smaller R = stronger curve).
+  setCurveRadius(radius) {
+    const r = Math.max(4000, Math.min(500000, Number(radius) || this.curvature.radius));
+    this.curvature.radius = r;
+    if (this.curvature.shape === 'round') this.curvature.targetStrength = 1 / (2 * r);
+    return { radius: r, shape: this.curvature.shape };
   }
 
 
@@ -267,7 +342,10 @@ export class WorldSystem extends System {
       spawnMana: (x, z) => this.spawnManaAt(x, z),
       terrainHeight: (x, z) => this.getTerrainHeight(x, z),
       setTimeOfDay: (t) => { const a = atmo(); if (a) a.timeOfDay = Math.max(0, Math.min(0.999, Number(t))); return a ? a.timeOfDay : null; },
-      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay'] },
+      setWorldShape: (shape) => this.setWorldShape(shape),     // 'flat' | 'round'
+      setCurveRadius: (r) => this.setCurveRadius(r),           // smaller = stronger curve
+      worldShape: () => ({ shape: this.curvature.shape, radius: this.curvature.radius }),
+      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay', 'setWorldShape', 'setCurveRadius'] },
     };
   }
 
@@ -2141,6 +2219,9 @@ updateLandmarks(delta, elapsed) {
        // Logger.info('[WorldSystem] No mana nodes exist, creating initial set');
       this.createManaNodes();
     }
+
+    // Ease + re-center the world-curvature bend on the viewer
+    this._updateCurvature();
 
     // Update terrain chunks
     this.updateChunks();
