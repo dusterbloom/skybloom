@@ -161,11 +161,16 @@ const RIGS = {
 // still slow or quicken any individual spawn/vehicle.
 const DEFAULT_ANIM_SPEED = 1.0;
 
-// Choose which embedded glTF clip to loop — prefer locomotion/flight verbs.
+// Choose which embedded glTF clip to loop — prefer active locomotion in priority
+// order (a fox should Run, not Survey/idle, which would look static while moving).
+const CLIP_PRIORITY = ['gallop', 'run', 'trot', 'fly', 'flap', 'soar', 'glide', 'swim', 'walk', 'move', 'hover', 'idle', 'survey', 'pose', 'stand'];
 function pickClip(clips) {
   if (!clips || !clips.length) return null;
-  const pref = /fly|flap|hover|glide|soar|idle|run|gallop|walk|survey|move|swim/i;
-  return clips.find((c) => c && pref.test(c.name || '')) || clips[0];
+  for (const key of CLIP_PRIORITY) {
+    const m = clips.find((c) => c && new RegExp(key, 'i').test(c.name || ''));
+    if (m) return m;
+  }
+  return clips[0];
 }
 
 // Decide WHICH clips to play. Characters ship rival locomotion states
@@ -190,6 +195,7 @@ export class GenieSystem extends System {
     this._nextId = 1;
     this._api = null;
     this._animated = new Set(); // objects with userData.genieAnim, ticked each frame
+    this._roamer = null;        // active GroundRoamController (walk/run on the ground)
   }
 
   // Tick every animated rig / glTF mixer so conjured flyers actually move.
@@ -224,6 +230,9 @@ export class GenieSystem extends System {
       import: this.import.bind(this),
       discover: this.discover.bind(this),
       vehicle: this.vehicle.bind(this),
+      roam: this.roam.bind(this),
+      stopRoam: this.stopRoam.bind(this),
+      trail: this.trail.bind(this),
       remove: this.remove.bind(this),
       clear: this.clear.bind(this),
       listCatalog: () => this.catalog.list(),
@@ -472,6 +481,7 @@ export class GenieSystem extends System {
 
       if (set === 'carpet') {
         lp.model = null;          // updateModels() recreates the carpet next frame
+        this.stopRoam();          // back to the carpet -> stop ground roaming, restore trail
         if (trail && trail.resetEmitOffset) trail.resetEmitOffset();
         this._vehicle = 'carpet';
         Logger.info('GenieSystem.vehicle: restored the carpet');
@@ -515,6 +525,65 @@ export class GenieSystem extends System {
       Logger.info(`GenieSystem.vehicle: now flying "${set}"`);
       return true;
     } catch (err) { Logger.error('GenieSystem.vehicle failed:', err); return false; }
+  }
+
+  // =====================================================================
+  // ROAM — make the CURRENT vehicle walk/run along the ground (not fly).
+  // =====================================================================
+
+  /**
+   * roam({ mode?:'walk'|'trot'|'run'|'graze'|'prowl', speed? }) -> boolean
+   * Starts a ground-roam on the local player so a swapped vehicle (e.g. a fox)
+   * trots over the terrain instead of flying. Silences the flight trail while
+   * grounded. Call stopRoam() (or roam again) to change pace.
+   */
+  async roam(opts = {}) {
+    try {
+      const agentAPI = (typeof window !== 'undefined') ? window.agentAPI : null;
+      if (!agentAPI) { Logger.warn('GenieSystem.roam: window.agentAPI not ready.'); return false; }
+      const speeds = { graze: 6, walk: 10, trot: 20, prowl: 16, run: 38 };
+      const mode = (opts && opts.mode) || 'trot';
+      const targetSpeed = (opts && opts.speed != null) ? opts.speed : (speeds[mode] || 20);
+
+      // Keep the animal on land — feed the world's sea level so it veers off coasts.
+      const world = this._sys('world');
+      const seaLevel = (world && Number.isFinite(world.waterLevel)) ? world.waterLevel : 0;
+
+      // Authoritative sprint signal: the engine's real Space key state.
+      const isSprinting = () => {
+        const im = this.engine && this.engine.input;
+        return !!(im && typeof im.isKeyDown === 'function' && im.isKeyDown('Space'));
+      };
+
+      this.stopRoam(); // replace any existing roamer
+      const { GroundRoamController } = await import('../../agents/GroundRoamController.js');
+      this._roamer = new GroundRoamController(agentAPI, { targetSpeed, seaLevel, isSprinting });
+      this._roamer.start();
+      this.trail({ on: false }); // a ground animal shouldn't trail a flight contrail
+      Logger.info(`GenieSystem.roam: ${mode} (target ${Math.round(targetSpeed)})`);
+      return true;
+    } catch (err) { Logger.error('GenieSystem.roam failed:', err); return false; }
+  }
+
+  /** Stop ground roaming and hand control back; restores the flight trail. */
+  stopRoam() {
+    try {
+      if (this._roamer) { this._roamer.stop(); this._roamer = null; }
+      this.trail({ on: true });
+      return true;
+    } catch (err) { Logger.error('GenieSystem.stopRoam failed:', err); return false; }
+  }
+
+  /** Toggle the flight trail (the carpet "stream"). trail({on:false}) silences it. */
+  trail(opts = {}) {
+    try {
+      const ct = this._sys('carpetTrail');
+      if (ct && typeof ct.setEmitEnabled === 'function') {
+        ct.setEmitEnabled(opts && opts.on !== undefined ? !!opts.on : true);
+        return true;
+      }
+      return false;
+    } catch (err) { Logger.error('GenieSystem.trail failed:', err); return false; }
   }
 
   // =====================================================================
@@ -672,6 +741,7 @@ export class GenieSystem extends System {
 
   destroy() {
     try {
+      this.stopRoam();
       this.clear();
       if (this._group && this.engine && this.engine.scene) this.engine.scene.remove(this._group);
       // Remove only the verbs we added — leave WorldSystem's terrain ops intact.

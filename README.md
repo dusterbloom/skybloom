@@ -61,6 +61,7 @@ Tip: diving trades altitude for speed. The first race is meant to be readable: f
 - Seeded 12-gate time trials with local splits, best times, replay storage, and ghost playback.
 - Agent API with information/action/tempo fairness constraints: `observe()`, `act()`, `startRace()`, replay/ghost helpers, config, WebSocket transport, and result export.
 - Reference SimpleBot that uses only `window.agentAPI`.
+- **Creative "genie" API** (`window.worldAPI`) — a separate, non-fairness godmode surface: conjure shapes and animated rigs, import real models from curated repos (flapping birds, propeller planes), fly any of them or **roam as an animal on the ground**, persist everything in a catalogue, and reshape terrain/sky. Speakable by voice or a small LLM. See [docs/AGENT_API.md](docs/AGENT_API.md#creative-mode-the-genie-windowworldapi).
 - Optional socket.io multiplayer co-presence for casual local experimentation.
 - GitHub Pages workflow, CI build check, local smoke script, and one-command local launcher.
 

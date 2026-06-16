@@ -1,8 +1,14 @@
 # Skybloom Agent API
 
-Protocol reference for `window.agentAPI` — the interface that lets a program fly the
-carpet. Everything an agent can know or do goes through this one object; no knowledge
-of the game's source is required. Reference bot: [`src/agents/SimpleBot.js`](../src/agents/SimpleBot.js).
+Protocol reference for `window.agentAPI` — the fairness-bound interface that lets a
+program fly the carpet on equal terms with a human. Everything a *racing* agent can
+know or do goes through this one object; no knowledge of the game's source is
+required. Reference bot: [`src/agents/SimpleBot.js`](../src/agents/SimpleBot.js).
+
+There is a second, deliberately *unfair* surface — `window.worldAPI`, the **genie**:
+creative godmode for spawning and importing models, swapping vehicles, roaming as
+an animal, and reshaping terrain/sky. It is for play and world-building, never for
+benchmark runs. See [Creative mode: the genie](#creative-mode-the-genie-windowworldapi).
 
 ## Why
 
@@ -493,6 +499,96 @@ every observation with simple math at full rate, while the slow model (Ollama,
 llama.cpp, a cloud API) runs beside it as a *planner*, re-reading the latest
 observation every few seconds and adjusting the reflex layer's goals. Model
 latency then costs strategy freshness — never control of the carpet.
+
+## Creative mode: the genie (`window.worldAPI`)
+
+`window.worldAPI` is the **opposite** of `agentAPI`. Where `agentAPI` is locked to
+human-fair inputs, `worldAPI` is godmode: it adds and removes meshes, imports models
+off the web, swaps what you fly, and reshapes the world. It is the "genie" — a model
+(local SLM, cloud API, or you in the console) speaks a wish and the world changes.
+
+> **Not for benchmarks.** Creative edits are explicitly outside the fairness model.
+> Never call `worldAPI` during a ranked or comparable race — it would taint the run.
+> It's for free play, sandboxes, and world-building.
+
+Two systems contribute to the one object: **WorldSystem** owns terrain/atmosphere
+("planet" ops) and **GenieSystem** owns objects/vehicles. Everything the genie creates
+or imports is normalized and **saved to a persistent catalogue** (IndexedDB), so it's
+re-spawnable by name, offline, across reloads.
+
+### Objects, models, and vehicles
+
+| Method | Purpose |
+|--------|---------|
+| `spawn({ shape?\|catalog?, at?, count?, scale?, color?, name? })` | Conjure a primitive/rig, or re-place a saved entry. Returns spawn ids. |
+| `import({ repo, name, as? })` | Fetch a `.glb` from a curated repo, normalize, save, and drop it ahead. |
+| `discover({ repo?, query?, tag?, limit? })` | List what's importable (queries the repo manifest). |
+| `vehicle({ set, scale?, animSpeed? })` | Fly a saved model instead of the carpet; `set:'carpet'` restores it. |
+| `roam({ mode?, speed? })` | Make the current vehicle **walk/run on the ground** (`walk\|trot\|run\|graze\|prowl`). |
+| `stopRoam()` | Stop ground roaming, hand control back, restore the trail. |
+| `trail({ on })` | Toggle the flight "stream" (off automatically while roaming on the ground). |
+| `remove({ id?\|entry? })` | Remove a spawn (last, by id, or all of a catalogue entry). |
+| `clear()` | Remove everything the genie spawned. |
+| `list()` / `listCatalog()` | The persistent catalogue (re-spawnable names). |
+| `repos()` | Available import repos and example names. |
+
+**`shape`** (built from scratch, saved as a catalogue entry): `pyramid`, `box`,
+`sphere`, `cylinder`, `cone`, plus animated rigs `falcon` (flaps) and `paperplane`
+(banks). **`at`** is `'ahead'` (default), `'here'`, or `[x,y,z]`; objects drop onto
+terrain and never below sea level.
+
+**Import repos** (CORS-friendly, no key):
+
+| repo | what | animated? |
+|------|------|-----------|
+| `khronos` | 148-model sample set, **queryable** via `discover` (name + tags) | some (e.g. `Fox` gallops) |
+| `threejs` | `Flamingo`, `Parrot`, `Stork`, `Horse` | yes — flight/gallop clips |
+| `cesium` | `plane`, `drone`, `car` | yes — propeller/rotors/wheels |
+| `local` | bundled `/assets/models` | — |
+
+Imports **fuzzy-match** names (lowercase `"flamingo"` → `Flamingo`), and embedded
+glTF animations play automatically (a fox runs, a plane's props spin). For animals,
+prefer `roam` so they stay on the ground; flyers use the normal flight controls.
+
+### World and atmosphere (WorldSystem)
+
+| Method | Effect |
+|--------|--------|
+| `raiseTerrain(x,z,radius,amount)` / `carveTerrain(...)` | Push a hill up / dig a crater |
+| `clearTerrain()` | Undo terrain edits |
+| `reroll(seed?)` | Regenerate the whole landscape |
+| `spawnMana(x,z)` / `terrainHeight(x,z)` | Drop a mana orb / sample ground height |
+| `setTimeOfDay(t)` | `0` midnight → `0.5` noon → `0.65` sunset |
+| `setWorldShape('flat'\|'round')` / `setCurveRadius(r)` | Flat plane vs curved planet |
+| `setTrees(level)` / `setLandmarks(level)` / `setMana(level)` | Density knobs (`1` = normal) |
+| `setClouds(on)` / `setSeaLevel(level)` / `setSeason(name)` | Sky / flood / spring–winter |
+| `savePlanet()` / `loadPlanet()` | Persist and restore the whole world |
+
+### Examples
+
+```js
+// conjure three pyramids ahead
+await worldAPI.spawn({ shape: 'pyramid', count: 3, scale: 120, color: '#e0c070' });
+
+// find and import a flamingo, then fly it (it flaps)
+await worldAPI.discover({ repo: 'threejs' });        // -> Flamingo, Parrot, Stork, Horse
+await worldAPI.import({ repo: 'threejs', name: 'flamingo' });
+await worldAPI.vehicle({ set: 'flamingo' });
+
+// become a fox and run across the ground (not fly)
+await worldAPI.import({ repo: 'khronos', name: 'fox' });
+await worldAPI.vehicle({ set: 'fox' });
+await worldAPI.roam({ mode: 'run' });
+worldAPI.vehicle({ set: 'carpet' });                 // back to the carpet
+
+// reshape the world
+worldAPI.setTimeOfDay(0.65);                          // sunset
+worldAPI.raiseTerrain(0, 200, 250, 180);             // a mountain ahead
+```
+
+A natural-language driver lives in [`src/agents/GenieAgent.js`](../src/agents/GenieAgent.js)
+(wish → validated ops) and the voice co-pilot [`src/agents/VoiceCopilot.js`](../src/agents/VoiceCopilot.js)
+speaks these ops, so the same surface is reachable by Haiku-tier / Qwen models, not just code.
 
 ## Limits and roadmap
 

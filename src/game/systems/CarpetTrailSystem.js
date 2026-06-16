@@ -100,6 +100,16 @@ export class CarpetTrailSystem extends System {
     // behind where the carpet used to be.
     this._defaultEmitOffset = new THREE.Vector3(0, -0.2, -this.carpetLength / 2);
     this.emitOffset = this._defaultEmitOffset.clone();
+
+    // Emission can be suppressed entirely (e.g. a fox running on the ground
+    // shouldn't leave a flight contrail).
+    this.emitEnabled = true;
+  }
+
+  /** Enable/disable trail emission; turning it off clears the current ribbon. */
+  setEmitEnabled(on) {
+    this.emitEnabled = !!on;
+    if (!this.emitEnabled) this.resetTrail();
   }
 
   /** Move the trail's emission anchor (player-local). Used on vehicle swaps. */
@@ -174,7 +184,7 @@ export class CarpetTrailSystem extends System {
 
     // Emission gating (min speed + fixed interval)
     this.timeSinceLastEmission += delta;
-    const emitting = speed > this.minSpeedForEmission;
+    const emitting = this.emitEnabled && speed > this.minSpeedForEmission;
     if (emitting && this.timeSinceLastEmission >= this.emissionInterval) {
       this.addPoint(player, speed);
       this.timeSinceLastEmission = 0;
