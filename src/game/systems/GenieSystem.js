@@ -26,6 +26,15 @@ import { GenieCatalog } from '../../agents/GenieCatalog.js';
  * 'here', or an explicit [x,y,z].
  */
 
+// Cesium sample models live in per-model folders with their own filenames, so
+// friendly names map to "folder/file" paths rather than a uniform template.
+const CESIUM_BASE = 'https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models';
+const CESIUM_PATHS = {
+  plane: 'CesiumAir/Cesium_Air',
+  drone: 'CesiumDrone/CesiumDrone',
+  car: 'GroundVehicle/GroundVehicle',
+};
+
 // Curated, CORS-friendly model repos. The agent picks a repo+name; the system
 // owns the URL so a small model can never wander into a CORS wall. {name} is
 // substituted into the template.
@@ -48,6 +57,14 @@ const REPOS = {
     label: 'three.js examples (animated)',
     url: (name) => `https://threejs.org/examples/models/gltf/${name}.glb`,
     examples: ['Flamingo', 'Parrot', 'Stork', 'Horse'],
+  },
+  // Cesium sample models — animated aircraft/vehicles (CORS-open raw GitHub).
+  // Friendly names map to their folder/file paths; the plane's propeller, the
+  // drone's rotors and the car's wheels all animate on import.
+  cesium: {
+    label: 'Cesium sample models (animated)',
+    url: (name) => `${CESIUM_BASE}/${CESIUM_PATHS[String(name).toLowerCase()] || name}.glb`,
+    examples: ['plane', 'drone', 'car'],
   },
   // Bundled assets shipped with the game (no manifest; name maps to a path).
   local: {
@@ -149,6 +166,19 @@ function pickClip(clips) {
   if (!clips || !clips.length) return null;
   const pref = /fly|flap|hover|glide|soar|idle|run|gallop|walk|survey|move|swim/i;
   return clips.find((c) => c && pref.test(c.name || '')) || clips[0];
+}
+
+// Decide WHICH clips to play. Characters ship rival locomotion states
+// (Walk/Run/Survey) — blending them all looks broken, so play just one. But
+// mechanical models ship independent part clips (two propellers, four rotors,
+// wheels) that should ALL run together. Heuristic: 2+ locomotion-named clips
+// => single best; otherwise => every clip.
+function selectClips(clips) {
+  if (!clips || !clips.length) return [];
+  const loco = /idle|run|gallop|walk|survey|jump|attack|death|dance|sit|stand|pose/i;
+  const locoClips = clips.filter((c) => c && loco.test(c.name || ''));
+  if (locoClips.length >= 2) { const best = pickClip(clips); return best ? [best] : []; }
+  return clips;
 }
 
 export class GenieSystem extends System {
@@ -534,8 +564,9 @@ export class GenieSystem extends System {
       // Drive any embedded clip so rigged imports (Fox's gallop, etc.) move.
       if (animations && animations.length) {
         const mixer = new THREE.AnimationMixer(inner);
-        const clip = pickClip(animations);
-        if (clip) mixer.clipAction(clip).play();
+        // Play every part clip (two propellers, four rotors…); for characters
+        // selectClips returns just one so rival gaits don't blend.
+        for (const clip of selectClips(animations)) mixer.clipAction(clip).play();
         // Many source clips (the three.js Flamingo especially) beat fast; ease
         // the default and let a per-entry/per-call animSpeed override it.
         mixer.timeScale = num(entry.animSpeed, 0.05, 4, DEFAULT_ANIM_SPEED);
