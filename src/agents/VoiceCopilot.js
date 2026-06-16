@@ -38,11 +38,16 @@ Intents (what to DO):
 - hover: stop and hold position.
 - manual: give control back to the human.
 You can ALSO reshape the world (creative power). When the player asks for it, set "world" to:
-{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setCurveRadius|setTrees|setLandmarks|setMana|setClouds|setSeaLevel|setSeason|savePlanet|loadPlanet","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round","level":<number, 1=normal>,"on":<true|false>,"season":"spring|summer|autumn|winter"}
+{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setCurveRadius|setTrees|setLandmarks|setMana|setClouds|setSeaLevel|setSeason|savePlanet|loadPlanet|spawn|import|clearObjects|vehicle","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round|pyramid|box|sphere|cylinder|cone|falcon|paperplane","level":<number, 1=normal>,"on":<true|false>,"season":"spring|summer|autumn|winter","catalog":"<saved object name>","repo":"khronos","name":"<asset e.g. Duck, Fox, Avocado>","count":<1-20>,"scale":<world size ~100>,"color":"<css color>","ride":"carpet|<saved object name>"}
 - raiseTerrain raises a hill/mountain; carveTerrain digs a crater/canyon; spawnMana drops a mana orb; setTimeOfDay changes the light; reroll regenerates the whole landscape; clearTerrain undoes your terrain edits.
 - setWorldShape flips the world between "flat" (endless plane) and "round" (a planet whose horizon curves away). setCurveRadius rounds the world and sets how tight the planet is via "level": 1 = gentle Earth-like curve, higher = a tiny planet, lower = subtler.
 - World knobs use "level" where 1 = normal, higher = more, 0 = none: setTrees (forest density — 0 barren, 1 normal, 3 jungle), setLandmarks (how many landmarks), setMana (how much mana to collect). setClouds takes "on": true/false. setSeaLevel uses "level": 0 normal, 1 floods the lowlands, 2 = a water planet, negative drains the sea. setSeason recolours the land and trees via "season": spring/summer/autumn/winter. savePlanet stores the whole world and loadPlanet brings it back — use them when asked to save or restore the planet.
-- "where" places terrain/mana ahead of the carpet (default) or here. Leave "world" null when not editing.
+- You can CONJURE objects (the genie's power): spawn builds a shape from scratch — use "shape" (pyramid/box/sphere/cylinder/cone), with optional count/scale/color — or re-places a saved object by "catalog" name. import brings a real model in from a repo: set repo "khronos" and a "name" (e.g. Duck, Fox, Avocado, DamagedHelmet). Everything you conjure is remembered and can be re-spawned by name later. clearObjects removes everything you conjured.
+- Use spawn for geometric things ("three pyramids", "a giant sphere") and import for named real objects ("bring me a duck"). Terrain ops (raiseTerrain etc.) shape the land; spawn/import place objects on it.
+- vehicle changes what the player FLIES: set "ride" to a saved object name to fly it instead of the carpet (import or spawn it first if it isn't saved yet), or "carpet" to switch back. e.g. "let me fly the fox" -> first import the Fox, then vehicle ride "Fox".
+- For a vehicle that MOVES, prefer the built-in animated flyers: shape "falcon" flaps its wings, shape "paperplane" banks as it glides. Imported models only animate if they ship their own clip (e.g. Fox gallops); a plain model just hangs still — so when the player wants something lively to fly, spawn a falcon or paperplane and ride it. e.g. "give me a bird to fly" -> spawn shape "falcon" name "falcon", then vehicle ride "falcon".
+- When asked what you can summon or conjure, answer in words using the GENIE line you're given (saved objects + importable examples); you don't need a "world" op just to talk about it.
+- "where" places terrain/mana/objects ahead of the carpet (default) or here. Leave "world" null when not editing.
 Default intent to "chat" if they're only talking. Speak naturally; never read the JSON aloud.`;
 
 function parseJSON(text) {
@@ -91,8 +96,36 @@ export class VoiceCopilot {
       this.onText({ role: 'system', text: `(${this.tts} voice unavailable — using the browser voice)` });
       this.tts = 'browser';
     }
+    // Pre-fetch a small sample of importable models so the genie can answer
+    // "what can you summon?" conversationally, without a tool round-trip.
+    try {
+      const api = (typeof window !== 'undefined') && window.worldAPI;
+      // Prefer the repos' curated examples (recognizable: Duck, Fox, …) over raw
+      // manifest order (which leads with dull test assets) for the spoken sample.
+      const repos = (api && api.repos) ? api.repos() : [];
+      const curated = repos.flatMap((r) => r.examples || []);
+      if (curated.length) this._importableSample = curated.slice(0, 14);
+      else if (api && api.discover) this._importableSample = (await api.discover({ limit: 14 })).map((m) => m.name);
+    } catch (e) { /* discovery is best-effort grounding, never blocks start */ }
     this._setState('ready');
     return this;
+  }
+
+  // Sync grounding line: what's already saved (re-spawn/fly by name) + a sample
+  // of what can be imported. Folded into each turn so the model speaks accurately.
+  _summonContext() {
+    try {
+      const api = (typeof window !== 'undefined') && window.worldAPI;
+      if (!api) return '';
+      const saved = (api.listCatalog ? api.listCatalog() : []).map((e) => e.name);
+      const parts = [];
+      if (saved.length) parts.push(`saved (re-spawn or fly by name): ${saved.join(', ')}`);
+      if (this._importableSample && this._importableSample.length) {
+        parts.push(`importable examples (118 available, name any): ${this._importableSample.join(', ')}`);
+      }
+      const ride = (this._lastRide && this._lastRide !== 'carpet') ? `; currently flying: ${this._lastRide}` : '';
+      return parts.length ? parts.join('; ') + ride : '';
+    } catch (e) { return ''; }
   }
 
   stop() {
@@ -148,7 +181,7 @@ export class VoiceCopilot {
     const messages = [
       { role: 'system', content: SYSTEM },
       ...this.history.slice(-8),
-      { role: 'user', content: `${text}\n\n[GAME STATE: ${this._stateSummary()}]` },
+      { role: 'user', content: `${text}\n\n[GAME STATE: ${this._stateSummary()}]${(() => { const g = this._summonContext(); return g ? `\n[GENIE: ${g}]` : ''; })()}` },
     ];
 
     let reply = '';
@@ -229,6 +262,19 @@ export class VoiceCopilot {
       else if (op === 'loadPlanet') { if (api.loadPlanet) api.loadPlanet(); }
       else if (op === 'reroll') { if (api.reroll) api.reroll(); }
       else if (op === 'clearTerrain') { if (api.clearTerrain) api.clearTerrain(); }
+      else if (op === 'spawn') {
+        // Genie object-authoring. `where` -> `at`; the rest passes straight through.
+        if (api.spawn) Promise.resolve(api.spawn({ shape: w.shape, catalog: w.catalog, count: w.count, scale: w.scale, color: w.color, at: w.where === 'here' ? 'here' : 'ahead' })).catch(() => {});
+      }
+      else if (op === 'import') {
+        if (api.import) Promise.resolve(api.import({ repo: w.repo || 'khronos', name: w.name, as: w.as })).catch(() => {});
+      }
+      else if (op === 'clearObjects') { if (api.clear) api.clear(); }
+      else if (op === 'vehicle') {
+        const ride = w.ride || w.catalog || 'carpet';
+        this._lastRide = ride;
+        if (api.vehicle) Promise.resolve(api.vehicle({ set: ride, scale: w.scale })).catch(() => {});
+      }
       else {
         const radius = op === 'spawnMana' ? 0 : (Number(w.radius) || 250);
         const p = this._worldPoint(w.where, radius);
@@ -262,6 +308,10 @@ export class VoiceCopilot {
       case 'loadPlanet': return 'restored your saved planet';
       case 'reroll': return 'regenerated the whole world';
       case 'clearTerrain': return 'undid the terrain edits';
+      case 'spawn': { const n = Number(w.count) || 1; const what = w.catalog || w.shape || 'object'; return `conjured ${n > 1 ? n + ' ' : 'a '}${what}${n > 1 ? 's' : ''} ${dir}`; }
+      case 'import': return `summoned a ${w.name || 'model'} ${dir}`;
+      case 'clearObjects': return 'cleared what you conjured';
+      case 'vehicle': { const r = w.ride || w.catalog || 'carpet'; return r === 'carpet' ? 'back on the carpet' : `now flying the ${r}`; }
       default: return op;
     }
   }
