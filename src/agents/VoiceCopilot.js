@@ -38,7 +38,7 @@ Intents (what to DO):
 - hover: stop and hold position.
 - manual: give control back to the human.
 You can ALSO reshape the world (creative power). When the player asks for it, set "world" to:
-{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setCurveRadius|setTrees|setLandmarks|setMana|setClouds|setSeaLevel|setSeason|savePlanet|loadPlanet|spawn|import|clearObjects|vehicle","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round|pyramid|box|sphere|cylinder|cone|falcon|paperplane","level":<number, 1=normal>,"on":<true|false>,"season":"spring|summer|autumn|winter","catalog":"<saved object name>","repo":"khronos","name":"<asset e.g. Duck, Fox, Avocado>","count":<1-20>,"scale":<world size ~100>,"color":"<css color>","ride":"carpet|<saved object name>"}
+{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setCurveRadius|setTrees|setLandmarks|setMana|setClouds|setSeaLevel|setSeason|savePlanet|loadPlanet|spawn|import|clearObjects|vehicle|setMusic","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round|pyramid|box|sphere|cylinder|cone|falcon|paperplane","level":<number, 1=normal>,"on":<true|false>,"season":"spring|summer|autumn|winter","catalog":"<saved object name>","repo":"khronos","name":"<asset e.g. Duck, Fox, Avocado>","count":<1-20>,"scale":<world size ~100>,"color":"<css color>","ride":"carpet|<saved object name>","mood":"auto|calm|epic|night|off"}
 - raiseTerrain raises a hill/mountain; carveTerrain digs a crater/canyon; spawnMana drops a mana orb; setTimeOfDay changes the light; reroll regenerates the whole landscape; clearTerrain undoes your terrain edits.
 - setWorldShape flips the world between "flat" (endless plane) and "round" (a planet whose horizon curves away). setCurveRadius rounds the world and sets how tight the planet is via "level": 1 = gentle Earth-like curve, higher = a tiny planet, lower = subtler.
 - World knobs use "level" where 1 = normal, higher = more, 0 = none: setTrees (forest density — 0 barren, 1 normal, 3 jungle), setLandmarks (how many landmarks), setMana (how much mana to collect). setClouds takes "on": true/false. setSeaLevel uses "level": 0 normal, 1 floods the lowlands, 2 = a water planet, negative drains the sea. setSeason recolours the land and trees via "season": spring/summer/autumn/winter. savePlanet stores the whole world and loadPlanet brings it back — use them when asked to save or restore the planet.
@@ -47,6 +47,7 @@ You can ALSO reshape the world (creative power). When the player asks for it, se
 - vehicle changes what the player FLIES: set "ride" to a saved object name to fly it instead of the carpet (import or spawn it first if it isn't saved yet), or "carpet" to switch back. For multi-step edits give "world" an ARRAY of ops, applied in order: e.g. "let me fly the fox" -> "world":[{"op":"import","repo":"khronos","name":"Fox"},{"op":"vehicle","ride":"Fox"}].
 - For a vehicle that MOVES, prefer the built-in animated flyers: shape "falcon" flaps its wings, shape "paperplane" banks as it glides. Imported models only animate if they ship their own clip (e.g. Fox gallops); a plain model just hangs still — so when the player wants something lively to fly, spawn a falcon or paperplane and ride it. e.g. "give me a bird to fly" -> "world":[{"op":"spawn","shape":"falcon","name":"falcon"},{"op":"vehicle","ride":"falcon"}].
 - When asked what you can summon or conjure, answer in words using the GENIE line you're given (saved objects + importable examples); you don't need a "world" op just to talk about it.
+- setMusic steers the soundtrack via "mood": calm (sparse and gentle), epic (full gallop and brass), night (hushed pads), off (silence), auto (follows the flying). Optional "level" 0..1 sets the volume. Use it when the player asks about the music ("make the music dramatic", "quieter music", "kill the music").
 - "where" places terrain/mana/objects ahead of the carpet (default) or here. Leave "world" null when not editing.
 Default intent to "chat" if they're only talking. Speak naturally; never read the JSON aloud.`;
 
@@ -302,6 +303,7 @@ export class VoiceCopilot {
       else if (op === 'setSeaLevel') { if (api.setSeaLevel) { api.setSeaLevel(Number(w.level)); done = true; } }
       else if (op === 'setCurveRadius') { const lvl = Math.max(0.2, Number(w.level) || 1); if (api.setCurveRadius) { if (api.setWorldShape) api.setWorldShape('round'); api.setCurveRadius(30000 / lvl); done = true; } }
       else if (op === 'setSeason') { if (api.setSeason) { api.setSeason(w.season); done = true; } }
+      else if (op === 'setMusic') { if (api.setMusic) { api.setMusic({ mood: w.mood, volume: w.level }); done = true; } }
       else if (op === 'savePlanet') { if (api.savePlanet) { api.savePlanet(); done = true; } }
       else if (op === 'loadPlanet') { if (api.loadPlanet) { api.loadPlanet(); done = true; } }
       else if (op === 'reroll') { if (api.reroll) { api.reroll(); done = true; } }
@@ -355,6 +357,7 @@ export class VoiceCopilot {
       case 'setClouds': return (w.on === true || w.on === 'true' || w.on === 'on') ? 'brought the clouds in' : 'cleared the clouds';
       case 'setSeaLevel': return Number(w.level) >= 2 ? 'flooded it into a water planet' : 'changed the sea level';
       case 'setSeason': return `turned it to ${w.season}`;
+      case 'setMusic': return w.mood === 'off' ? 'silenced the music' : `turned the music ${w.mood || 'up'}`;
       case 'savePlanet': return 'saved this planet';
       case 'loadPlanet': return 'restored your saved planet';
       case 'reroll': return 'regenerated the whole world';
