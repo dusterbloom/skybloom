@@ -4,6 +4,13 @@ import path from 'path';
 
 const screenshotsDir = 'screenshots';
 
+if (!fs.existsSync(screenshotsDir)) {
+  console.log('no screenshots/ directory found; writing empty mapping');
+  fs.writeFileSync('scripts/screenshot-commit-mapping.json', '[]');
+  fs.writeFileSync('scripts/screenshot-commit-mapping.md', '# Screenshot ↔ Commit Mapping\n\n(no screenshots)\n');
+  process.exit(0);
+}
+
 // Get all screenshot files with dates
 const files = fs.readdirSync(screenshotsDir)
   .filter(f => f.endsWith('.png') && f !== 'image.png')
@@ -23,11 +30,16 @@ const files = fs.readdirSync(screenshotsDir)
 // Sort by date
 files.sort((a, b) => (a.date || a.mtime).localeCompare(b.date || b.mtime));
 
-// Get commits
-const gitLog = execSync(
-  'git log --all --format="%H|%ad|%s" --date=short',
-  { encoding: 'utf-8' }
-).trim().split('\n');
+// Get commits (empty when not in a git checkout, e.g. building from a tarball)
+let gitLog = [];
+try {
+  gitLog = execSync(
+    'git log --all --format="%H|%ad|%s" --date=short',
+    { encoding: 'utf-8' }
+  ).trim().split('\n').filter(Boolean);
+} catch {
+  console.warn('git log unavailable; screenshots will have no commit matches');
+}
 
 const commits = gitLog.map(line => {
   const [hash, date, ...rest] = line.split('|');
