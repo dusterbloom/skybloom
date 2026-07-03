@@ -6,6 +6,7 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
 import { resolveAsset } from '../../utils/assetPath.js';
+import { CURVE_UNIFORMS_GLSL, CURVE_DROP_GLSL } from '../shaders/curvature.js';
 
 /**
  * Water System - Enhanced with realistic reflections using Three.js Water
@@ -109,14 +110,19 @@ export class WaterSystem extends System {
     if (!m || !m.uniforms) return;
     m.uniforms.uCurveCenter = cu.uCurveCenter;
     m.uniforms.uCurveAmount = cu.uCurveAmount;
-    m.vertexShader = 'uniform vec3 uCurveCenter;\nuniform float uCurveAmount;\n' + m.vertexShader;
+    m.vertexShader = CURVE_UNIFORMS_GLSL + CURVE_DROP_GLSL + m.vertexShader;
     m.vertexShader = m.vertexShader.replace(
       /vec4 mvPosition\s*=\s*modelViewMatrix \* vec4\( position, 1\.0 \);/,
       `vec4 _wp = modelMatrix * vec4( position, 1.0 );
-       _wp.y -= uCurveAmount * ((_wp.x - uCurveCenter.x) * (_wp.x - uCurveCenter.x) + (_wp.z - uCurveCenter.z) * (_wp.z - uCurveCenter.z));
+       _wp.y -= curveDrop(_wp.xyz);
        worldPosition = _wp;
        vec4 mvPosition = viewMatrix * _wp;`
     );
+    // The regex silently no-ops if three's Water vertex shader ever drifts — shout
+    // instead of leaving the sea flat in 'round' mode with no clue why.
+    if (!m.vertexShader.includes('curveDrop(_wp')) {
+      Logger.warn('WaterSystem: curvature injection failed — three Water shader source changed; the sea will not bend in round mode.');
+    }
     m.needsUpdate = true;
   }
 

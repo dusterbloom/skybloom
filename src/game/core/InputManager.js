@@ -46,6 +46,7 @@ export class InputManager {
     // Keyboard events
     window.addEventListener('keydown', this.onKeyDown.bind(this));
     window.addEventListener('keyup', this.onKeyUp.bind(this));
+    window.addEventListener('blur', this.onWindowBlur.bind(this));
 
     // Mouse events
     window.addEventListener('mousedown', this.onMouseDown.bind(this));
@@ -103,10 +104,15 @@ export class InputManager {
 
   // Typing into a form field (settings inputs, etc.) must reach the field, not the
   // game — otherwise letters trigger flight/menu keys and copy/paste is swallowed.
-  _isEditableTarget(t) {
+  // Static so every key handler in the game shares the exact same rule.
+  static isEditableTarget(t) {
     if (!t) return false;
     const tag = t.tagName;
     return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable === true;
+  }
+
+  _isEditableTarget(t) {
+    return InputManager.isEditableTarget(t);
   }
 
   // Input event handlers
@@ -117,9 +123,17 @@ export class InputManager {
   }
 
   onKeyUp(event) {
-    if (this._isEditableTarget(event.target)) return;
+    // ALWAYS process keyup, even from a form field — a key held in gameplay and
+    // released while an input has focus must still clear, or it stays stuck down
+    // (hold W, click a settings field, release → the carpet accelerates forever).
     this.keys[event.code] = false;
     this.emit('keyup', event);
+  }
+
+  onWindowBlur() {
+    // Backstop: no keyup ever arrives while the window is unfocused, so clear
+    // every pressed key when focus leaves (alt-tab, dev tools, etc.).
+    for (const code of Object.keys(this.keys)) this.keys[code] = false;
   }
 
   onMouseDown(event) {

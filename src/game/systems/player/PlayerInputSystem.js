@@ -180,6 +180,11 @@ export class PlayerInputSystem extends System {
     // Vertical movement (Space = up, Ctrl = down, Shift is now brake; pad climb merges in, clamped)
     let verticalForce = 0;
     let spacePressed = this.input.isKeyDown('Space');
+    // While ground-roaming (GenieSystem sets engine.groundRoamActive), SPACE means
+    // sprint — the roam controller reads it via its isSprinting callback. It must
+    // NOT also count as climb, or it cancels the roamer's climb -1 ground pin and
+    // the animal floats off crests.
+    if (this.engine.groundRoamActive) spacePressed = false;
     if (spacePressed) verticalForce += 1;
     if (this.input.isKeyDown('ControlLeft') || this.input.isKeyDown('ControlRight')) verticalForce -= 1;
     if (this.touchAltitude.up) verticalForce += 1;

@@ -32,6 +32,7 @@ export class SkySystem {
     this._zenithColor = new THREE.Color(0x77bbff);
     this._horizonColor = new THREE.Color(0xbcdfff);
     this._sunGlowColor = new THREE.Color(0xffd9a0); // warm halo tint, refreshed per frame
+    this._sunDir = new THREE.Vector3(); // scratch for the per-frame sun direction
 
     // Per-vertex zenith/horizon blend factors + unit directions for the gradient sky
     this._skyGradientFactors = null;
@@ -178,11 +179,19 @@ export class SkySystem {
     const TIGHTNESS = 3.5;   // higher = tighter halo around the sun
     const GLOW_MAX = 0.6;    // peak blend toward the glow colour
     if (sun && dirs && sun.getSunDirection) {
-      const sd = sun.getSunDirection();
+      const sd = sun.getSunDirection(this._sunDir);
       sx = sd.x; sy = sd.y; sz = sd.z;
       // Full halo whenever the sun is at/above the horizon; fade only as it sinks
-      // below (twilight afterglow), off at night.
-      glowGate = Math.max(0, Math.min(1, sy / 0.15 + 1.0));
+      // below (twilight afterglow), off at night. Gate on the UNCLAMPED altitude:
+      // sunPosition.y is clamped to -200 for the light, and its normalized y
+      // (~-0.013) would hold this gate ~0.9 all night — a phantom sunset glow.
+      let gateY = sy;
+      if (typeof sun.rawSunAltitude === 'number' && sun.sunPosition) {
+        const sp = sun.sunPosition;
+        const rawLen = Math.sqrt(sp.x * sp.x + sun.rawSunAltitude * sun.rawSunAltitude + sp.z * sp.z);
+        if (rawLen > 0) gateY = sun.rawSunAltitude / rawLen;
+      }
+      glowGate = Math.max(0, Math.min(1, gateY / 0.15 + 1.0));
       if (sun.sunMesh && sun.sunMesh.material) {
         this._sunGlowColor.copy(sun.sunMesh.material.color).lerp(_glowWhite, 0.25);
       }

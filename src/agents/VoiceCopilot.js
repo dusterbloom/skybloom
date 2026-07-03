@@ -23,12 +23,12 @@
  * (flow-matching denoise steps, default 4). A neural voice that fails to load
  * falls back to the browser voice — it never blocks the co-pilot.
  */
-import { createProvider } from './llmProviders.js';
+import { createProvider, extractJSON } from './llmProviders.js';
 import { Companion } from './Companion.js';
 
 const SYSTEM = `You are the voice of a magical flying carpet — a warm, witty co-pilot in the game SkyBloom, free to roam an open world, visit landmarks, gather mana, fly alongside the player, or race.
 Each turn you get the live GAME STATE. Reply with ONLY a JSON object, nothing else:
-{"reply":"<one or two short SPOKEN sentences — no markdown, no emoji>","intent":"chat|roam|goto|collect|race|hover|manual","target":<a landmark type for goto else null>,"world":<null, or a creative world edit (see below)>}
+{"reply":"<one or two short SPOKEN sentences — no markdown, no emoji>","intent":"chat|roam|goto|collect|race|hover|manual","target":<a landmark type for goto else null>,"world":<null, one creative world edit, or an ARRAY of them applied in order (see below)>}
 Intents (what to DO):
 - chat: just talk; keep doing whatever you were doing.
 - roam: wander and explore the world.
@@ -44,20 +44,11 @@ You can ALSO reshape the world (creative power). When the player asks for it, se
 - World knobs use "level" where 1 = normal, higher = more, 0 = none: setTrees (forest density — 0 barren, 1 normal, 3 jungle), setLandmarks (how many landmarks), setMana (how much mana to collect). setClouds takes "on": true/false. setSeaLevel uses "level": 0 normal, 1 floods the lowlands, 2 = a water planet, negative drains the sea. setSeason recolours the land and trees via "season": spring/summer/autumn/winter. savePlanet stores the whole world and loadPlanet brings it back — use them when asked to save or restore the planet.
 - You can CONJURE objects (the genie's power): spawn builds a shape from scratch — use "shape" (pyramid/box/sphere/cylinder/cone), with optional count/scale/color — or re-places a saved object by "catalog" name. import brings a real model in from a repo: set repo "khronos" and a "name" (e.g. Duck, Fox, Avocado, DamagedHelmet). Everything you conjure is remembered and can be re-spawned by name later. clearObjects removes everything you conjured.
 - Use spawn for geometric things ("three pyramids", "a giant sphere") and import for named real objects ("bring me a duck"). Terrain ops (raiseTerrain etc.) shape the land; spawn/import place objects on it.
-- vehicle changes what the player FLIES: set "ride" to a saved object name to fly it instead of the carpet (import or spawn it first if it isn't saved yet), or "carpet" to switch back. e.g. "let me fly the fox" -> first import the Fox, then vehicle ride "Fox".
-- For a vehicle that MOVES, prefer the built-in animated flyers: shape "falcon" flaps its wings, shape "paperplane" banks as it glides. Imported models only animate if they ship their own clip (e.g. Fox gallops); a plain model just hangs still — so when the player wants something lively to fly, spawn a falcon or paperplane and ride it. e.g. "give me a bird to fly" -> spawn shape "falcon" name "falcon", then vehicle ride "falcon".
+- vehicle changes what the player FLIES: set "ride" to a saved object name to fly it instead of the carpet (import or spawn it first if it isn't saved yet), or "carpet" to switch back. For multi-step edits give "world" an ARRAY of ops, applied in order: e.g. "let me fly the fox" -> "world":[{"op":"import","repo":"khronos","name":"Fox"},{"op":"vehicle","ride":"Fox"}].
+- For a vehicle that MOVES, prefer the built-in animated flyers: shape "falcon" flaps its wings, shape "paperplane" banks as it glides. Imported models only animate if they ship their own clip (e.g. Fox gallops); a plain model just hangs still — so when the player wants something lively to fly, spawn a falcon or paperplane and ride it. e.g. "give me a bird to fly" -> "world":[{"op":"spawn","shape":"falcon","name":"falcon"},{"op":"vehicle","ride":"falcon"}].
 - When asked what you can summon or conjure, answer in words using the GENIE line you're given (saved objects + importable examples); you don't need a "world" op just to talk about it.
 - "where" places terrain/mana/objects ahead of the carpet (default) or here. Leave "world" null when not editing.
 Default intent to "chat" if they're only talking. Speak naturally; never read the JSON aloud.`;
-
-function parseJSON(text) {
-  if (!text) return null;
-  try { return JSON.parse(text); } catch (e) {
-    const m = text.match(/\{[\s\S]*\}/); // tolerate prose around the JSON
-    if (m) { try { return JSON.parse(m[0]); } catch (e2) { /* give up */ } }
-  }
-  return null;
-}
 
 export class VoiceCopilot {
   constructor(api = window.agentAPI, opts = {}) {
@@ -78,6 +69,9 @@ export class VoiceCopilot {
     this._supertonic = null;
     this._voice = this.config.voice || 'af_heart';
     this._audioCtx = null;
+    this._activeSrc = null; // the WebAudio source currently speaking, so stop() can silence it
+    this._gen = 0; // bumped by stop(); in-flight start()/say() work from an older gen must not land
+    this._sayChain = Promise.resolve(); // serializes say() turns
     this.state = 'idle';
   }
 
@@ -87,7 +81,14 @@ export class VoiceCopilot {
     // a context made lazily after the async LLM call would stay suspended and
     // Kokoro/Supertonic would render silently. This is the gesture that unlocks it.
     this._ensureAudio();
-    this._provider = await createProvider(this.config);
+    const gen = this._gen; // stop() bumps this — a stale start must not go live
+    const provider = await createProvider(this.config); // can take minutes (WebLLM)
+    if (gen !== this._gen) {
+      // stopped while the brain loaded — dispose it and stay off
+      try { if (provider.dispose) Promise.resolve(provider.dispose()).catch(() => {}); } catch (e) { /* ignore */ }
+      return this;
+    }
+    this._provider = provider;
     try {
       if (this.tts === 'kokoro') await this._initKokoro();
       else if (this.tts === 'supertonic') await this._initSupertonic();
@@ -96,6 +97,7 @@ export class VoiceCopilot {
       this.onText({ role: 'system', text: `(${this.tts} voice unavailable — using the browser voice)` });
       this.tts = 'browser';
     }
+    if (gen !== this._gen) return this; // stopped while the voice loaded
     // Pre-fetch a small sample of importable models so the genie can answer
     // "what can you summon?" conversationally, without a tool round-trip.
     try {
@@ -107,6 +109,7 @@ export class VoiceCopilot {
       if (curated.length) this._importableSample = curated.slice(0, 14);
       else if (api && api.discover) this._importableSample = (await api.discover({ limit: 14 })).map((m) => m.name);
     } catch (e) { /* discovery is best-effort grounding, never blocks start */ }
+    if (gen !== this._gen) return this; // stopped during discovery
     this._setState('ready');
     return this;
   }
@@ -129,9 +132,25 @@ export class VoiceCopilot {
   }
 
   stop() {
+    this._gen++; // cancels any in-flight start()/say() from going live on this instance
     this.stopListening();
     if (this.companion) { try { this.companion.stop(); } catch (e) { /* ignore */ } this.companion = null; }
     try { if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+    // Silence the neural voice too: stop the in-flight WebAudio source...
+    if (this._activeSrc) { try { this._activeSrc.stop(); } catch (e) { /* already ended */ } this._activeSrc = null; }
+    // ...and close the AudioContext (browsers cap live contexts; leaking one per
+    // restart eventually mutes the neural voice). A fresh start() recreates it.
+    if (this._audioCtx) {
+      const ctx = this._audioCtx;
+      this._audioCtx = null;
+      try { Promise.resolve(ctx.close()).catch(() => {}); } catch (e) { /* ignore */ }
+    }
+    // Release the brain (unloads the on-device WebLLM engine's GPU memory).
+    if (this._provider) {
+      const p = this._provider;
+      this._provider = null;
+      try { if (p.dispose) Promise.resolve(p.dispose()).catch(() => {}); } catch (e) { /* ignore */ }
+    }
     this._setState('off');
     return this;
   }
@@ -151,6 +170,7 @@ export class VoiceCopilot {
 
   /** One push-to-talk turn: listen until silence, transcribe, then act + reply. */
   listen() {
+    if (this.state === 'off') return; // stopped — don't open the mic on a dead instance
     this._ensureAudio(); // pressing Talk is a gesture — keep audio unlocked
     if (this._listening) return;
     const SR = (typeof window !== 'undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -174,8 +194,17 @@ export class VoiceCopilot {
   }
 
   /** Take a text turn (from speech or typed): reason -> act on intent -> speak. */
-  async say(text) {
-    if (!text || !this._provider) return '';
+  say(text) {
+    // Serialize turns: two overlapping say() calls would interleave history and
+    // play two voices over each other. Each turn waits for the previous one.
+    const turn = this._sayChain.then(() => this._sayTurn(text));
+    this._sayChain = turn.then(() => {}, () => {});
+    return turn;
+  }
+
+  async _sayTurn(text) {
+    if (!text || !this._provider || this.state === 'off') return '';
+    const gen = this._gen; // stop() mid-turn must keep results from landing
     this.onText({ role: 'user', text });
     this._setState('thinking');
     const messages = [
@@ -194,11 +223,12 @@ export class VoiceCopilot {
     const timer = ctrl ? setTimeout(() => ctrl.abort(), 45000) : null;
     try {
       const raw = await this._provider.complete(messages, ctrl ? { signal: ctrl.signal } : {});
-      const obj = parseJSON(raw);
+      const obj = extractJSON(raw);
       if (obj) {
         reply = String(obj.reply || '').trim();
         intent = String(obj.intent || 'chat').trim().toLowerCase();
         target = typeof obj.target === 'string' ? obj.target : null;
+        // "world" may be one op or an array of ops applied in order.
         world = obj.world && typeof obj.world === 'object' ? obj.world : null;
       } else {
         reply = (raw || '').trim(); // model ignored the format — just say it
@@ -210,9 +240,11 @@ export class VoiceCopilot {
     } finally {
       if (timer) clearTimeout(timer);
     }
+    if (gen !== this._gen) return ''; // stopped while thinking — drop the turn
     if (!reply) reply = '…';
 
     this.history.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
+    if (this.history.length > 16) this.history = this.history.slice(-16); // only slice(-8) is ever read
     this.onText({ role: 'assistant', text: reply });
 
     // Act first (start flying / edit the world immediately), then speak over it.
@@ -220,7 +252,7 @@ export class VoiceCopilot {
     this._applyWorld(world);
     this._setState('speaking');
     await this._speak(reply);
-    this._setState('ready');
+    if (gen === this._gen) this._setState('ready'); // don't wake a stopped copilot
     return reply;
   }
 
@@ -243,49 +275,68 @@ export class VoiceCopilot {
     return this.companion;
   }
 
+  // "world" from the model may be one op or an array of ops — apply in order.
   _applyWorld(w) {
+    if (!w) return;
+    if (Array.isArray(w)) { for (const op of w) this._applyWorldOp(op); return; }
+    this._applyWorldOp(w);
+  }
+
+  _applyWorldOp(w) {
     if (!w || typeof w !== 'object' || !w.op) return;
     const api = (typeof window !== 'undefined') && window.worldAPI;
     if (!api) { this.onText({ role: 'system', text: '(world editing not available)' }); return; }
     const op = String(w.op);
+    // Report the ACTUAL outcome: async ops confirm on resolve, and a missing or
+    // failing op says so instead of claiming success.
+    const ok = () => this.onText({ role: 'system', text: `🪄 ${this._worldLabel(w, op)}` });
+    const fail = (why) => this.onText({ role: 'system', text: `(world edit "${op}" didn’t take${why ? ` — ${why}` : ''})` });
     try {
-      if (op === 'setTimeOfDay') { if (api.setTimeOfDay) api.setTimeOfDay(Number(w.t)); }
-      else if (op === 'setWorldShape') { if (api.setWorldShape) api.setWorldShape(w.shape); }
-      else if (op === 'setTrees') { if (api.setTrees) api.setTrees(Number(w.level)); }
-      else if (op === 'setLandmarks') { if (api.setLandmarks) api.setLandmarks(Number(w.level)); }
-      else if (op === 'setMana') { if (api.setMana) api.setMana(Number(w.level)); }
-      else if (op === 'setClouds') { if (api.setClouds) api.setClouds(w.on === true || w.on === 'true' || w.on === 'on'); }
-      else if (op === 'setSeaLevel') { if (api.setSeaLevel) api.setSeaLevel(Number(w.level)); }
-      else if (op === 'setCurveRadius') { const lvl = Math.max(0.2, Number(w.level) || 1); if (api.setWorldShape) api.setWorldShape('round'); if (api.setCurveRadius) api.setCurveRadius(30000 / lvl); }
-      else if (op === 'setSeason') { if (api.setSeason) api.setSeason(w.season); }
-      else if (op === 'savePlanet') { if (api.savePlanet) api.savePlanet(); }
-      else if (op === 'loadPlanet') { if (api.loadPlanet) api.loadPlanet(); }
-      else if (op === 'reroll') { if (api.reroll) api.reroll(); }
-      else if (op === 'clearTerrain') { if (api.clearTerrain) api.clearTerrain(); }
+      let done = false;
+      if (op === 'setTimeOfDay') { if (api.setTimeOfDay) { api.setTimeOfDay(Number(w.t)); done = true; } }
+      else if (op === 'setWorldShape') { if (api.setWorldShape) { api.setWorldShape(w.shape); done = true; } }
+      else if (op === 'setTrees') { if (api.setTrees) { api.setTrees(Number(w.level)); done = true; } }
+      else if (op === 'setLandmarks') { if (api.setLandmarks) { api.setLandmarks(Number(w.level)); done = true; } }
+      else if (op === 'setMana') { if (api.setMana) { api.setMana(Number(w.level)); done = true; } }
+      else if (op === 'setClouds') { if (api.setClouds) { api.setClouds(w.on === true || w.on === 'true' || w.on === 'on'); done = true; } }
+      else if (op === 'setSeaLevel') { if (api.setSeaLevel) { api.setSeaLevel(Number(w.level)); done = true; } }
+      else if (op === 'setCurveRadius') { const lvl = Math.max(0.2, Number(w.level) || 1); if (api.setCurveRadius) { if (api.setWorldShape) api.setWorldShape('round'); api.setCurveRadius(30000 / lvl); done = true; } }
+      else if (op === 'setSeason') { if (api.setSeason) { api.setSeason(w.season); done = true; } }
+      else if (op === 'savePlanet') { if (api.savePlanet) { api.savePlanet(); done = true; } }
+      else if (op === 'loadPlanet') { if (api.loadPlanet) { api.loadPlanet(); done = true; } }
+      else if (op === 'reroll') { if (api.reroll) { api.reroll(); done = true; } }
+      else if (op === 'clearTerrain') { if (api.clearTerrain) { api.clearTerrain(); done = true; } }
       else if (op === 'spawn') {
         // Genie object-authoring. `where` -> `at`; the rest passes straight through.
-        if (api.spawn) Promise.resolve(api.spawn({ shape: w.shape, catalog: w.catalog, count: w.count, scale: w.scale, color: w.color, at: w.where === 'here' ? 'here' : 'ahead' })).catch(() => {});
+        if (api.spawn) Promise.resolve(api.spawn({ shape: w.shape, catalog: w.catalog, count: w.count, scale: w.scale, color: w.color, at: w.where === 'here' ? 'here' : 'ahead' })).then(ok, (e) => fail(e && e.message));
+        else fail();
+        return;
       }
       else if (op === 'import') {
-        if (api.import) Promise.resolve(api.import({ repo: w.repo || 'khronos', name: w.name, as: w.as })).catch(() => {});
+        if (api.import) Promise.resolve(api.import({ repo: w.repo || 'khronos', name: w.name, as: w.as })).then(ok, (e) => fail(e && e.message));
+        else fail();
+        return;
       }
-      else if (op === 'clearObjects') { if (api.clear) api.clear(); }
+      else if (op === 'clearObjects') { if (api.clear) { api.clear(); done = true; } }
       else if (op === 'vehicle') {
         const ride = w.ride || w.catalog || 'carpet';
-        this._lastRide = ride;
-        if (api.vehicle) Promise.resolve(api.vehicle({ set: ride, scale: w.scale })).catch(() => {});
+        // _lastRide grounds the next prompt — only claim the ride once it resolves.
+        if (api.vehicle) Promise.resolve(api.vehicle({ set: ride, scale: w.scale })).then(() => { this._lastRide = ride; ok(); }, (e) => fail(e && e.message));
+        else fail();
+        return;
       }
-      else {
+      else if (op === 'raiseTerrain' || op === 'carveTerrain' || op === 'spawnMana') {
         const radius = op === 'spawnMana' ? 0 : (Number(w.radius) || 250);
         const p = this._worldPoint(w.where, radius);
         if (!p) { this.onText({ role: 'system', text: '(can’t place that yet — take off first)' }); return; }
-        if (op === 'raiseTerrain' && api.raiseTerrain) api.raiseTerrain(p.x, p.z, Number(w.radius) || 250, Math.abs(Number(w.amount) || 170));
-        else if (op === 'carveTerrain' && api.carveTerrain) api.carveTerrain(p.x, p.z, Number(w.radius) || 250, Math.abs(Number(w.amount) || 150));
-        else if (op === 'spawnMana' && api.spawnMana) api.spawnMana(p.x, p.z);
+        if (op === 'raiseTerrain' && api.raiseTerrain) { api.raiseTerrain(p.x, p.z, Number(w.radius) || 250, Math.abs(Number(w.amount) || 170)); done = true; }
+        else if (op === 'carveTerrain' && api.carveTerrain) { api.carveTerrain(p.x, p.z, Number(w.radius) || 250, Math.abs(Number(w.amount) || 150)); done = true; }
+        else if (op === 'spawnMana' && api.spawnMana) { api.spawnMana(p.x, p.z); done = true; }
       }
+      else { fail('unknown op'); return; }
       // Tell the player what just happened, in plain words, so the change is legible.
-      this.onText({ role: 'system', text: `🪄 ${this._worldLabel(w, op)}` });
-    } catch (e) { /* a world edit must never break the conversation */ }
+      if (done) ok(); else fail();
+    } catch (e) { fail(e && e.message); /* a world edit must never break the conversation */ }
   }
 
   // Plain-language description of a world edit for the on-screen log.
@@ -428,13 +479,18 @@ export class VoiceCopilot {
     const ctx = this._ensureAudio();
     if (!ctx) return;
     if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) { /* ignore */ } }
+    // A context still suspended (no user gesture yet) would never fire onended
+    // and wedge the turn at 'speaking' — throw so _speak falls back to the
+    // browser voice instead.
+    if (ctx.state === 'suspended') throw new Error('audio locked (needs a user gesture)');
     const buf = ctx.createBuffer(1, pcm.length, rate);
     buf.copyToChannel(pcm instanceof Float32Array ? pcm : Float32Array.from(pcm), 0);
     await new Promise((resolve) => {
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.connect(ctx.destination);
-      src.onended = () => resolve();
+      src.onended = () => { if (this._activeSrc === src) this._activeSrc = null; resolve(); };
+      this._activeSrc = src; // kept so stop() can silence mid-sentence
       src.start();
     });
   }

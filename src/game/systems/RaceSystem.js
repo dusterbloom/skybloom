@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System.js';
+import { InputManager } from '../core/InputManager.js';
 import { SimpleBot } from '../../agents/SimpleBot.js';
 import { LLMPilot } from '../../agents/LLMPilot.js';
 import { VoiceCopilot } from '../../agents/VoiceCopilot.js';
@@ -71,6 +72,14 @@ const COLOR_GHOST = 0x66ffee;
 const BUILD_VERSION = typeof __SKYBLOOM_BUILD_VERSION__ !== 'undefined'
   ? __SKYBLOOM_BUILD_VERSION__
   : 'dev';
+
+// Default model id per Brain provider. Also used to detect "the user never
+// customized the model", so switching provider can swap the default in.
+const PROVIDER_DEFAULT_MODELS = {
+  cloud: 'claude-haiku-4-5',
+  openai: 'local-model',
+  local: 'Llama-3.2-1B-Instruct-q4f32_1-MLC',
+};
 
 /**
  * mulberry32 — tiny deterministic PRNG. Same seed → same course, everywhere.
@@ -182,8 +191,7 @@ export class RaceSystem extends System {
     // stray keypress mid-race can't wipe a good run — call start() for that).
     this._onKeyDown = (event) => {
       if (event.code !== 'KeyR' || event.repeat) return;
-      const t = event.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (InputManager.isEditableTarget(event.target)) return;
       if (!this._isGamePlaying()) return;
       if (this.state !== 'running') this.start();
     };
@@ -262,11 +270,15 @@ export class RaceSystem extends System {
     if (this._panelToggle && this._panelToggle.parentNode) {
       this._panelToggle.parentNode.removeChild(this._panelToggle);
     }
+    if (this._agentRoot && this._agentRoot.parentNode) {
+      this._agentRoot.parentNode.removeChild(this._agentRoot);
+    }
     this._hudRoot = null;
     this._raceChip = null;
     this._ghostChip = null;
     this._panelRoot = null;
     this._panelToggle = null;
+    this._agentRoot = null;
     this._panelFields = {};
     this._panelButtons = {};
 
@@ -274,7 +286,7 @@ export class RaceSystem extends System {
       this.engine.eventBus.off('agentActionQueued', this._onAgentActionQueued);
       this._onAgentActionQueued = null;
     }
-    this.stopSimpleBot();
+    this.stopAutonomousDrivers();
 
     if (this.courseGroup) {
       this.engine.scene.remove(this.courseGroup);
@@ -505,6 +517,22 @@ export class RaceSystem extends System {
     if (keep !== 'voice' && this._voiceCopilot && this._voiceCopilot.companion) {
       try { this._voiceCopilot.companion.setGoal('manual'); } catch (error) { /* best effort */ }
     }
+    // GenieSystem's ground roamer drives the same virtualPad at 10 Hz — it counts
+    // as an autonomous driver too, so kick it out along with the others.
+    try { this.engine.systems.get('genie')?.stopRoam?.(); } catch (error) { /* best effort */ }
+  }
+
+  /**
+   * Stop EVERY autonomous driver this system owns: SimpleBot, the LLM pilot and
+   * the voice co-pilot. Public contract — GenieSystem calls this before starting
+   * a ground roamer, and destroy() uses it so a hot-reload never leaves an
+   * orphaned pilot steering the carpet.
+   */
+  stopAutonomousDrivers() {
+    this.stopSimpleBot();
+    this.stopLLMPilot();
+    if (this._voiceCopilot) this.stopVoiceChat();
+    return true;
   }
 
   /** Start the bundled reference agent through the same public Agent API users get. */
@@ -544,29 +572,37 @@ export class RaceSystem extends System {
     return true;
   }
 
-  /** Current agent/LLM config from the in-panel form (localStorage), with defaults. */
+  /** Current agent/LLM config from the in-panel form (localStorage), with defaults.
+   *  Keys are stored PER PROVIDER (`apiKeys`); the flat `apiKey` field exposed here
+   *  is always the current provider's key only, so a key saved for one provider is
+   *  never sent as a Bearer token to another provider's endpoint. */
   _agentConfig() {
     let cfg = {};
     try { const raw = localStorage.getItem('vc.voice'); if (raw) cfg = JSON.parse(raw); } catch (error) { /* defaults below */ }
     const provider = cfg.provider || 'cloud';
+    const apiKeys = (cfg.apiKeys && typeof cfg.apiKeys === 'object') ? { ...cfg.apiKeys } : {};
+    // Migrate the legacy single `apiKey` field into the saved provider's slot.
+    if (cfg.apiKey && !apiKeys[provider]) apiKeys[provider] = cfg.apiKey;
     return {
       provider,
       baseURL: cfg.baseURL || 'http://localhost:1234/v1',
-      apiKey: cfg.apiKey || '',
-      model: cfg.model || (provider === 'openai' ? 'local-model' : provider === 'local' ? 'Llama-3.2-1B-Instruct-q4f32_1-MLC' : 'claude-haiku-4-5'),
+      apiKeys,
+      apiKey: apiKeys[provider] || '',
+      model: cfg.model || PROVIDER_DEFAULT_MODELS[provider] || PROVIDER_DEFAULT_MODELS.cloud,
       tts: cfg.tts || 'supertonic',
     };
   }
 
   _saveAgentConfig(cfg) {
     try { localStorage.setItem('vc.voice', JSON.stringify(cfg)); } catch (error) { /* private mode */ }
-    try { localStorage.setItem('vc.pilot', JSON.stringify(cfg)); } catch (error) { /* private mode */ }
+    // 'vc.pilot' was a duplicate write (plaintext key included) that nothing reads.
+    try { localStorage.removeItem('vc.pilot'); } catch (error) { /* private mode */ }
   }
 
   /** A brain config needs a key for cloud; local/openai usually don't. */
   _requireBrain(cfg) {
     if (cfg.provider === 'cloud' && !cfg.apiKey) {
-      this._toast('Add your API key in MENU → Race → Agent settings', '#ffcc66', 4000);
+      this._toast('Add your API key in MENU → Agent', '#ffcc66', 4000);
       return false;
     }
     return true;
@@ -575,7 +611,10 @@ export class RaceSystem extends System {
   /** Resolve pilot config from the saved agent settings (no prompts). */
   _resolvePilotConfig() {
     const cfg = this._agentConfig();
-    return this._requireBrain(cfg) ? cfg : null;
+    if (!this._requireBrain(cfg)) return null;
+    // Agents get only the current provider's key, never the whole key map.
+    const { apiKeys, ...runtime } = cfg;
+    return runtime;
   }
 
   /** Start the in-browser hybrid LLM pilot (SimpleBot floor + LLM directive overrides). */
@@ -623,7 +662,9 @@ export class RaceSystem extends System {
   _resolveVoiceConfig() {
     const cfg = this._agentConfig();
     if (!this._requireBrain(cfg)) return null;
-    return { ...cfg, lang: 'en-US' };
+    // Agents get only the current provider's key, never the whole key map.
+    const { apiKeys, ...runtime } = cfg;
+    return { ...runtime, lang: 'en-US' };
   }
 
   /** In-panel Agent/LLM settings form — edit provider, endpoint, key, model, voice
@@ -675,11 +716,30 @@ export class RaceSystem extends System {
     row('Model', model);
     row('Voice', tts);
 
+    // Each provider keeps its own API key; the visible field always shows the
+    // key belonging to the currently selected provider.
+    const apiKeys = { ...cfg.apiKeys };
+    let prevProvider = provider.value;
+
     const sync = () => {
       urlRow.style.display = provider.value === 'openai' ? 'grid' : 'none';
       keyRow.style.display = provider.value === 'local' ? 'none' : 'grid';
     };
-    provider.addEventListener('change', sync); sync();
+    provider.addEventListener('change', () => {
+      // Stash the field under the provider we are leaving, show the key saved
+      // for the one we are entering.
+      apiKeys[prevProvider] = apiKey.value.trim();
+      apiKey.value = apiKeys[provider.value] || '';
+      // Swap the default model id along with the provider — but only when the
+      // field still holds a provider default (i.e. the user never customized it).
+      const m = model.value.trim();
+      if (!m || Object.values(PROVIDER_DEFAULT_MODELS).includes(m)) {
+        model.value = PROVIDER_DEFAULT_MODELS[provider.value];
+      }
+      prevProvider = provider.value;
+      sync();
+    });
+    sync();
 
     const save = document.createElement('button');
     save.type = 'button'; save.className = 'vc-btn-primary';
@@ -688,8 +748,9 @@ export class RaceSystem extends System {
     save.style.fontSize = '12px'; save.style.marginTop = '4px';
     save.addEventListener('click', (e) => {
       e.preventDefault(); e.stopPropagation();
+      apiKeys[provider.value] = apiKey.value.trim();
       this._saveAgentConfig({
-        provider: provider.value, baseURL: baseURL.value.trim(), apiKey: apiKey.value.trim(),
+        provider: provider.value, baseURL: baseURL.value.trim(), apiKeys,
         model: model.value.trim(), tts: tts.value,
       });
       const wasVoice = !!this._voiceCopilot;
@@ -1413,10 +1474,16 @@ export class RaceSystem extends System {
     this._createAgentConfigForm(agentRoot);
     this._agentRoot = agentRoot;
 
+    // registerSettingsPane always accepts (it queues until the menu exists), so
+    // the direct append only covers a missing/degraded UI system.
     const ui = this.engine.systems.get('ui');
-    const canRegister = ui && typeof ui.registerSettingsPane === 'function';
-    if (!canRegister || !ui.registerSettingsPane('race', root)) uiRoot.appendChild(root);
-    if (!canRegister || !ui.registerSettingsPane('agent', agentRoot)) uiRoot.appendChild(agentRoot);
+    if (ui && typeof ui.registerSettingsPane === 'function') {
+      ui.registerSettingsPane('race', root);
+      ui.registerSettingsPane('agent', agentRoot);
+    } else {
+      uiRoot.appendChild(root);
+      uiRoot.appendChild(agentRoot);
+    }
     this._panelToggle = null;
     this._panelRoot = root;
     this._updatePanel();
@@ -1486,9 +1553,10 @@ export class RaceSystem extends System {
 
   _removePanelNodes() {
     if (typeof document === 'undefined') return;
-    document.querySelectorAll('#race-panel, #race-panel-toggle').forEach((node) => node.remove());
+    document.querySelectorAll('#race-panel, #race-panel-toggle, #agent-panel').forEach((node) => node.remove());
     this._panelRoot = null;
     this._panelToggle = null;
+    this._agentRoot = null;
     this._panelOpen = false;
   }
 

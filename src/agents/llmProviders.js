@@ -16,6 +16,36 @@
 // with `npm i @mlc-ai/web-llm` if you want it offline-cached.
 const WEBLLM_CDN = 'https://esm.run/@mlc-ai/web-llm';
 
+/**
+ * Tolerant JSON extraction, shared by every agent that reads model output.
+ * Tries a straight parse first, then scans a BALANCED {...} block from the
+ * first '{' — robust to prose before AND after the JSON (a greedy regex is
+ * not). Returns the parsed object, or null.
+ */
+export function extractJSON(text) {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch (e) { /* fall through to the scan */ }
+  const start = text.indexOf('{');
+  if (start < 0) return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 0) {
+        try { return JSON.parse(text.slice(start, i + 1)); } catch (e) { return null; }
+      }
+    }
+  }
+  return null;
+}
+
 export async function createProvider(config = {}) {
   switch (config.provider) {
     case 'local': return createLocalProvider(config);
@@ -53,6 +83,7 @@ function createCloudProvider({ apiKey, model = 'claude-haiku-4-5' } = {}) {
       const block = Array.isArray(data.content) && data.content.find((b) => b.type === 'text');
       return block ? block.text : '';
     },
+    async dispose() { /* nothing held client-side */ },
   };
 }
 
@@ -75,6 +106,7 @@ function createOpenAIProvider({ baseURL = 'http://localhost:1234/v1', apiKey = '
       const data = await res.json();
       return data?.choices?.[0]?.message?.content || '';
     },
+    async dispose() { /* nothing held client-side */ },
   };
 }
 
@@ -86,11 +118,34 @@ async function createLocalProvider({ model = 'Llama-3.2-1B-Instruct-q4f32_1-MLC'
   const engine = await webllm.CreateMLCEngine(model, {
     initProgressCallback: (p) => onStatus && onStatus(p && p.text ? p.text : 'loading model…'),
   });
+  const abortError = () => { const err = new Error('WebLLM generation aborted'); err.name = 'AbortError'; return err; };
   return {
-    async complete(messages) {
-      const reply = await engine.chat.completions.create({ messages, max_tokens: 200, temperature: 0.4 });
+    // Honour { signal } like the fetch-based providers: on abort, interrupt the
+    // on-device generation if the engine supports it, and reject either way so
+    // the caller's timeout path actually fires.
+    async complete(messages, { signal } = {}) {
+      if (signal && signal.aborted) throw abortError();
+      const run = engine.chat.completions.create({ messages, max_tokens: 200, temperature: 0.4 });
+      let reply;
+      if (signal) {
+        reply = await new Promise((resolve, reject) => {
+          const onAbort = () => {
+            try { if (engine.interruptGenerate) engine.interruptGenerate(); } catch (e) { /* best effort */ }
+            reject(abortError());
+          };
+          signal.addEventListener('abort', onAbort, { once: true });
+          run.then(
+            (r) => { signal.removeEventListener('abort', onAbort); resolve(r); },
+            (e) => { signal.removeEventListener('abort', onAbort); reject(e); },
+          );
+        });
+      } else {
+        reply = await run;
+      }
       return reply?.choices?.[0]?.message?.content || '';
     },
+    // Free the GPU memory held by the on-device engine (WebLLM exposes unload()).
+    async dispose() { try { if (engine.unload) await engine.unload(); } catch (e) { /* best effort */ } },
   };
 }
 

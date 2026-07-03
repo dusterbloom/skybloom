@@ -12,7 +12,7 @@
  *   new LLMPilot(window.agentAPI, { config: { provider:'cloud', apiKey:'sk-ant-...' } }).start();
  */
 import { SimpleBot } from './SimpleBot.js';
-import { createProvider } from './llmProviders.js';
+import { createProvider, extractJSON } from './llmProviders.js';
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -30,12 +30,7 @@ Heuristic: far gate roughly ahead -> high aggression; close gate with large |bea
 const num = (v, lo, hi, dflt) => { const n = Number(v); return Number.isFinite(n) ? clamp(n, lo, hi) : dflt; };
 
 function parseDirective(text) {
-  if (!text) return null;
-  let obj = null;
-  try { obj = JSON.parse(text); } catch (e) {
-    const m = text.match(/\{[\s\S]*\}/); // tolerate prose around the JSON
-    if (m) { try { obj = JSON.parse(m[0]); } catch (e2) { /* give up */ } }
-  }
+  const obj = extractJSON(text); // tolerate prose around the JSON
   if (!obj || typeof obj !== 'object') return null;
   return {
     aggression: num(obj.aggression, 0, 1, NEUTRAL.aggression),
@@ -62,6 +57,7 @@ export class LLMPilot {
     this._baseline = new SimpleBot(api, { autoStart: false }); // reuse its pure steer()
     this._provider = null;
     this._timer = null;
+    this._gen = 0; // bumped by stop(); an in-flight start() from an older gen must not go live
     this._raceRequested = false;
     this._released = false;
     this.directive = { ...NEUTRAL };
@@ -75,14 +71,27 @@ export class LLMPilot {
     if (!this.api || typeof this.api.observe !== 'function') {
       throw new Error('LLMPilot: window.agentAPI not found. Is the game running?');
     }
-    this._provider = await createProvider(this.config);
+    const gen = this._gen;
+    const provider = await createProvider(this.config); // can take minutes (WebLLM)
+    if (gen !== this._gen || this._timer) {
+      // stop() was called while the model loaded — don't start an orphaned pilot
+      try { if (provider.dispose) Promise.resolve(provider.dispose()).catch(() => {}); } catch (e) { /* ignore */ }
+      return this;
+    }
+    this._provider = provider;
     this._timer = setInterval(() => this._tick(), this.opts.intervalMs);
     return this;
   }
 
   /** Stop and hand control back to the human immediately. */
   stop() {
+    this._gen++; // cancels an in-flight start()
     if (this._timer) { clearInterval(this._timer); this._timer = null; }
+    if (this._provider) {
+      const p = this._provider;
+      this._provider = null;
+      try { if (p.dispose) Promise.resolve(p.dispose()).catch(() => {}); } catch (e) { /* ignore */ }
+    }
     if (this.api && typeof this.api.release === 'function') this.api.release();
     return this;
   }

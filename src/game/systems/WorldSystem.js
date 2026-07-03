@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { createNoise2D } from "simplex-noise";
 import { System } from "../core/System.js";
 import { Logger } from "../../utils/Logger.js";
+import { CURVE_UNIFORMS_GLSL, CURVE_DROP_GLSL } from "../shaders/curvature.js";
 
 export class WorldSystem extends System {
   constructor(engine) {
@@ -16,6 +17,13 @@ export class WorldSystem extends System {
     this.currentChunks = new Map();
     this.manaNodes = [];
     this.terrainEdits = []; // creative terraform brushes: sparse additive height edits
+    // Coarse spatial hash over terrainEdits so getTerrainHeight (hot path: physics,
+    // chunk-gen, vegetation, mana) only scans edits in the 3×3 neighbouring cells.
+    // Cell size = the max edit radius (raiseTerrain clamps to 1500), so any edit
+    // that can reach a query point lives in one of those 9 cells. The saved format
+    // stays the flat terrainEdits array; the index is rebuilt on load.
+    this._editIndex = new Map(); // "cx,cz" -> [edit, ...]
+    this._editCellSize = 1500;
 
     // World shape: a camera-relative visual curvature that bends distant terrain
     // DOWN like a planet's horizon, while generation and physics stay a flat 2D
@@ -263,16 +271,11 @@ export class WorldSystem extends System {
     material.onBeforeCompile = (shader) => {
       shader.uniforms.uCurveCenter = uniforms.uCurveCenter;
       shader.uniforms.uCurveAmount = uniforms.uCurveAmount;
-      shader.vertexShader = 'uniform vec3 uCurveCenter;\nuniform float uCurveAmount;\n' + shader.vertexShader;
+      shader.vertexShader = CURVE_UNIFORMS_GLSL + CURVE_DROP_GLSL + shader.vertexShader;
       shader.vertexShader = shader.vertexShader.replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
-        {
-          vec3 _cwp = (modelMatrix * vec4(transformed, 1.0)).xyz;
-          float _cdx = _cwp.x - uCurveCenter.x;
-          float _cdz = _cwp.z - uCurveCenter.z;
-          transformed.y -= uCurveAmount * (_cdx * _cdx + _cdz * _cdz);
-        }`
+        transformed.y -= curveDrop((modelMatrix * vec4(transformed, 1.0)).xyz);`
       );
       WorldSystem.applySeasonShader(shader, season);
     };
@@ -324,10 +327,13 @@ export class WorldSystem extends System {
 
   // Per-frame: ease the bend toward its target and re-center every registered set
   // on the viewer, so terrain, water and vegetation all curve about the same point.
-  _updateCurvature() {
+  _updateCurvature(delta) {
     const c = this.curvature;
-    // critically-damped-ish ease so flat<->round morphs smoothly instead of popping
-    c.strength += (c.targetStrength - c.strength) * 0.08;
+    // critically-damped-ish ease so flat<->round morphs smoothly instead of popping.
+    // Delta-scaled (exponential decay) so the morph speed is frame-rate independent
+    // — k = 5 matches the old 0.08-per-frame feel at 60 Hz.
+    const ease = 1 - Math.exp(-5 * (Number.isFinite(delta) ? delta : 1 / 60));
+    c.strength += (c.targetStrength - c.strength) * ease;
     if (Math.abs(c.strength - c.targetStrength) < 1e-9) c.strength = c.targetStrength;
     const cam = this.engine.camera;
     const center = cam ? cam.position : (this.engine.systems.player?.localPlayer?.position);
@@ -367,21 +373,26 @@ export class WorldSystem extends System {
   }
 
   // ===== "World DJ" knobs the companion can twist. Each takes a friendly LEVEL
-  // where 1 = normal, more/less scales around it; delegates to the owning system. =====
+  // where 1 = normal, more/less scales around it; delegates to the owning system.
+  // These are LLM-called entry points, so a dropped/garbled arg is LIKELY: a
+  // missing level must mean "normal" (the neutral 1), never "delete everything". =====
   _setTrees(level) {
     const trees = this.engine.systemManager.get('simpleTrees');
-    if (trees && trees.setDensity) return trees.setDensity(Number(level));
+    const lv = Number(level);
+    if (trees && trees.setDensity) return trees.setDensity(Number.isFinite(lv) ? lv : 1);
     return null;
   }
 
   _setLandmarks(level) {
     const lm = this.engine.systemManager.get('landmarks');
-    if (lm && lm.setMaxLandmarks) return lm.setMaxLandmarks(Math.round((Number(level) || 0) * 8));
+    const lv = Number(level);
+    if (lm && lm.setMaxLandmarks) return lm.setMaxLandmarks(Math.round((Number.isFinite(lv) ? lv : 1) * 8));
     return null;
   }
 
   _setMana(level) {
-    this.maxManaNodes = Math.max(0, Math.min(400, Math.round((Number(level) || 0) * 80)));
+    const lv = Number(level);
+    this.maxManaNodes = Math.max(0, Math.min(400, Math.round((Number.isFinite(lv) ? lv : 1) * 80)));
     while (this.manaNodes.length > this.maxManaNodes) this.removeManaNode(this.manaNodes.pop());
     if (this.manaNodes.length < this.maxManaNodes) this.topUpManaNodes();
     return { maxMana: this.maxManaNodes };
@@ -395,7 +406,8 @@ export class WorldSystem extends System {
   }
 
   _setSeaLevel(level) {
-    const y = (Number(level) || 0) * 150; // level 1 ~ floods lowlands, 2 ~ water planet
+    const lv = Number(level);
+    const y = (Number.isFinite(lv) ? lv : 0) * 150; // level 1 ~ floods lowlands, 2 ~ water planet; missing = normal
     const water = this.engine.systemManager.get('water');
     if (water && water.setSeaLevel) return water.setSeaLevel(y);
     this.waterLevel = y;
@@ -413,19 +425,43 @@ export class WorldSystem extends System {
   }
 
   // Sum of smooth additive brushes. amount > 0 raises (hill/mountain), < 0 carves.
+  // Only the 3×3 cells around the query point are scanned (see _editIndex).
   _deformHeight(x, z) {
+    const cs = this._editCellSize;
+    const cx = Math.floor(x / cs);
+    const cz = Math.floor(z / cs);
     let d = 0;
-    for (let i = 0; i < this.terrainEdits.length; i++) {
-      const e = this.terrainEdits[i];
-      const dx = x - e.x;
-      const dz = z - e.z;
-      const dist2 = dx * dx + dz * dz;
-      const r2 = e.radius * e.radius;
-      if (dist2 >= r2) continue;
-      const t = 1 - dist2 / r2;             // 1 at the centre -> 0 at the rim
-      d += e.amount * t * t * (3 - 2 * t);  // smoothstep -> rounded, seamless bump
+    for (let ix = cx - 1; ix <= cx + 1; ix++) {
+      for (let iz = cz - 1; iz <= cz + 1; iz++) {
+        const bucket = this._editIndex.get(`${ix},${iz}`);
+        if (!bucket) continue;
+        for (let i = 0; i < bucket.length; i++) {
+          const e = bucket[i];
+          const dx = x - e.x;
+          const dz = z - e.z;
+          const dist2 = dx * dx + dz * dz;
+          const r2 = e.radius * e.radius;
+          if (dist2 >= r2) continue;
+          const t = 1 - dist2 / r2;             // 1 at the centre -> 0 at the rim
+          d += e.amount * t * t * (3 - 2 * t);  // smoothstep -> rounded, seamless bump
+        }
+      }
     }
     return d;
+  }
+
+  // Add one edit to the spatial hash (keyed by the cell its CENTRE falls in).
+  _indexEdit(e) {
+    const cs = this._editCellSize;
+    const key = `${Math.floor(e.x / cs)},${Math.floor(e.z / cs)}`;
+    const bucket = this._editIndex.get(key);
+    if (bucket) bucket.push(e); else this._editIndex.set(key, [e]);
+  }
+
+  // Rebuild the hash from the flat terrainEdits array (after load/replace).
+  _rebuildEditIndex() {
+    this._editIndex.clear();
+    for (let i = 0; i < this.terrainEdits.length; i++) this._indexEdit(this.terrainEdits[i]);
   }
 
   // ===== Save / load the whole creative planet state to localStorage =====
@@ -435,19 +471,22 @@ export class WorldSystem extends System {
     const trees = sm.get('simpleTrees');
     const lm = sm.get('landmarks');
     const cs = atmo && atmo.cloudSystem;
+    // Never persist NaN (JSON turns it into null, which loads back as 0 and bakes
+    // an accident in) — fall back to each field's neutral value instead.
+    const fin = (v, dflt) => (Number.isFinite(Number(v)) ? Number(v) : dflt);
     const snap = {
       v: 1,
-      seed: this.seed,
+      seed: fin(this.seed, 0),
       terrainEdits: this.terrainEdits.map((e) => ({ x: e.x, z: e.z, radius: e.radius, amount: e.amount })),
       shape: this.curvature.shape,
-      curveRadius: this.curvature.radius,
+      curveRadius: fin(this.curvature.radius, 30000),
       season: this.season,
-      seaLevel: this.waterLevel,
-      trees: trees && trees.densityScale != null ? trees.densityScale : 1,
-      landmarks: lm ? lm.maxLandmarks : 8,
+      seaLevel: fin(this.waterLevel, 0),
+      trees: fin(trees && trees.densityScale != null ? trees.densityScale : 1, 1),
+      landmarks: fin(lm ? lm.maxLandmarks : 8, 8),
       clouds: cs ? !cs._hidden : true,
-      timeOfDay: atmo ? atmo.timeOfDay : 0.5,
-      maxMana: this.maxManaNodes,
+      timeOfDay: fin(atmo ? atmo.timeOfDay : 0.5, 0.5),
+      maxMana: fin(this.maxManaNodes, 80),
     };
     try { localStorage.setItem('vc.planet', JSON.stringify(snap)); } catch (e) { /* private mode */ }
     return snap;
@@ -457,24 +496,49 @@ export class WorldSystem extends System {
     if (!snap) { try { snap = JSON.parse(localStorage.getItem('vc.planet')); } catch (e) { return null; } }
     if (!snap || typeof snap !== 'object') return null;
     const sm = this.engine.systemManager;
+    // Distrust the input: a bad numeric field keeps the current value rather than
+    // zeroing the world. null is "missing", NOT 0 — legacy saves serialized NaN
+    // as null, and Number(null) === 0 would bake that accident back in.
+    const fin = (v) => (v == null || !Number.isFinite(Number(v))) ? undefined : Number(v);
     // terrain: restore seed + edits, then re-mesh everything from the flat oracle
-    if (snap.seed !== undefined && snap.seed !== null) this.seed = Number(snap.seed);
+    if (fin(snap.seed) !== undefined) this.seed = fin(snap.seed);
     this.terrainEdits = Array.isArray(snap.terrainEdits)
-      ? snap.terrainEdits.map((e) => ({ x: +e.x, z: +e.z, radius: +e.radius, amount: +e.amount }))
+      ? snap.terrainEdits
+          .map((e) => ({ x: +e.x, z: +e.z, radius: +e.radius, amount: +e.amount }))
+          .filter((e) => Number.isFinite(e.x) && Number.isFinite(e.z) && Number.isFinite(e.radius) && Number.isFinite(e.amount))
       : [];
+    this._rebuildEditIndex();
     this.heightCache.clear();
     this._remeshAll();
     // world shape + curve tightness
-    if (snap.curveRadius) this.curvature.radius = Number(snap.curveRadius);
+    if (fin(snap.curveRadius) !== undefined) this.curvature.radius = fin(snap.curveRadius);
     this.setWorldShape(snap.shape === 'round' ? 'round' : 'flat');
     if (snap.season) this.setSeason(snap.season);
-    if (snap.seaLevel !== undefined) { const w = sm.get('water'); if (w && w.setSeaLevel) w.setSeaLevel(Number(snap.seaLevel)); else this.waterLevel = Number(snap.seaLevel); }
-    if (snap.trees !== undefined) { const t = sm.get('simpleTrees'); if (t && t.setDensity) t.setDensity(Number(snap.trees)); }
-    if (snap.landmarks !== undefined) { const l = sm.get('landmarks'); if (l && l.setMaxLandmarks) l.setMaxLandmarks(Number(snap.landmarks)); }
+    if (fin(snap.seaLevel) !== undefined) { const w = sm.get('water'); if (w && w.setSeaLevel) w.setSeaLevel(fin(snap.seaLevel)); else this.waterLevel = fin(snap.seaLevel); }
+    if (fin(snap.trees) !== undefined) { const t = sm.get('simpleTrees'); if (t && t.setDensity) t.setDensity(fin(snap.trees)); }
+    if (fin(snap.landmarks) !== undefined) { const l = sm.get('landmarks'); if (l && l.setMaxLandmarks) l.setMaxLandmarks(fin(snap.landmarks)); }
     if (snap.clouds !== undefined) { const a = sm.get('atmosphere'); if (a && a.cloudSystem && a.cloudSystem.setVisible) a.cloudSystem.setVisible(!!snap.clouds); }
-    if (snap.timeOfDay !== undefined) { const a = sm.get('atmosphere'); if (a) a.timeOfDay = Number(snap.timeOfDay); }
-    if (snap.maxMana !== undefined) { this.maxManaNodes = Math.max(0, Math.min(400, Number(snap.maxMana))); this.topUpManaNodes(); }
+    if (fin(snap.timeOfDay) !== undefined) { const a = sm.get('atmosphere'); if (a) a.timeOfDay = fin(snap.timeOfDay); }
+    if (fin(snap.maxMana) !== undefined) { this.maxManaNodes = Math.max(0, Math.min(400, fin(snap.maxMana))); this.topUpManaNodes(); }
+    // the ground moved under everything — re-pin landmarks, mana and genie spawns
+    this._resyncWorldObjects();
     return snap;
+  }
+
+  // Terrain changed wholesale (reroll/loadPlanet): re-derive the base heights of
+  // everything pinned to the old ground — landmarks, mana orbs (their per-frame
+  // bob/curve math reads userData.baseY) and genie-spawned objects.
+  _resyncWorldObjects() {
+    const sm = this.engine.systemManager;
+    const lm = sm.get('landmarks');
+    if (lm && typeof lm.resyncHeights === 'function') lm.resyncHeights();
+    for (const node of this.manaNodes) {
+      if (!node.userData || node.userData.collected) continue;
+      const h = this.getTerrainHeight(node.position.x, node.position.z);
+      if (Number.isFinite(h)) node.userData.baseY = Math.max(h, this.waterLevel) + 20 + Math.random() * 25;
+    }
+    const genie = sm.get('genie');
+    if (genie && typeof genie.resyncHeights === 'function') genie.resyncHeights();
   }
 
   hasSavedPlanet() {
@@ -486,14 +550,14 @@ export class WorldSystem extends System {
   _exposeWorldAPI() {
     if (typeof window === 'undefined') return;
     const atmo = () => this.engine.systemManager && this.engine.systemManager.get('atmosphere');
-    window.worldAPI = {
+    const ops = {
       raiseTerrain: (x, z, radius, amount) => this.raiseTerrain(x, z, radius, amount),
       carveTerrain: (x, z, radius, amount) => this.raiseTerrain(x, z, radius, -Math.abs(Number(amount) || 140)),
       clearTerrain: () => this.clearTerrainEdits(),
       reroll: (seed) => this.reroll(seed),
       spawnMana: (x, z) => this.spawnManaAt(x, z),
       terrainHeight: (x, z) => this.getTerrainHeight(x, z),
-      setTimeOfDay: (t) => { const a = atmo(); if (a) a.timeOfDay = Math.max(0, Math.min(0.999, Number(t))); return a ? a.timeOfDay : null; },
+      setTimeOfDay: (t) => { const a = atmo(); const v = Number(t); if (a && Number.isFinite(v)) a.timeOfDay = Math.max(0, Math.min(0.999, v)); return a ? a.timeOfDay : null; },
       setWorldShape: (shape) => this.setWorldShape(shape),     // 'flat' | 'round'
       setCurveRadius: (r) => this.setCurveRadius(r),           // smaller = stronger curve
       worldShape: () => ({ shape: this.curvature.shape, radius: this.curvature.radius }),
@@ -506,8 +570,13 @@ export class WorldSystem extends System {
       savePlanet: () => this.savePlanet(),                     // persist the whole world to localStorage
       loadPlanet: (snap) => this.loadPlanet(snap),             // restore it
       hasSavedPlanet: () => this.hasSavedPlanet(),
-      meta: { ops: ['raiseTerrain', 'carveTerrain', 'clearTerrain', 'reroll', 'spawnMana', 'setTimeOfDay', 'setWorldShape', 'setCurveRadius', 'setTrees', 'setLandmarks', 'setMana', 'setClouds', 'setSeaLevel', 'setSeason', 'savePlanet', 'loadPlanet'] },
     };
+    // COMPOSE onto the shared creative surface rather than replace it — GenieSystem
+    // adds its object-authoring verbs to the same object, so neither side may wipe
+    // the other regardless of init order or re-invocation.
+    const api = window.worldAPI = Object.assign(window.worldAPI || {}, ops);
+    api.meta = api.meta || {};
+    api.meta.ops = Array.from(new Set([...(api.meta.ops || []), ...Object.keys(ops)]));
   }
 
   // Raise (amount>0) or carve (amount<0) terrain at a world point, then re-mesh the
@@ -518,7 +587,9 @@ export class WorldSystem extends System {
     if (!amount) return { edits: this.terrainEdits.length };
     const px = Number(x) || 0;
     const pz = Number(z) || 0;
-    this.terrainEdits.push({ x: px, z: pz, radius, amount });
+    const edit = { x: px, z: pz, radius, amount };
+    this.terrainEdits.push(edit);
+    this._indexEdit(edit);
     this._remeshRegion(px, pz, radius);
     return { edits: this.terrainEdits.length, op: amount > 0 ? 'raise' : 'carve', at: [px, pz], radius, amount };
   }
@@ -528,16 +599,21 @@ export class WorldSystem extends System {
     if (!this.terrainEdits.length) return { edits: 0 };
     const edits = this.terrainEdits.slice();
     this.terrainEdits = [];
+    this._editIndex.clear();
     for (const e of edits) this._remeshRegion(e.x, e.z, e.radius);
     return { edits: 0 };
   }
 
   // Re-roll the whole procedural world to a new seed, live.
   reroll(seed) {
-    this.seed = (seed === undefined || seed === null) ? Math.random() * 1000 : Number(seed);
+    const s = Number(seed);
+    this.seed = Number.isFinite(s) ? s : Math.random() * 1000;
     this.terrainEdits = [];
+    this._editIndex.clear();
     this.heightCache.clear(); this.cacheHits = 0; this.cacheMisses = 0;
     this._remeshAll();
+    // the ground moved under everything — re-pin landmarks, mana and genie spawns
+    this._resyncWorldObjects();
     return { seed: this.seed };
   }
 
@@ -2375,14 +2451,15 @@ updateLandmarks(delta, elapsed) {
       this.topUpManaNodes();
     }
     
-    // Create initial mana nodes if none exist and player is ready
-    if (this.manaNodes.length === 0 && player && player.position) {
+    // Create initial mana nodes if none exist and player is ready (skip entirely
+    // when setMana(0) zeroed the target — otherwise this branch re-runs every frame)
+    if (this.manaNodes.length === 0 && this.maxManaNodes > 0 && player && player.position) {
        // Logger.info('[WorldSystem] No mana nodes exist, creating initial set');
       this.createManaNodes();
     }
 
     // Ease + re-center the world-curvature bend on the viewer
-    this._updateCurvature();
+    this._updateCurvature(delta);
 
     // Update terrain chunks
     this.updateChunks();

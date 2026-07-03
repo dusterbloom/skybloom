@@ -110,12 +110,40 @@ export class LandmarkSystem extends System {
         fog: false // Keep beacons visible at distance despite scene fog
       });
     }
+
+    // Resources shared across landmarks (never dispose these on removal — only
+    // per-landmark geometries/materials are freed by _disposeLandmark).
+    this._sharedMaterials = new Set([
+      ...Object.values(this.materials),
+      ...Object.values(this.beaconMaterials),
+    ]);
+  }
+
+  // Remove a landmark's mesh from the scene and free its per-landmark GPU
+  // resources. Landmark parts are built with unique geometries (and mostly
+  // unique/cloned materials); only the beacon geometry and the template
+  // materials in this.materials/this.beaconMaterials are shared.
+  _disposeLandmark(landmark) {
+    const mesh = landmark && landmark.mesh;
+    if (!mesh) return;
+    this.scene.remove(mesh);
+    mesh.traverse((node) => {
+      if (node.geometry && node.geometry !== this.beaconGeometry) node.geometry.dispose();
+      if (node.material) {
+        const mats = Array.isArray(node.material) ? node.material : [node.material];
+        for (const m of mats) {
+          if (m && m.dispose && !this._sharedMaterials.has(m)) m.dispose();
+        }
+      }
+    });
   }
 
   // Live landmark abundance. Lowering the cap culls the farthest landmarks now;
-  // raising it lets more spawn over the next updates.
+  // raising it lets more spawn over the next updates. NaN/missing keeps the
+  // current cap (an LLM-dropped arg must never mean "remove everything").
   setMaxLandmarks(n) {
-    this.maxLandmarks = Math.max(0, Math.min(60, Math.round(Number(n))));
+    const v = Math.round(Number(n));
+    this.maxLandmarks = Number.isFinite(v) ? Math.max(0, Math.min(60, v)) : this.maxLandmarks;
     const player = this.engine.systems.player?.localPlayer;
     while (this.landmarks.size > this.maxLandmarks) {
       // remove the landmark farthest from the player (or any, if no player yet)
@@ -125,11 +153,28 @@ export class LandmarkSystem extends System {
         if (d >= farD) { farD = d; farId = id; }
       }
       if (farId == null) break;
-      const l = this.landmarks.get(farId);
-      if (l && l.mesh) this.scene.remove(l.mesh);
+      this._disposeLandmark(this.landmarks.get(farId));
       this.landmarks.delete(farId);
     }
     return { maxLandmarks: this.maxLandmarks };
+  }
+
+  // Re-pin every live landmark to the current ground — called by WorldSystem
+  // after a terrain change (reroll/loadPlanet). Cheap: one height probe each;
+  // animateLandmarks keeps re-applying position.y (minus the curve drop) per frame.
+  resyncHeights() {
+    if (!this.worldSystem) {
+      this.worldSystem = this.engine.systems.world || this.engine.systemManager.get('world');
+      if (!this.worldSystem) return;
+    }
+    for (const landmark of this.landmarks.values()) {
+      if (!landmark.position) continue;
+      const h = this.worldSystem.getTerrainHeight(landmark.position.x, landmark.position.z);
+      if (Number.isFinite(h)) {
+        landmark.position.y = h;
+        if (landmark.mesh) landmark.mesh.position.y = h;
+      }
+    }
   }
 
   async _initialize() {
@@ -160,7 +205,7 @@ export class LandmarkSystem extends System {
         // Skip landmarks with invalid positions
         if (!landmark.position || isNaN(landmark.position.x) || isNaN(landmark.position.z)) {
           // Clean up invalid landmark
-          if (landmark.mesh) this.scene.remove(landmark.mesh);
+          this._disposeLandmark(landmark);
           this.landmarks.delete(id);
           continue;
         }
@@ -170,8 +215,8 @@ export class LandmarkSystem extends System {
         const distanceSquared = dx * dx + dz * dz;
 
         if (distanceSquared > maxDistance * maxDistance) {
-          // Remove landmark from scene
-          this.scene.remove(landmark.mesh);
+          // Remove landmark from scene (and free its per-landmark resources)
+          this._disposeLandmark(landmark);
           this.landmarks.delete(id);
         }
       }
@@ -792,12 +837,10 @@ export class LandmarkSystem extends System {
       const position = landmark.position;
       if (!position || isNaN(position.x) || isNaN(position.y) || isNaN(position.z)) {
         Logger.debug(`Removing invalid landmark: ${id}`);
-        
-        // Remove from scene
-        if (landmark.mesh) {
-          this.scene.remove(landmark.mesh);
-        }
-        
+
+        // Remove from scene (and free its per-landmark resources)
+        this._disposeLandmark(landmark);
+
         // Remove from collection
         this.landmarks.delete(id);
       }

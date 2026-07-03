@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
 import { GenieCatalog } from '../../agents/GenieCatalog.js';
@@ -193,13 +194,24 @@ export class GenieSystem extends System {
     this._group = null;       // all genie-spawned objects live under one group
     this._spawns = new Map(); // id -> THREE.Object3D
     this._nextId = 1;
-    this._api = null;
     this._animated = new Set(); // objects with userData.genieAnim, ticked each frame
     this._roamer = null;        // active GroundRoamController (walk/run on the ground)
   }
 
   // Tick every animated rig / glTF mixer so conjured flyers actually move.
   _update(delta, elapsed) {
+    // Settle spawned objects onto the curved ground: like landmarks/mana orbs,
+    // subtract the visual curve drop from their flat base height each frame so
+    // they don't hover with distance on round worlds (drop = 0 in flat mode).
+    if (this._spawns.size) {
+      const world = this._sys('world');
+      if (world && typeof world.curveDropAt === 'function') {
+        for (const obj of this._spawns.values()) {
+          const baseY = obj.userData && obj.userData.genieBaseY;
+          if (baseY != null) obj.position.y = baseY - world.curveDropAt(obj.position.x, obj.position.z);
+        }
+      }
+    }
     if (!this._animated.size) return;
     for (const obj of this._animated) {
       const a = obj && obj.userData && obj.userData.genieAnim;
@@ -236,13 +248,15 @@ export class GenieSystem extends System {
       remove: this.remove.bind(this),
       clear: this.clear.bind(this),
       listCatalog: () => this.catalog.list(),
-      list: () => this.catalog.list(), // alias used by GenieAgent
+      list: () => this.catalog.list(), // alias used by VoiceCopilot
       repos: () => Object.keys(REPOS).map((k) => ({ id: k, label: REPOS[k].label, examples: REPOS[k].examples })),
     };
     if (typeof window !== 'undefined') {
-      const surface = window.worldAPI || (window.worldAPI = {});
-      Object.assign(surface, this._verbs);
-      this._api = surface;
+      const surface = window.worldAPI = Object.assign(window.worldAPI || {}, this._verbs);
+      // Advertise our verbs in meta.ops alongside WorldSystem's terrain ops, so
+      // the discovery surface reflects everything that's actually callable.
+      surface.meta = surface.meta || {};
+      surface.meta.ops = Array.from(new Set([...(surface.meta.ops || []), ...Object.keys(this._verbs)]));
     }
 
     Logger.info('GenieSystem initialized — window.worldAPI augmented with spawn/import/clear');
@@ -274,6 +288,7 @@ export class GenieSystem extends System {
         const isRig = !!RIGS[opts.shape];
         const sample = isRig ? RIGS[opts.shape](color).object : PRIMITIVES[opts.shape](color);
         const norm = measureNormalize(sample);
+        this._disposeObject(sample); // measuring rig only — free its geometry/materials
         const entryName = this.catalog.uniqueName(opts.name || opts.shape);
         entry = await this.catalog.save({
           name: entryName,
@@ -289,11 +304,14 @@ export class GenieSystem extends System {
       }
 
       const entryName = entry.name;
+      // Parse the GLB ONCE for the whole batch; each instance is then a clone of
+      // the parsed template instead of a full re-fetch/re-parse per instance.
+      const template = entry.kind === 'gltf' ? await this._parseGLB(entry.glb) : null;
       const ids = [];
       for (let i = 0; i < count; i++) {
         // A fresh, independently-normalized object per instance — no shared
         // template to mutate, so scale never compounds across clones.
-        const obj = await this._objectFromEntry(entry);
+        const obj = await this._objectFromEntry(entry, template);
         obj.scale.multiplyScalar(scale);
         this._applyAnimSpeed(obj, opts.animSpeed);
         this._placeObject(obj, opts.at, i, count, scale);
@@ -338,6 +356,7 @@ export class GenieSystem extends System {
       // Parse once to measure for normalization (and to fail early on bad data).
       const { scene } = await this._parseGLB(glb);
       const norm = measureNormalize(scene);
+      this._disposeObject(scene); // measuring copy only — free its geometry/materials
 
       const entryName = this.catalog.uniqueName(opts.as || matchedName);
       const entry = await this.catalog.save({
@@ -349,8 +368,9 @@ export class GenieSystem extends System {
         createdAt: this._now(),
       });
 
-      // Drop the freshly imported model in front of the player immediately.
-      await this.spawn({ catalog: entryName, at: 'ahead', scale: 100 });
+      // Drop the freshly imported model in front of the player immediately
+      // (caller-provided scale wins; spawn() defaults to 100 otherwise).
+      await this.spawn({ catalog: entryName, at: 'ahead', scale: opts.scale });
       return { name: entry.name, kind: entry.kind, source: entry.source };
     } catch (err) {
       Logger.error('GenieSystem.import failed:', err);
@@ -472,15 +492,25 @@ export class GenieSystem extends System {
       const scene = this.engine && this.engine.scene;
 
       const set = (opts && opts.set) || 'carpet';
-      // Detach the current model from the scene (don't dispose — carpet meshes
-      // share templated materials; GC handles the discarded clone).
-      if (lp.model && scene) scene.remove(lp.model);
-      this._animated.delete(lp.model);   // stop ticking the old vehicle's rig
-
       const trail = this._sys('carpetTrail');
 
+      // Detach the outgoing model only once its replacement is known-good — a
+      // failed swap must leave the current vehicle (and the player's visibility)
+      // untouched, since PlayerModels only rebuilds while lp.model is null.
+      const removeCurrent = () => {
+        const old = lp.model;
+        if (!old) return;
+        if (scene) scene.remove(old);
+        this._animated.delete(old);   // stop ticking the old vehicle's rig
+        // Genie-built vehicles own unique geometries/materials per parse —
+        // dispose them. The carpet shares templated materials, so it just gets
+        // detached and GC'd (PlayerModels rebuilds it from the templates).
+        if (old.userData && old.userData.genieVehicle) this._disposeObject(old);
+        lp.model = null;
+      };
+
       if (set === 'carpet') {
-        lp.model = null;          // updateModels() recreates the carpet next frame
+        removeCurrent();          // updateModels() recreates the carpet next frame
         this.stopRoam();          // back to the carpet -> stop ground roaming, restore trail
         if (trail && trail.resetEmitOffset) trail.resetEmitOffset();
         this._vehicle = 'carpet';
@@ -519,6 +549,7 @@ export class GenieSystem extends System {
       if (trail && trail.setEmitOffset) {
         trail.setEmitOffset(0, -size.y * 0.15, -size.z * 0.5);
       }
+      removeCurrent();            // replacement is ready — NOW retire the old model
       lp.model = vehicle;         // updateModels() will position/rotate it each frame
       if (scene) scene.add(vehicle);
       this._vehicle = set;
@@ -556,9 +587,14 @@ export class GenieSystem extends System {
       };
 
       this.stopRoam(); // replace any existing roamer
+      // Two drivers on one carpet ends badly — hand the wheel over cleanly.
+      this.engine.systems?.get('race')?.stopAutonomousDrivers?.();
       const { GroundRoamController } = await import('../../agents/GroundRoamController.js');
       this._roamer = new GroundRoamController(agentAPI, { targetSpeed, seaLevel, isSprinting });
       this._roamer.start();
+      // PlayerInputSystem reads this flag so SPACE means "sprint" (not flight-climb)
+      // while ground-roaming.
+      this.engine.groundRoamActive = true;
       this.trail({ on: false }); // a ground animal shouldn't trail a flight contrail
       Logger.info(`GenieSystem.roam: ${mode} (target ${Math.round(targetSpeed)})`);
       return true;
@@ -569,6 +605,7 @@ export class GenieSystem extends System {
   stopRoam() {
     try {
       if (this._roamer) { this._roamer.stop(); this._roamer = null; }
+      this.engine.groundRoamActive = false; // SPACE goes back to meaning flight-climb
       this.trail({ on: true });
       return true;
     } catch (err) { Logger.error('GenieSystem.stopRoam failed:', err); return false; }
@@ -624,12 +661,25 @@ export class GenieSystem extends System {
    * carries the unit-scale. The wrapper's own position/scale is then free for
    * placement and the per-instance world scale.
    */
-  async _objectFromEntry(entry) {
+  async _objectFromEntry(entry, template = null) {
     let inner;
     let anim = null;
     if (entry.kind === 'gltf') {
-      const { scene, animations } = await this._parseGLB(entry.glb);
-      inner = scene;
+      // `template` (a pre-parsed { scene, animations }) lets spawn({count:N})
+      // parse once and clone per instance. SkeletonUtils.clone keeps skinned
+      // rigs working (plain .clone() breaks bone bindings); materials are cloned
+      // too so a per-instance dispose can't yank resources from a sibling.
+      const { scene, animations } = template || await this._parseGLB(entry.glb);
+      if (template) {
+        inner = cloneSkinned(scene);
+        inner.traverse((n) => {
+          if (n.isMesh && n.material) {
+            n.material = Array.isArray(n.material) ? n.material.map((m) => m.clone()) : n.material.clone();
+          }
+        });
+      } else {
+        inner = scene;
+      }
       // Drive any embedded clip so rigged imports (Fox's gallop, etc.) move.
       if (animations && animations.length) {
         const mixer = new THREE.AnimationMixer(inner);
@@ -689,6 +739,28 @@ export class GenieSystem extends System {
       }
     }
     obj.position.set(p.x, p.y, p.z);
+    // Remember the flat base height; _update subtracts the per-frame visual
+    // curve drop from it so spawns ride the curved ground like landmarks do.
+    obj.userData.genieBaseY = p.y;
+  }
+
+  /**
+   * Re-pin every spawned object to the current ground — WorldSystem calls this
+   * after a terrain change (reroll/loadPlanet) so spawns don't float over (or
+   * sink into) the new landscape. Cheap: one height probe per spawn.
+   */
+  resyncHeights() {
+    const world = this._sys('world');
+    if (!world || typeof world.getTerrainHeight !== 'function') return;
+    const sea = Number.isFinite(world.waterLevel) ? world.waterLevel : 0;
+    for (const obj of this._spawns.values()) {
+      if (!obj.userData || obj.userData.genieBaseY == null) continue;
+      const h = world.getTerrainHeight(obj.position.x, obj.position.z);
+      if (Number.isFinite(h)) {
+        obj.userData.genieBaseY = Math.max(h, sea);
+        obj.position.y = obj.userData.genieBaseY;
+      }
+    }
   }
 
   /** Resolve 'ahead' | 'here' | [x,y,z] into a world position. */
@@ -742,6 +814,7 @@ export class GenieSystem extends System {
   destroy() {
     try {
       this.stopRoam();
+      if (this.engine) this.engine.groundRoamActive = false;
       this.clear();
       if (this._group && this.engine && this.engine.scene) this.engine.scene.remove(this._group);
       // Remove only the verbs we added — leave WorldSystem's terrain ops intact.
@@ -749,9 +822,10 @@ export class GenieSystem extends System {
         for (const k of Object.keys(this._verbs)) {
           if (window.worldAPI[k] === this._verbs[k]) delete window.worldAPI[k];
         }
+        const meta = window.worldAPI.meta;
+        if (meta && Array.isArray(meta.ops)) meta.ops = meta.ops.filter((op) => !(op in this._verbs));
       }
     } catch (err) { /* never throw on teardown */ }
-    this._api = null;
     super.destroy();
   }
 }

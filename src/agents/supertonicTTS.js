@@ -24,6 +24,21 @@ const AVAILABLE_LANGS = ['en', 'ko', 'ja', 'ar', 'bg', 'cs', 'da', 'de', 'el', '
 
 let ort = null; // set on first init
 
+// The four ONNX InferenceSessions are heavy and onnxruntime-web has no cheap
+// release path — cache them (and the voice styles) module-level so a co-pilot
+// restart reuses them instead of re-creating four graphs per start().
+const assetCache = new Map(); // onnxBase -> Promise<[cfgs, indexer, dp, enc, est, voc]>
+const voiceCache = new Map(); // `${voicesBase}/${voice}` -> Promise<style json>
+function cached(map, key, make) {
+  let p = map.get(key);
+  if (!p) {
+    p = make();
+    p.catch(() => map.delete(key)); // a failed load must not brick every retry
+    map.set(key, p);
+  }
+  return p;
+}
+
 // ===== pure helpers, verbatim from Supertone's Space =====================
 function preprocessText(text, lang = null) {
   text = text.normalize('NFKD');
@@ -145,15 +160,15 @@ export async function createSupertonicTTS(opts = {}) {
   const sessOpts = { executionProviders: useGpu ? ['webgpu', 'wasm'] : ['wasm'] };
 
   onStatus('downloading model…');
-  const [cfgs, indexer, voiceStyle, dpOrt, textEncOrt, vectorEstOrt, vocoderOrt] = await Promise.all([
+  const [cfgs, indexer, dpOrt, textEncOrt, vectorEstOrt, vocoderOrt] = await cached(assetCache, onnxBase, () => Promise.all([
     fetch(`${onnxBase}/tts.json`).then((r) => r.json()),
     fetch(`${onnxBase}/unicode_indexer.json`).then((r) => r.json()),
-    fetch(`${voicesBase}/${voice}.json`).then((r) => r.json()),
     ort.InferenceSession.create(`${onnxBase}/duration_predictor.onnx`, sessOpts),
     ort.InferenceSession.create(`${onnxBase}/text_encoder.onnx`, sessOpts),
     ort.InferenceSession.create(`${onnxBase}/vector_estimator.onnx`, sessOpts),
     ort.InferenceSession.create(`${onnxBase}/vocoder.onnx`, sessOpts),
-  ]);
+  ]));
+  const voiceStyle = await cached(voiceCache, `${voicesBase}/${voice}`, () => fetch(`${voicesBase}/${voice}.json`).then((r) => r.json()));
 
   const textProcessor = new UnicodeProcessor(indexer);
   const styleTtlTensor = new ort.Tensor(voiceStyle.style_ttl.type || 'float32', Float32Array.from(voiceStyle.style_ttl.data.flat(Infinity)), voiceStyle.style_ttl.dims);

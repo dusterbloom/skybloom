@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
 import { resolveAsset } from '../../utils/assetPath.js';
+import { CURVE_UNIFORMS_GLSL, CURVE_DROP_GLSL } from '../shaders/curvature.js';
 
 /**
  * SimpleTreeSystem - Loads and spawns GLTF tree models
@@ -103,9 +104,7 @@ export class SimpleTreeSystem extends System {
         {
           vec4 _vwp = modelMatrix * mvPosition;
           vec3 _io = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-          float _cdx = _io.x - uCurveCenter.x;
-          float _cdz = _io.z - uCurveCenter.z;
-          _vwp.y -= uCurveAmount * (_cdx * _cdx + _cdz * _cdz);
+          _vwp.y -= curveDrop(_io);
           mvPosition = viewMatrix * _vwp;
         }
         gl_Position = projectionMatrix * mvPosition;`;
@@ -117,7 +116,7 @@ export class SimpleTreeSystem extends System {
       m.onBeforeCompile = (shader) => {
         shader.uniforms.uCurveCenter = cu.uCurveCenter;
         shader.uniforms.uCurveAmount = cu.uCurveAmount;
-        shader.vertexShader = 'uniform vec3 uCurveCenter;\nuniform float uCurveAmount;\n' + shader.vertexShader;
+        shader.vertexShader = CURVE_UNIFORMS_GLSL + CURVE_DROP_GLSL + shader.vertexShader;
         shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', inject);
         // recolour the forest with the season (shares WorldSystem's season uniforms)
         if (season && world.constructor && world.constructor.applySeasonShader) {
@@ -384,7 +383,10 @@ export class SimpleTreeSystem extends System {
   // Live forest density: 0 = none, 1 = normal, up to ~4 = jungle. Clears the live
   // forest so nearby chunks respawn at the new density on the next update ticks.
   setDensity(scale) {
-    this.densityScale = Math.max(0, Math.min(4, Number(scale)));
+    // NaN/missing must never zero the forest (Math.min/max would keep NaN):
+    // keep the current density instead of silently deleting every tree.
+    const s = Number(scale);
+    this.densityScale = Number.isFinite(s) ? Math.max(0, Math.min(4, s)) : (this.densityScale ?? 1);
     for (const entry of this.chunksWithTrees.values()) {
       if (entry.trees) for (const t of entry.trees) this.scene.remove(t);
     }

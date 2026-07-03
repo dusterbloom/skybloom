@@ -8,9 +8,12 @@ import {
   SUN_DISC_KEYFRAMES,
   sampleKeyframes
 } from '../../config/SunConfig.js';
+import { CELESTIAL_DISTANCE_FRACTION } from './atmosphere/constants.js';
 
 // Scratch color for deriving the glow tint from the disc color (no per-frame allocs)
 const _glowWhite = new THREE.Color(0xffffff);
+// Scratch vector for the per-frame sun direction (no per-frame allocs)
+const _sunDir = new THREE.Vector3();
 
 // SunSystem - manages sun lighting and appearance
 export class SunSystem extends System {
@@ -177,9 +180,9 @@ export class SunSystem extends System {
         // Place the disc along the sun DIRECTION at a fixed distance that stays
         // inside the camera far plane (and sky dome) — otherwise the disc is
         // clipped at low sun angles where the arc offset is far past the far plane.
-        const viewDist = (cam.far || 5000) * 0.72;
+        const viewDist = (cam.far || 5000) * CELESTIAL_DISTANCE_FRACTION;
         const trueDist = Math.max(1, this.sunPosition.length()); // the real arc distance
-        const dir = this.sunPosition.lengthSq() > 0 ? this.sunPosition.clone().normalize() : new THREE.Vector3(0, 1, 0);
+        const dir = this.sunPosition.lengthSq() > 0 ? _sunDir.copy(this.sunPosition).normalize() : _sunDir.set(0, 1, 0);
         this.sunMesh.position.copy(cam.position).addScaledVector(dir, viewDist);
         this.sunMesh.lookAt(cam.position);
         // Shrink the disc to the angular size it WOULD have at its true distance,
@@ -286,7 +289,9 @@ export class SunSystem extends System {
     return this.sunLight;
   }
 
-  getSunDirection() {
+  getSunDirection(target) {
+    // Pass a target to avoid the per-frame clone (see SkySystem's scratch vector)
+    if (target) return target.copy(this.sunPosition).normalize();
     return this.sunPosition.clone().normalize();
   }
 

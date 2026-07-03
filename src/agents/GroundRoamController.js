@@ -11,6 +11,9 @@
  */
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
+// A space typed into a form field must not toggle sprint.
+const isEditableTarget = (t) => !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+
 export class GroundRoamController {
   /**
    * @param {object} api   window.agentAPI
@@ -32,13 +35,15 @@ export class GroundRoamController {
     this._sprint = false;
     // Hold SPACE to sprint. Read raw key state (movement axes are already taken
     // by the virtual pad, so this never fights the controls).
-    this._onKeyDown = (e) => { if (e && e.code === 'Space') this._sprint = true; };
+    this._onKeyDown = (e) => { if (e && e.code === 'Space' && !isEditableTarget(e.target)) this._sprint = true; };
     this._onKeyUp = (e) => { if (e && e.code === 'Space') this._sprint = false; };
   }
 
   start() {
     if (this._timer) return this;
-    if (typeof window !== 'undefined') {
+    // The key listener is only a FALLBACK for when no authoritative isSprinting
+    // callback was supplied — don't double-listen when the engine signal exists.
+    if (!this._isSprinting && typeof window !== 'undefined') {
       window.addEventListener('keydown', this._onKeyDown);
       window.addEventListener('keyup', this._onKeyUp);
     }

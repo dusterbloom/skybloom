@@ -139,8 +139,8 @@ export class CloudSystem {
     Logger.info(`Created ${this.cloudCount} clouds`);
   }
   
-  /** Toggle all clouds on/off (the per-frame update only sets colour/opacity, so
-   * .visible sticks). */
+  /** Toggle all clouds on/off (the per-frame update tints, drifts and recycles
+   * clouds but never writes .visible, so the toggle sticks). */
   setVisible(on) {
     this._hidden = !on;
     if (this.clouds) for (const cloud of this.clouds) cloud.visible = !!on;

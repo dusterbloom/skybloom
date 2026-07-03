@@ -1,5 +1,6 @@
 import { useGameState, GameStates } from '../state/gameState';
 import { System } from '../core/System.js';
+import { InputManager } from '../core/InputManager.js';
 import { Logger } from '../../utils/Logger.js';
 import { ensureVibeTheme } from '../ui/theme.js';
 
@@ -58,8 +59,7 @@ export class UISystem extends System {
 
     // Quest tracker toggle (Q) — panel is non-blocking, gameplay never pauses
     this._questKeyHandler = (e) => {
-      const t = e.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+      if (InputManager.isEditableTarget(e.target)) return;
       if (e.code === 'KeyQ' && !e.repeat && this.engine.gameStarted) {
         this.showQuestLog();
       }
@@ -365,11 +365,19 @@ export class UISystem extends System {
   static FLIGHT_DEFAULTS = { cruise: 140, rush: 280, punch: 300 };
 
   loadFlightSettings() {
+    const settings = { ...UISystem.FLIGHT_DEFAULTS };
     try {
       const raw = localStorage.getItem('vc.flight');
-      if (raw) return { ...UISystem.FLIGHT_DEFAULTS, ...JSON.parse(raw) };
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Validate per key: these values feed straight into the physics every
+        // frame, so a corrupted store must never NaN player.maxSpeed & co.
+        for (const key of Object.keys(UISystem.FLIGHT_DEFAULTS)) {
+          if (Number.isFinite(parsed?.[key])) settings[key] = parsed[key];
+        }
+      }
     } catch (e) { /* corrupted/unavailable storage — use defaults */ }
-    return { ...UISystem.FLIGHT_DEFAULTS };
+    return settings;
   }
 
   applyFlightSettings(settings) {
@@ -572,8 +580,7 @@ export class UISystem extends System {
 
     // Listen for key presses to select spells
     window.addEventListener('keydown', (event) => {
-      const t = event.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+      if (InputManager.isEditableTarget(event.target)) return;
       if (event.key >= '1' && event.key <= '3') {
         const index = parseInt(event.key) - 1;
         this.selectSpell(index);
