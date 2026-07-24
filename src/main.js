@@ -35,6 +35,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Use window.getPerformanceReport() to view performance metrics');
   } catch (error) {
     console.error('Error initializing game:', error);
-    document.getElementById('loading-text').textContent = 'Error loading game. Please refresh.';
+    const loadingText = document.getElementById('loading-text');
+    if (loadingText) {
+      if (error.message && error.message.includes('WebGL')) {
+        loadingText.textContent = 'WebGL is not available. Please enable hardware acceleration or try a different browser.';
+      } else {
+        loadingText.textContent = 'Error loading game. Please refresh.';
+      }
+      loadingText.style.maxWidth = '400px';
+    }
+    const progress = document.getElementById('progress-bar');
+    if (progress) progress.style.display = 'none';
   }
 });

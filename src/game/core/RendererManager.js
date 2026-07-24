@@ -20,8 +20,12 @@ export class RendererManager {
   }
 
   setup() {
+    if (!this._isWebGLAvailable()) {
+      this._showWebGLError();
+      throw new Error('WebGL is not available');
+    }
+
     try {
-      // Common renderer settings
       this.renderer = new THREE.WebGLRenderer({
         canvas: this.canvas,
         antialias: !this.isMobile,
@@ -32,19 +36,27 @@ export class RendererManager {
         alpha: false,
         premultipliedAlpha: true,
         preserveDrawingBuffer: false,
-        logarithmicDepthBuffer: false
+        logarithmicDepthBuffer: false,
+        failIfMajorPerformanceCaveat: false
       });
 
       Logger.info("WebGL Renderer created successfully");
     } catch (error) {
       Logger.error("Failed to create WebGL Renderer:", error);
-      // Fallback to basic renderer
-      this.renderer = new THREE.WebGLRenderer({
-        canvas: this.canvas,
-        antialias: false,
-        precision: "lowp"
-      });
-      Logger.warn("Using fallback WebGL renderer");
+      try {
+        this.renderer = new THREE.WebGLRenderer({
+          canvas: this.canvas,
+          antialias: false,
+          precision: "lowp",
+          powerPreference: "default",
+          failIfMajorPerformanceCaveat: false
+        });
+        Logger.warn("Using fallback WebGL renderer");
+      } catch (fallbackError) {
+        Logger.error("Fallback renderer also failed:", fallbackError);
+        this._showWebGLError();
+        throw fallbackError;
+      }
     }
 
     this.renderer.setClearColor(0x88ccff);
@@ -272,6 +284,29 @@ export class RendererManager {
   handleVisibilityChange(visible) {
     // Pause/resume rendering based on visibility
     this.engine.isVisible = visible;
+  }
+
+  _isWebGLAvailable() {
+    try {
+      const testCanvas = document.createElement('canvas');
+      const gl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+      return !!gl;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  _showWebGLError() {
+    const loading = document.getElementById('loading');
+    if (loading) {
+      const text = document.getElementById('loading-text');
+      if (text) {
+        text.textContent = 'Your browser or device does not support WebGL. Please try a different browser or enable hardware acceleration.';
+        text.style.maxWidth = '400px';
+      }
+      const progress = document.getElementById('progress-bar');
+      if (progress) progress.style.display = 'none';
+    }
   }
 
   destroy() {
