@@ -11,6 +11,8 @@
  *   - local  : WebLLM on WebGPU, fully on-device (no key, offline).
  */
 
+import { llmBudget } from './llmBudget.js';
+
 // ponytail: WebLLM is loaded from a CDN via dynamic import ONLY when chosen — so
 // there's no npm dependency and no bundle cost otherwise. Upgrade path: pin it
 // with `npm i @mlc-ai/web-llm` if you want it offline-cached.
@@ -57,7 +59,10 @@ export async function createProvider(config = {}) {
 // Direct browser → Claude. The `anthropic-dangerous-direct-browser-access` header
 // opts the request into CORS from a page; it also signals the key lives client-side,
 // which is fine for personal/research use but must never be a shared key.
-function createCloudProvider({ apiKey, model = 'claude-haiku-4-5' } = {}) {
+//
+// `cache`, `thinking`, `maxTokens` and `task` come from modelRouting.resolveTask() —
+// see that file for why each agent gets the settings it does.
+function createCloudProvider({ apiKey, model = 'claude-haiku-4-5', maxTokens = 200, cache = false, thinking = null, task = 'other' } = {}) {
   if (!apiKey) throw new Error('Cloud provider needs an Anthropic API key.');
   return {
     async complete(messages, { signal } = {}) {
@@ -65,8 +70,21 @@ function createCloudProvider({ apiKey, model = 'claude-haiku-4-5' } = {}) {
       // out so callers can use the same role:'system' shape across every provider.
       const system = messages.filter((m) => m && m.role === 'system').map((m) => m.content).join('\n\n');
       const msgs = messages.filter((m) => m && m.role !== 'system');
-      const body = { model, max_tokens: 200, messages: msgs };
-      if (system) body.system = system;
+      const body = { model, max_tokens: maxTokens, messages: msgs };
+      if (system) {
+        // Caching is a PREFIX match, and the breakpoint goes on the system block
+        // rather than on a message: the system prompt is byte-identical every
+        // turn, while the message list rotates (callers keep only a short
+        // window of history), so a message-level breakpoint would thrash and
+        // never be read. Everything volatile — history, live game state — sits
+        // after the breakpoint, which is exactly where it has to be.
+        body.system = cache
+          ? [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }]
+          : system;
+      }
+      // Some models think unless told otherwise, and max_tokens caps thinking and
+      // reply TOGETHER — leaving it on would silently truncate short answers.
+      if (thinking) body.thinking = thinking;
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         signal,
@@ -80,6 +98,8 @@ function createCloudProvider({ apiKey, model = 'claude-haiku-4-5' } = {}) {
       });
       if (!res.ok) throw new Error(`Claude API ${res.status}${await errDetail(res)}`);
       const data = await res.json();
+      // Metering must never break a turn — a missing usage block just counts a call.
+      try { llmBudget.record(task, model, data.usage); } catch (e) { /* ignore */ }
       const block = Array.isArray(data.content) && data.content.find((b) => b.type === 'text');
       return block ? block.text : '';
     },
@@ -90,7 +110,7 @@ function createCloudProvider({ apiKey, model = 'claude-haiku-4-5' } = {}) {
 // Any OpenAI-compatible chat endpoint. Works with hosted OpenAI and — the common
 // case here — a local server (LM Studio default :1234, Jan :1337, Ollama :11434/v1,
 // vLLM, llama.cpp). Most local servers ignore the key; send it only if provided.
-function createOpenAIProvider({ baseURL = 'http://localhost:1234/v1', apiKey = '', model = 'local-model' } = {}) {
+function createOpenAIProvider({ baseURL = 'http://localhost:1234/v1', apiKey = '', model = 'local-model', maxTokens = 200, task = 'other' } = {}) {
   const url = baseURL.replace(/\/+$/, '') + '/chat/completions';
   return {
     async complete(messages, { signal } = {}) {
@@ -100,17 +120,23 @@ function createOpenAIProvider({ baseURL = 'http://localhost:1234/v1', apiKey = '
         method: 'POST',
         signal,
         headers,
-        body: JSON.stringify({ model, messages, max_tokens: 200, temperature: 0.4 }),
+        body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.4 }),
       });
       if (!res.ok) throw new Error(`OpenAI-compat ${res.status}${await errDetail(res)}`);
       const data = await res.json();
+      // Token counts still worth seeing on a local server (context pressure);
+      // an unknown model id prices at $0 rather than guessing a rate.
+      try {
+        const u = data && data.usage;
+        llmBudget.record(task, model, u && { input_tokens: u.prompt_tokens, output_tokens: u.completion_tokens });
+      } catch (e) { /* ignore */ }
       return data?.choices?.[0]?.message?.content || '';
     },
     async dispose() { /* nothing held client-side */ },
   };
 }
 
-async function createLocalProvider({ model = 'Llama-3.2-1B-Instruct-q4f32_1-MLC', onStatus } = {}) {
+async function createLocalProvider({ model = 'Llama-3.2-1B-Instruct-q4f32_1-MLC', onStatus, maxTokens = 200, task = 'other' } = {}) {
   if (typeof navigator === 'undefined' || !navigator.gpu) {
     throw new Error('Local (WebLLM) provider needs WebGPU (try Chrome). Use cloud or openai instead.');
   }
@@ -125,7 +151,7 @@ async function createLocalProvider({ model = 'Llama-3.2-1B-Instruct-q4f32_1-MLC'
     // the caller's timeout path actually fires.
     async complete(messages, { signal } = {}) {
       if (signal && signal.aborted) throw abortError();
-      const run = engine.chat.completions.create({ messages, max_tokens: 200, temperature: 0.4 });
+      const run = engine.chat.completions.create({ messages, max_tokens: maxTokens, temperature: 0.4 });
       let reply;
       if (signal) {
         reply = await new Promise((resolve, reject) => {
@@ -142,6 +168,12 @@ async function createLocalProvider({ model = 'Llama-3.2-1B-Instruct-q4f32_1-MLC'
       } else {
         reply = await run;
       }
+      // On-device inference is free; count tokens anyway so the meter shows the
+      // same shape whichever brain is selected.
+      try {
+        const u = reply && reply.usage;
+        llmBudget.record(task, model, u && { input_tokens: u.prompt_tokens, output_tokens: u.completion_tokens });
+      } catch (e) { /* ignore */ }
       return reply?.choices?.[0]?.message?.content || '';
     },
     // Free the GPU memory held by the on-device engine (WebLLM exposes unload()).

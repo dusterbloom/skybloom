@@ -5,6 +5,8 @@ import { InputManager } from '../core/InputManager.js';
 import { SimpleBot } from '../../agents/SimpleBot.js';
 import { LLMPilot } from '../../agents/LLMPilot.js';
 import { VoiceCopilot } from '../../agents/VoiceCopilot.js';
+import { autoModelFor } from '../../agents/modelRouting.js';
+import { llmBudget } from '../../agents/llmBudget.js';
 import { useGameState, GameStates } from '../state/gameState.js';
 import { ensureVibeTheme } from '../ui/theme.js';
 
@@ -260,6 +262,10 @@ export class RaceSystem extends System {
     if (this._hintTimer) {
       clearTimeout(this._hintTimer);
       this._hintTimer = null;
+    }
+    if (this._budgetUnsub) {
+      this._budgetUnsub();
+      this._budgetUnsub = null;
     }
     if (this._hudRoot && this._hudRoot.parentNode) {
       this._hudRoot.parentNode.removeChild(this._hudRoot);
@@ -589,6 +595,11 @@ export class RaceSystem extends System {
       apiKeys,
       apiKey: apiKeys[provider] || '',
       model: cfg.model || PROVIDER_DEFAULT_MODELS[provider] || PROVIDER_DEFAULT_MODELS.cloud,
+      // 'auto' lets modelRouting pick a model per agent (cheap advisor, capable
+      // voice brain); 'manual' pins whatever is in `model` for both. Saved configs
+      // predating this field default to auto — the model they hold was the shipped
+      // default rather than a deliberate choice.
+      modelMode: cfg.modelMode === 'manual' ? 'manual' : 'auto',
       tts: cfg.tts || 'supertonic',
     };
   }
@@ -705,6 +716,7 @@ export class RaceSystem extends System {
     const input = (val, type, ph) => { const i = style(document.createElement('input')); i.type = type || 'text'; i.value = val || ''; if (ph) i.placeholder = ph; return i; };
 
     const provider = select(['cloud', 'openai', 'local'], cfg.provider);
+    const modelMode = select(['auto', 'manual'], cfg.modelMode);
     const model = input(cfg.model, 'text', 'claude-haiku-4-5');
     const baseURL = input(cfg.baseURL, 'text', 'http://localhost:1234/v1');
     const apiKey = input(cfg.apiKey, 'password', 'sk-ant-… (blank for local)');
@@ -713,8 +725,28 @@ export class RaceSystem extends System {
     row('Brain', provider);
     const urlRow = row('Base URL', baseURL);
     const keyRow = row('API key', apiKey);
-    row('Model', model);
+    const modeRow = row('Model', modelMode);
+    const modelRow = row('Model id', model);
+
+    // What auto mode resolves to, so "auto" isn't a black box.
+    const autoNote = document.createElement('div');
+    autoNote.className = 'vc-label';
+    autoNote.style.cssText = 'font-size:10px;opacity:0.7;margin:-2px 0 6px;line-height:1.4;';
+    autoNote.textContent = `pilot → ${autoModelFor('pilot')} · voice → ${autoModelFor('voice')}`;
+    wrap.appendChild(autoNote);
+
     row('Voice', tts);
+
+    // Live token/cost meter — the only honest way to tell whether the routing and
+    // the prompt cache are doing what they claim.
+    const usage = document.createElement('div');
+    usage.className = 'vc-label';
+    usage.style.cssText = 'font-size:10px;opacity:0.7;margin:2px 0 8px;line-height:1.4;';
+    const renderUsage = () => { usage.textContent = llmBudget.line(); };
+    renderUsage();
+    wrap.appendChild(usage);
+    if (this._budgetUnsub) this._budgetUnsub();
+    this._budgetUnsub = llmBudget.onChange(renderUsage);
 
     // Each provider keeps its own API key; the visible field always shows the
     // key belonging to the currently selected provider.
@@ -722,9 +754,17 @@ export class RaceSystem extends System {
     let prevProvider = provider.value;
 
     const sync = () => {
+      const isCloud = provider.value === 'cloud';
       urlRow.style.display = provider.value === 'openai' ? 'grid' : 'none';
       keyRow.style.display = provider.value === 'local' ? 'none' : 'grid';
+      // Per-task routing only means anything for the cloud provider — a local
+      // server serves whatever model it has loaded, so always ask for the id.
+      modeRow.style.display = isCloud ? 'grid' : 'none';
+      const auto = isCloud && modelMode.value === 'auto';
+      modelRow.style.display = auto ? 'none' : 'grid';
+      autoNote.style.display = auto ? 'block' : 'none';
     };
+    modelMode.addEventListener('change', sync);
     provider.addEventListener('change', () => {
       // Stash the field under the provider we are leaving, show the key saved
       // for the one we are entering.
@@ -751,7 +791,7 @@ export class RaceSystem extends System {
       apiKeys[provider.value] = apiKey.value.trim();
       this._saveAgentConfig({
         provider: provider.value, baseURL: baseURL.value.trim(), apiKeys,
-        model: model.value.trim(), tts: tts.value,
+        model: model.value.trim(), modelMode: modelMode.value, tts: tts.value,
       });
       const wasVoice = !!this._voiceCopilot;
       if (wasVoice) this.stopVoiceChat();

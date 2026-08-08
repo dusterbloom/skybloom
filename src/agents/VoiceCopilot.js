@@ -24,6 +24,7 @@
  * falls back to the browser voice — it never blocks the co-pilot.
  */
 import { createProvider, extractJSON } from './llmProviders.js';
+import { resolveTask } from './modelRouting.js';
 import { Companion } from './Companion.js';
 
 const SYSTEM = `You are the voice of a magical flying carpet — a warm, witty co-pilot in the game SkyBloom, free to roam an open world, visit landmarks, gather mana, fly alongside the player, or race.
@@ -83,7 +84,11 @@ export class VoiceCopilot {
     // Kokoro/Supertonic would render silently. This is the gesture that unlocks it.
     this._ensureAudio();
     const gen = this._gen; // stop() bumps this — a stale start must not go live
-    const provider = await createProvider(this.config); // can take minutes (WebLLM)
+    // Route to the capable tier and cache the big static SYSTEM prefix. This is
+    // the workload where a wrong world op is a visible failure, and it's also the
+    // one where caching pays: see modelRouting.js for why "smarter" ends up
+    // cheaper per turn here than the small model would be.
+    const provider = await createProvider(resolveTask('voice', this.config)); // can take minutes (WebLLM)
     if (gen !== this._gen) {
       // stopped while the brain loaded — dispose it and stay off
       try { if (provider.dispose) Promise.resolve(provider.dispose()).catch(() => {}); } catch (e) { /* ignore */ }
