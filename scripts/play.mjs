@@ -47,10 +47,34 @@ function safePath(urlPath) {
 
 const server = createServer((req, res) => {
   let filePath = safePath(req.url || '/');
-  if (!existsSync(filePath) || statSync(filePath).isDirectory()) filePath = join(distDir, 'index.html');
+  const missing = !existsSync(filePath) || statSync(filePath).isDirectory();
+  // Fall back to index.html for client routes (no file extension). A missing
+  // file that clearly WANTED to be a file gets an honest 404 instead: silently
+  // answering an asset request with the HTML shell hides the real failure.
+  if (missing) {
+    if (extname(filePath)) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Not found');
+      return;
+    }
+    filePath = join(distDir, 'index.html');
+  }
 
+  const stats = statSync(filePath);
   res.setHeader('Cache-Control', filePath.endsWith('index.html') ? 'no-cache' : 'public, max-age=31536000, immutable');
   res.setHeader('Content-Type', contentTypes[extname(filePath).toLowerCase()] || 'application/octet-stream');
+  // Content-Length is load-bearing, not decoration: AssetManager sizes every
+  // asset from this header and swaps in a placeholder when it reads under 100
+  // bytes. Without it the game boots on fallback textures and models.
+  res.setHeader('Content-Length', stats.size);
+  res.setHeader('Accept-Ranges', 'bytes');
+
+  if (req.method === 'HEAD') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
   createReadStream(filePath)
     .on('error', () => {
       res.writeHead(500);
