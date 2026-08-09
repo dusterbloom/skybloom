@@ -917,9 +917,16 @@ export class RaceSystem extends System {
       }
     });
 
-    // Look for a server now. Nothing above waits on it: the form is fully usable
-    // while the probes run, and a machine with none is the quiet path.
-    runScan({ adoptIfUnconfigured: true });
+    // Look for a server, but not on the critical path: this form is built while
+    // the engine is still starting, and a blocked main thread delays the fetch
+    // and the probe's own abort timer alike — scanning here loses servers that
+    // did reply. Wait for idle, with a timer fallback where that's unavailable.
+    const startScan = () => runScan({ adoptIfUnconfigured: true });
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(startScan, { timeout: 3000 });
+    } else {
+      setTimeout(startScan, 1200);
+    }
   }
 
   /** True when the player has saved agent settings at least once. */

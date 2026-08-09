@@ -41,7 +41,11 @@ export const KNOWN_ENDPOINTS = [
   { name: 'text-generation-webui', baseURL: 'http://localhost:5000/v1' },
 ];
 
-const DEFAULT_TIMEOUT_MS = 1500;
+// Generous on purpose. A closed port refuses instantly, so this budget is only
+// ever spent on a port that hangs — and it has to survive the main thread being
+// blocked by engine start-up, which can delay both the fetch resolution and the
+// abort timer. A tight timeout here silently loses a server that did reply.
+const DEFAULT_TIMEOUT_MS = 4000;
 
 /**
  * Ask one endpoint what it is. Resolves to {name, baseURL, models} or null —
