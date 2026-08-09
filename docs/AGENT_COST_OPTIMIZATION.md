@@ -112,6 +112,59 @@ Read it like this:
 Local and OpenAI-compatible brains report tokens and $0 rather than inventing a
 price for weights we can't identify.
 
+## Free beats cheap: local server discovery
+
+The cheapest token is the one you don't buy. If the player already runs LM Studio,
+Jan, Ollama or llama.cpp, that should be the offer — not a paid API and a key
+prompt.
+
+`src/agents/localEndpoints.js` probes the usual ports in parallel
+(`GET {baseURL}/models`, the one endpoint every OpenAI-compatible server
+implements) and reports which models are loaded:
+
+| Server | Port probed |
+|---|---|
+| LM Studio | 1234 |
+| Jan | 1337 |
+| Ollama | 11434 |
+| llama.cpp / LocalAI | 8080 |
+| vLLM | 8000 |
+| text-generation-webui | 5000 |
+
+Plus whatever `Base URL` is currently in the form, so a custom port is never
+missed. Measured in Chromium: all six probes complete in ~14 ms when a server is
+up, ~40 ms when nothing is (a refused connection is instant). Nothing waits on it
+— the form is fully usable while the probes run.
+
+What happens with a hit:
+
+- **Never configured anything** → the local server is *applied*, not just offered.
+  There is no key to lose and the Brain select reverses it in one click.
+- **Already has settings** → a banner offers it: `⚡ Found LM Studio ·
+  qwen2.5-7b-instruct on this machine.` with a one-click **Use it — no API key, no
+  cost**.
+- Either way the server's real model ids become completions on the Model id field,
+  so nobody has to guess the exact string.
+- The Brain dropdown now reads `cloud API (paid)` / `local server (free)` /
+  `on-device (free)` — the cost is visible at the point of choosing.
+- If a cloud run is blocked for a missing key, the toast names the free server
+  that's already running instead of only demanding a key.
+
+**A probe can fail while the server is genuinely up.** All of these look identical
+to a closed port from a browser, which is a security guarantee rather than a bug —
+so the UI offers a **Scan for a local server** button rather than concluding
+nothing is there:
+
+- **CORS** — the server must allow the page's origin. LM Studio ships with CORS
+  on; Ollama needs `OLLAMA_ORIGINS` set.
+- **Mixed content** — from an `https://` page, Chrome and Firefox treat
+  `http://localhost` as trustworthy and allow it; Safari does not.
+- **Private Network Access** — Chrome may preflight public → loopback requests and
+  expect `Access-Control-Allow-Private-Network` on the reply.
+
+Local endpoints report tokens and $0 to the meter, since we can't price weights we
+can't identify.
+
 ## Settings
 
 **MENU → Agent** gains a *Model* mode:

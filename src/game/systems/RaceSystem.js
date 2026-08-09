@@ -7,6 +7,7 @@ import { LLMPilot } from '../../agents/LLMPilot.js';
 import { VoiceCopilot } from '../../agents/VoiceCopilot.js';
 import { autoModelFor } from '../../agents/modelRouting.js';
 import { llmBudget } from '../../agents/llmBudget.js';
+import { discoverLocalEndpoints, describeEndpoint, preferredModel } from '../../agents/localEndpoints.js';
 import { useGameState, GameStates } from '../state/gameState.js';
 import { ensureVibeTheme } from '../ui/theme.js';
 
@@ -266,6 +267,11 @@ export class RaceSystem extends System {
     if (this._budgetUnsub) {
       this._budgetUnsub();
       this._budgetUnsub = null;
+    }
+    if (this._localScanCtrl) {
+      // Don't leave probes in flight against a torn-down panel.
+      try { this._localScanCtrl.abort(); } catch (error) { /* already settled */ }
+      this._localScanCtrl = null;
     }
     if (this._hudRoot && this._hudRoot.parentNode) {
       this._hudRoot.parentNode.removeChild(this._hudRoot);
@@ -613,7 +619,11 @@ export class RaceSystem extends System {
   /** A brain config needs a key for cloud; local/openai usually don't. */
   _requireBrain(cfg) {
     if (cfg.provider === 'cloud' && !cfg.apiKey) {
-      this._toast('Add your API key in MENU → Agent', '#ffcc66', 4000);
+      // If something free is already running here, say so instead of only
+      // demanding a key.
+      this._toast(this._localFound
+        ? `Add an API key in MENU → Agent — or use ${describeEndpoint(this._localFound)}, already running here`
+        : 'Add your API key in MENU → Agent', '#ffcc66', 4000);
       return false;
     }
     return true;
@@ -708,21 +718,44 @@ export class RaceSystem extends System {
       const l = document.createElement('div'); l.className = 'vc-label'; l.style.fontSize = '10px'; l.textContent = labelText;
       r.appendChild(l); r.appendChild(el); wrap.appendChild(r); return r;
     };
-    const select = (opts, val) => {
+    // `labels` lets an option read differently from the value it stores — used to
+    // put the cost of each brain in front of the player at the point of choosing.
+    const select = (opts, val, labels) => {
       const s = style(document.createElement('select'));
-      for (const o of opts) { const op = document.createElement('option'); op.value = o; op.textContent = o; if (o === val) op.selected = true; s.appendChild(op); }
+      for (const o of opts) { const op = document.createElement('option'); op.value = o; op.textContent = (labels && labels[o]) || o; if (o === val) op.selected = true; s.appendChild(op); }
       return s;
     };
     const input = (val, type, ph) => { const i = style(document.createElement('input')); i.type = type || 'text'; i.value = val || ''; if (ph) i.placeholder = ph; return i; };
 
-    const provider = select(['cloud', 'openai', 'local'], cfg.provider);
+    const provider = select(['cloud', 'openai', 'local'], cfg.provider, {
+      cloud: 'cloud API (paid)',
+      openai: 'local server (free)',
+      local: 'on-device (free)',
+    });
     const modelMode = select(['auto', 'manual'], cfg.modelMode);
     const model = input(cfg.model, 'text', 'claude-haiku-4-5');
     const baseURL = input(cfg.baseURL, 'text', 'http://localhost:1234/v1');
     const apiKey = input(cfg.apiKey, 'password', 'sk-ant-… (blank for local)');
     const tts = select(['supertonic', 'kokoro', 'browser'], cfg.tts);
 
+    // Offer whatever is already running on this machine before asking for a key.
+    // Populated asynchronously by _scanLocalEndpoints; hidden until it finds one.
+    const localBanner = document.createElement('div');
+    localBanner.style.cssText = 'display:none;margin:0 0 8px;padding:7px 9px;border-radius:8px;'
+      + 'background:rgba(102,255,238,0.10);border:1px solid rgba(102,255,238,0.35);'
+      + 'font-size:11px;line-height:1.45;gap:6px;';
+    const localText = document.createElement('div');
+    localText.style.cssText = 'margin-bottom:6px;color:var(--vc-ink,#fff);';
+    const localUse = document.createElement('button');
+    localUse.type = 'button';
+    localUse.textContent = 'Use it — no API key, no cost';
+    localUse.style.cssText = 'width:100%;min-height:26px;border-radius:999px;font-size:11px;cursor:pointer;'
+      + 'border:1px solid rgba(102,255,238,0.5);background:rgba(102,255,238,0.18);color:var(--vc-ink,#fff);';
+    localBanner.appendChild(localText);
+    localBanner.appendChild(localUse);
+
     row('Brain', provider);
+    wrap.appendChild(localBanner);
     const urlRow = row('Base URL', baseURL);
     const keyRow = row('API key', apiKey);
     const modeRow = row('Model', modelMode);
@@ -747,6 +780,23 @@ export class RaceSystem extends System {
     wrap.appendChild(usage);
     if (this._budgetUnsub) this._budgetUnsub();
     this._budgetUnsub = llmBudget.onChange(renderUsage);
+
+    // Model ids the discovered server actually has loaded, offered as completions
+    // on the Model id field so nobody has to guess the exact string.
+    const modelList = document.createElement('datalist');
+    modelList.id = 'vc-local-models';
+    model.setAttribute('list', modelList.id);
+    wrap.appendChild(modelList);
+
+    // Manual rescan: servers get started after the page does.
+    const scanRow = document.createElement('div');
+    scanRow.style.cssText = 'margin-top:6px;text-align:center;';
+    const scan = document.createElement('button');
+    scan.type = 'button';
+    scan.textContent = 'Scan for a local server';
+    scan.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'
+      + 'border:1px solid rgba(255,255,255,0.2);background:transparent;color:var(--vc-ink-dim,#aaa);';
+    scanRow.appendChild(scan);
 
     // Each provider keeps its own API key; the visible field always shows the
     // key belonging to the currently selected provider.
@@ -781,13 +831,9 @@ export class RaceSystem extends System {
     });
     sync();
 
-    const save = document.createElement('button');
-    save.type = 'button'; save.className = 'vc-btn-primary';
-    save.textContent = 'Save agent settings';
-    save.style.width = '100%'; save.style.minHeight = '30px'; save.style.borderRadius = '999px';
-    save.style.fontSize = '12px'; save.style.marginTop = '4px';
-    save.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
+    // Write the form to storage. Shared by the Save button and the one-click
+    // "use the local server" path so both restart a running voice co-pilot.
+    const persist = (message) => {
       apiKeys[provider.value] = apiKey.value.trim();
       this._saveAgentConfig({
         provider: provider.value, baseURL: baseURL.value.trim(), apiKeys,
@@ -795,10 +841,123 @@ export class RaceSystem extends System {
       });
       const wasVoice = !!this._voiceCopilot;
       if (wasVoice) this.stopVoiceChat();
-      this._toast(wasVoice ? 'Agent settings saved — press Talk to restart voice' : 'Agent settings saved', '#66ffee');
+      this._toast(wasVoice ? `${message} — press Talk to restart voice` : message, '#66ffee');
+    };
+
+    // Point the form at a discovered local server and save in one gesture.
+    const adoptLocal = (found) => {
+      provider.value = 'openai';
+      apiKeys[prevProvider] = apiKey.value.trim();
+      prevProvider = 'openai';
+      apiKey.value = apiKeys.openai || '';
+      baseURL.value = found.baseURL;
+      model.value = preferredModel(found);
+      // Assigning .value doesn't fire 'change', so retire the offer by hand —
+      // otherwise we'd keep proposing the server we just switched to.
+      localBanner.style.display = 'none';
+      sync();
+      persist(`Using ${describeEndpoint(found)} — free`);
+    };
+    localUse.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (this._localFound) adoptLocal(this._localFound);
+    });
+
+    const save = document.createElement('button');
+    save.type = 'button'; save.className = 'vc-btn-primary';
+    save.textContent = 'Save agent settings';
+    save.style.width = '100%'; save.style.minHeight = '30px'; save.style.borderRadius = '999px';
+    save.style.fontSize = '12px'; save.style.marginTop = '4px';
+    save.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      persist('Agent settings saved');
     });
     wrap.appendChild(save);
+    wrap.appendChild(scanRow);
     root.appendChild(wrap);
+
+    const runScan = ({ adoptIfUnconfigured = false, announce = false } = {}) => {
+      const started = this._scanLocalEndpoints({
+        baseURL, models: modelList,
+        onDone: (found) => {
+          if (announce) scan.textContent = 'Scan for a local server';
+          if (!found) {
+            localBanner.style.display = 'none';
+            if (announce) this._toast('No local model server found on the usual ports', '#ffcc66', 4000);
+            return;
+          }
+          localText.textContent = `⚡ Found ${describeEndpoint(found)} on this machine.`;
+          // Already pointed at it — nothing to propose.
+          localBanner.style.display = provider.value === 'openai' ? 'none' : 'block';
+          // A player who has never configured anything gets the free option
+          // applied rather than merely offered: there is no key to lose, and the
+          // Brain select reverses it in one click.
+          if (adoptIfUnconfigured && provider.value !== 'openai' && !this._hasSavedAgentConfig()) adoptLocal(found);
+        },
+      });
+      // Only claim to be scanning if a scan actually started — a second click
+      // while one is in flight must not strand the label on "Scanning…".
+      if (announce && started) scan.textContent = 'Scanning…';
+    };
+    scan.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      runScan({ announce: true });
+    });
+    // Switching to "local server" by hand should land on the one we found rather
+    // than the generic placeholder defaults, and retires the offer.
+    provider.addEventListener('change', () => {
+      if (provider.value !== 'openai') {
+        if (this._localFound) localBanner.style.display = 'block';
+        return;
+      }
+      localBanner.style.display = 'none';
+      if (this._localFound) {
+        baseURL.value = this._localFound.baseURL;
+        model.value = preferredModel(this._localFound);
+      }
+    });
+
+    // Look for a server now. Nothing above waits on it: the form is fully usable
+    // while the probes run, and a machine with none is the quiet path.
+    runScan({ adoptIfUnconfigured: true });
+  }
+
+  /** True when the player has saved agent settings at least once. */
+  _hasSavedAgentConfig() {
+    try { return !!localStorage.getItem('vc.voice'); } catch (error) { return false; }
+  }
+
+  /**
+   * Probe the machine for an OpenAI-compatible server and report back.
+   * Best effort by design: a blocked or absent server is silence, not an error.
+   * Returns false when a scan is already in flight and this one was dropped.
+   */
+  _scanLocalEndpoints({ baseURL, models, onFound, onDone } = {}) {
+    if (this._localScanning) return false;
+    this._localScanning = true;
+    this._localScanCtrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    discoverLocalEndpoints({
+      extra: baseURL ? baseURL.value : undefined,
+      signal: this._localScanCtrl ? this._localScanCtrl.signal : undefined,
+    })
+      .then((found) => {
+        const best = found[0] || null;
+        this._localFound = best;
+        // Offer the server's real model ids instead of asking for one blind.
+        if (models && best) {
+          models.replaceChildren();
+          for (const id of best.models) {
+            const opt = document.createElement('option');
+            opt.value = id;
+            models.appendChild(opt);
+          }
+        }
+        if (best && onFound) onFound(best);
+        if (onDone) onDone(best);
+      })
+      .catch(() => { if (onDone) onDone(null); })
+      .finally(() => { this._localScanning = false; });
+    return true;
   }
 
   /** Talk to the carpet: one push-to-talk turn (configures + starts on first press). */
