@@ -25,11 +25,14 @@
  */
 
 /**
- * Default ports, most-likely first. Order matters: the first hit wins when we
- * auto-offer, and LM Studio is both the most common and the one whose defaults
- * let a browser talk to it without extra configuration.
+ * Default ports, preferred first. Order matters: the first one to answer is what
+ * gets offered (and auto-adopted for a player who has configured nothing), so
+ * Higgs — this project's own inference server — leads, then LM Studio, which is
+ * the most common and the one whose defaults let a browser reach it unconfigured.
+ * Move a row to change the preference; nothing else reads this order.
  */
 export const KNOWN_ENDPOINTS = [
+  { name: 'Higgs', baseURL: 'http://localhost:9000/v1' },
   { name: 'LM Studio', baseURL: 'http://localhost:1234/v1' },
   { name: 'Jan', baseURL: 'http://localhost:1337/v1' },
   { name: 'Ollama', baseURL: 'http://localhost:11434/v1' },

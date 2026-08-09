@@ -124,6 +124,7 @@ implements) and reports which models are loaded:
 
 | Server | Port probed |
 |---|---|
+| Higgs (this project's own inference server) | 9000 |
 | LM Studio | 1234 |
 | Jan | 1337 |
 | Ollama | 11434 |
@@ -132,9 +133,13 @@ implements) and reports which models are loaded:
 | text-generation-webui | 5000 |
 
 Plus whatever `Base URL` is currently in the form, so a custom port is never
-missed. Measured in Chromium: all six probes complete in ~14 ms when a server is
-up, ~40 ms when nothing is (a refused connection is instant). Nothing waits on it
-— the form is fully usable while the probes run.
+missed. Measured in Chromium: all seven probes complete in a few tens of ms
+whether or not anything is listening (a refused connection is instant). Nothing
+waits on it — the form is fully usable while the probes run.
+
+Order is preference: the first server to answer is what gets offered, and Higgs
+leads the list. Reorder `KNOWN_ENDPOINTS` to change that; nothing else depends on
+it.
 
 What happens with a hit:
 
