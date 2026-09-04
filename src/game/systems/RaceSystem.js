@@ -171,6 +171,7 @@ export class RaceSystem extends System {
     this._tmpB = new THREE.Vector3();
 
     this._onKeyDown = null;
+    this._onVoiceKeyDown = null;
     this._onAgentActionQueued = null;
     this._hintTimer = null;
   }
@@ -200,6 +201,19 @@ export class RaceSystem extends System {
       if (this.state !== 'running') this.start();
     };
     window.addEventListener('keydown', this._onKeyDown);
+
+    // KeyV: talk to the co-pilot and, while it's mid-sentence, barge in on it
+    // (VoiceCopilot#bargeIn() aborts the utterance and reopens the mic). It is
+    // deliberately inert when no co-pilot is running — MENU -> Agent -> Talk is
+    // still what starts one, because starting needs a resolved provider/voice
+    // config that this key has no business improvising.
+    this._onVoiceKeyDown = (event) => {
+      if (event.code !== 'KeyV' || event.repeat) return;
+      if (InputManager.isEditableTarget(event.target)) return;
+      if (!this._isGamePlaying()) return;
+      if (this._voiceCopilot) this._voiceCopilot.bargeIn();
+    };
+    window.addEventListener('keydown', this._onVoiceKeyDown);
 
     this._onAgentActionQueued = (event) => this.recordAgentAction(event);
     this.engine.eventBus.on('agentActionQueued', this._onAgentActionQueued);
@@ -260,6 +274,10 @@ export class RaceSystem extends System {
     if (this._onKeyDown) {
       window.removeEventListener('keydown', this._onKeyDown);
       this._onKeyDown = null;
+    }
+    if (this._onVoiceKeyDown) {
+      window.removeEventListener('keydown', this._onVoiceKeyDown);
+      this._onVoiceKeyDown = null;
     }
     if (this._hintTimer) {
       clearTimeout(this._hintTimer);
@@ -612,6 +630,9 @@ export class RaceSystem extends System {
       // HuggingFace before the first word. A saved 'supertonic'/'kokoro' choice
       // is left exactly as the player set it; only the *unset* default changed.
       tts: cfg.tts || 'browser',
+      // 'ptt' (press Talk each turn) is the default and what an unset/legacy
+      // config resolves to — see listenModes.js for what 'handsfree' opts into.
+      listenMode: cfg.listenMode === 'handsfree' ? 'handsfree' : 'ptt',
     };
   }
 
@@ -748,6 +769,13 @@ export class RaceSystem extends System {
       supertonic: 'Supertonic (neural, downloads)',
       kokoro: 'Kokoro (neural, downloads)',
     });
+    // Push-to-talk (default) vs. hands-free — see listenModes.js. Saved
+    // alongside tts/provider in the same vc.voice blob; a running voice
+    // co-pilot restarts on Save, same as every other field here.
+    const listenMode = select(['ptt', 'handsfree'], cfg.listenMode, {
+      ptt: 'push-to-talk (press Talk each turn)',
+      handsfree: 'hands-free (mic stays open, V to interrupt)',
+    });
 
     // Offer whatever is already running on this machine before asking for a key.
     // Populated asynchronously by _scanLocalEndpoints; hidden until it finds one.
@@ -780,6 +808,7 @@ export class RaceSystem extends System {
     wrap.appendChild(autoNote);
 
     row('Voice', tts);
+    row('Listen', listenMode);
 
     // Live token/cost meter — the only honest way to tell whether the routing and
     // the prompt cache are doing what they claim.
@@ -849,6 +878,7 @@ export class RaceSystem extends System {
       this._saveAgentConfig({
         provider: provider.value, baseURL: baseURL.value.trim(), apiKeys,
         model: model.value.trim(), modelMode: modelMode.value, tts: tts.value,
+        listenMode: listenMode.value,
       });
       const wasVoice = !!this._voiceCopilot;
       if (wasVoice) this.stopVoiceChat();
@@ -1004,6 +1034,7 @@ export class RaceSystem extends System {
       const vc = new VoiceCopilot(api, {
         config: cfg,
         onText: (turn) => { if (this._copilotConsole) this._copilotConsole.push(turn); },
+        onInterim: (text) => { if (this._copilotConsole) this._copilotConsole.setInterim(text); },
         onState: (s) => { this._voiceState = s; if (this._copilotConsole) this._copilotConsole.setState(s); },
         // When the companion actually takes the controls, stop any other autonomous driver.
         onGoal: (g) => { if (g && g.type !== 'manual') this._stopOtherDrivers('voice'); },
@@ -1721,6 +1752,10 @@ export class RaceSystem extends System {
     addButton('pilot', 'LLM Pilot', () => { this._llmPilotRunning ? this.stopLLMPilot() : this.runLLMPilot(); }, false, agentActions);
     addButton('voiceTalk', '🎙 Talk', () => this.runVoiceChat(), true, agentActions);
     addButton('voiceOff', 'Voice Off', () => this.stopVoiceChat(), false, agentActions);
+    // Once running, V is the hotkey: talk (or, mid-sentence, barge in on the
+    // co-pilot). It does nothing until Talk has started one — see the KeyV
+    // handler in _initialize().
+    this._panelButtons.voiceTalk.title = 'Or press V once the co-pilot is running — also interrupts it mid-sentence';
 
     const agentRoot = document.createElement('div');
     agentRoot.id = 'agent-panel';

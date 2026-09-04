@@ -1,6 +1,7 @@
 /**
  * VoiceCopilot — talk to the carpet, it talks back AND does what you ask. Fully
- * in the browser, no server: the browser's Speech Recognition for input, a
+ * in the browser, no server: the browser's Speech Recognition for input (via
+ * listenModes.js — this file never touches the raw SpeechRecognition API), a
  * pluggable LLM provider (cloud Claude / OpenAI-compatible / on-device WebLLM)
  * for the brain, and a pluggable voice provider for output (see
  * voiceProviders.js): the OS's own speechSynthesis, or on-device neural TTS —
@@ -12,11 +13,19 @@
  * folds window.agentAPI.observe() (landmarks, mana, race, kinematics) into the
  * prompt, so it talks and acts about the actual world.
  *
+ * Listening (config.listenMode): 'ptt' (default) — press-to-talk, one utterance
+ * per listen() call, exactly the original behaviour. 'handsfree' — the mic stays
+ * open across turns; interim text streams out via onInterim() and a turn fires
+ * once listenModes.js's semantic endpointer decides the thought is finished (see
+ * that file for why silence-only endpointing isn't good enough). Either way,
+ * KeyV (wired by the host, e.g. RaceSystem) is the barge-in hotkey: bargeIn()
+ * aborts the in-flight utterance and opens the mic immediately.
+ *
  * DevTools:
  *   const { VoiceCopilot } = await import('/src/agents/VoiceCopilot.js');
  *   const v = await new VoiceCopilot(window.agentAPI,
  *     { config: { provider:'openai', baseURL:'http://localhost:1234/v1', model:'local-model' } }).start();
- *   v.listen();              // push-to-talk one turn
+ *   v.listen();              // push-to-talk one turn (or opens the hands-free mic)
  *   v.say('take me to the crystal formation');
  *
  * Voice (config.tts): 'browser' (default — the OS's own voice, free and instant),
@@ -29,6 +38,7 @@
  */
 import { createProvider, extractJSON } from './llmProviders.js';
 import { createVoice, normalizeTtsId } from './voiceProviders.js';
+import { createMicInput } from './listenModes.js';
 import { resolveTask } from './modelRouting.js';
 import { Companion } from './Companion.js';
 
@@ -67,12 +77,17 @@ export class VoiceCopilot {
     this.lang = this.config.lang || 'en-US';
     this.onText = opts.onText || (() => {});
     this.onState = opts.onState || (() => {});
+    this.onInterim = opts.onInterim || (() => {}); // host hook: live provisional transcript while listening
     this.onGoal = opts.onGoal || (() => {}); // host hook: fires when the companion's goal changes
     this.history = [];
     this._provider = null;
     this.companion = null;
-    this._rec = null;
-    this._listening = false;
+    // Listening lives entirely in listenModes.js now — see _initMic(). 'ptt' is
+    // the default and is what the Talk button drives; a saved config.listenMode
+    // of 'handsfree' opts into a continuously-open mic (see the file header).
+    this._micMode = this.config.listenMode === 'handsfree' ? 'handsfree' : 'ptt';
+    this._mic = null;
+    this._micRunning = false; // hands-free only: whether the mic SHOULD be open across turns (independent of the echo guard's stop/start around speaking)
     this._voiceOut = null; // the active voice provider, from createVoice()
     this._speakCtrl = null; // AbortController for the in-flight utterance, so stop() can silence it
     this._audioCtx = null;
@@ -115,6 +130,7 @@ export class VoiceCopilot {
       this._voiceOut = null;
       return this;
     }
+    this._initMic();
     // Pre-fetch a small sample of importable models so the genie can answer
     // "what can you summon?" conversationally, without a tool round-trip.
     try {
@@ -151,6 +167,7 @@ export class VoiceCopilot {
   stop() {
     this._gen++; // cancels any in-flight start()/say() from going live on this instance
     this.stopListening();
+    if (this._mic) { try { this._mic.destroy(); } catch (e) { /* ignore */ } this._mic = null; }
     if (this.companion) { try { this.companion.stop(); } catch (e) { /* ignore */ } this.companion = null; }
     // Abort the in-flight utterance — the voice provider silences its own
     // playback (stops the AudioBufferSourceNode for a PCM voice, or
@@ -192,29 +209,76 @@ export class VoiceCopilot {
     } catch (e) { return null; }
   }
 
-  /** One push-to-talk turn: listen until silence, transcribe, then act + reply. */
+  // Build the mic controller once voice/brain are up. All the raw
+  // SpeechRecognition handling lives in listenModes.js now; this is just the
+  // wiring from its generic {listening,idle,error} lifecycle onto VoiceCopilot's
+  // own state machine and the console/echo-guard hooks.
+  _initMic() {
+    this._mic = createMicInput({
+      mode: this._micMode,
+      lang: this.lang,
+      onUtterance: (text) => { if (this.state !== 'off' && text) this.say(text); },
+      onInterim: (text) => this.onInterim(text),
+      onState: (s) => this._onMicState(s),
+      onError: (kind) => this._onMicError(kind),
+    });
+  }
+
+  _onMicState(s) {
+    if (s === 'listening') {
+      if (this._micMode === 'handsfree') this._micRunning = true;
+      this._setState('listening');
+    } else if (s === 'idle' || s === 'error') {
+      // Only fall back to 'ready' from 'listening' — never clobber 'thinking'/
+      // 'speaking' (a stray recognizer event mid-turn must not reset the UI).
+      if (this.state === 'listening') this._setState('ready');
+    }
+  }
+
+  _onMicError(kind) {
+    if (kind === 'unsupported') {
+      // Carried over from the old inline listen(): Firefox and friends have no
+      // SpeechRecognition at all — the console still works fine via typing.
+      this._setState('no-mic');
+      this.onText({ role: 'system', text: 'Speech input not supported here — try Chrome, or call say("...") with text.' });
+      return;
+    }
+    if (kind === 'not-allowed' || kind === 'service-not-allowed') {
+      this._micRunning = false;
+      this._setState('no-mic');
+      this.onText({ role: 'system', text: 'Microphone permission was denied — allow it in your browser’s site settings, or keep typing below.' });
+    }
+    // Other transient recognizer errors (no-speech, network, aborted,
+    // audio-capture, ...) are handled by listenModes.js's own restart/backoff
+    // in hands-free mode; in push-to-talk they just fall through to onend's
+    // 'idle', which _onMicState above turns back into 'ready'.
+  }
+
+  /** One turn of listening: push-to-talk (one utterance) or, in hands-free
+   *  mode, (re)opens the continuously-listening mic. */
   listen() {
     if (this.state === 'off') return; // stopped — don't open the mic on a dead instance
-    this._ensureAudio(); // pressing Talk is a gesture — keep audio unlocked
-    if (this._listening) return;
-    const SR = (typeof window !== 'undefined') && (window.SpeechRecognition || window.webkitSpeechRecognition);
-    if (!SR) { this._setState('no-mic'); this.onText({ role: 'system', text: 'Speech input not supported here — try Chrome, or call say("...") with text.' }); return; }
-    const rec = new SR();
-    rec.lang = this.lang;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e) => { const t = e.results[0][0].transcript; if (t) this.say(t); };
-    rec.onerror = () => { this._listening = false; this._setState('ready'); };
-    rec.onend = () => { this._listening = false; if (this.state === 'listening') this._setState('ready'); };
-    this._rec = rec;
-    this._listening = true;
-    this._setState('listening');
-    try { rec.start(); } catch (e) { this._listening = false; this._setState('ready'); }
+    this._ensureAudio(); // pressing Talk (or V) is a gesture — keep audio unlocked
+    if (!this._mic) return; // start() hasn't reached _initMic() yet
+    if (this._micMode === 'handsfree') this._micRunning = true;
+    this._mic.start();
   }
 
   stopListening() {
-    this._listening = false;
-    if (this._rec) { try { this._rec.stop(); } catch (e) { /* already stopped */ } this._rec = null; }
+    this._micRunning = false;
+    if (this._mic) this._mic.stop();
+  }
+
+  /** Barge-in hotkey (KeyV, wired by the host): abort whatever's being spoken
+   *  right now and open the mic immediately, instead of waiting for the
+   *  utterance to finish and the echo guard's own resume in _setState(). A
+   *  no-op on a stopped instance — V must never silently start a co-pilot,
+   *  since starting needs a resolved provider/voice config. */
+  bargeIn() {
+    if (this.state === 'off' || !this._mic) return;
+    if (this._speakCtrl) { try { this._speakCtrl.abort(); } catch (e) { /* ignore */ } }
+    if (this._micMode === 'handsfree') this._micRunning = true;
+    this._mic.start();
   }
 
   /** Take a text turn (from speech or typed): reason -> act on intent -> speak. */
@@ -276,7 +340,11 @@ export class VoiceCopilot {
     this._applyWorld(world);
     this._setState('speaking');
     await this._speak(reply);
-    if (gen === this._gen) this._setState('ready'); // don't wake a stopped copilot
+    // Don't wake a stopped copilot — and don't clobber 'listening' either: a
+    // barge-in (V, mid-utterance) can already have reopened the mic and moved
+    // the state on by the time this await resolves, and stamping 'ready' over
+    // that would show a stale status while the mic is actually live.
+    if (gen === this._gen && this.state !== 'listening') this._setState('ready');
     return reply;
   }
 
@@ -442,7 +510,25 @@ export class VoiceCopilot {
     }
   }
 
-  _setState(s) { this.state = s; this.onState(s); }
+  _setState(s) {
+    const prev = this.state;
+    this.state = s;
+    this.onState(s);
+    // Echo guard (v1, hands-free only): an open mic hears the TTS and
+    // transcribes the co-pilot talking to itself, so recognition is suspended
+    // for exactly the duration of the utterance and resumed right after. This
+    // deliberately trades voice barge-in (interrupting just by talking over
+    // it) for correctness — the alternative would be acoustic similarity
+    // gating (comparing what the mic hears against what we're about to play
+    // and discounting the match), which is real signal-processing work we're
+    // not doing for v1. bargeIn() (the V hotkey) is the escape hatch: it
+    // aborts the utterance and reopens the mic immediately rather than
+    // waiting for this resume.
+    if (this._mic && this._micMode === 'handsfree') {
+      if (s === 'speaking' && prev !== 'speaking') this._mic.stop();
+      else if (prev === 'speaking' && s !== 'speaking' && this._micRunning) this._mic.start();
+    }
+  }
 }
 
 if (typeof window !== 'undefined') window.VoiceCopilot = VoiceCopilot;

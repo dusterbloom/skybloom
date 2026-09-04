@@ -151,6 +151,14 @@ function ensureConsoleStyles() {
       max-width: 100%;
       text-align: center;
     }
+    /* Provisional line for a hands-free utterance still being recognized —
+       same shape as a user bubble, dashed and dimmed so it reads as "not
+       final yet" until it's replaced by the real line (see setInterim()). */
+    #copilot-console .cc-line-interim {
+      opacity: 0.62;
+      border: 1px dashed rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.05);
+    }
     #copilot-console .cc-empty {
       flex: 1 1 auto;
       min-height: 0;
@@ -323,6 +331,7 @@ export function createCopilotConsole({ onSubmit, onClose } = {}) {
 
   let turnCount = 0;
   let thinking = false;
+  let interimLine = null; // the live provisional line, while one is showing
 
   function submit(text) {
     const trimmed = (text || '').trim();
@@ -346,6 +355,10 @@ export function createCopilotConsole({ onSubmit, onClose } = {}) {
 
   function push({ role, text } = {}) {
     if (!text) return;
+    // A real turn landing supersedes any provisional line still on screen —
+    // clear it first so a final user line never appears alongside its own
+    // now-stale interim ghost.
+    clearInterim();
     if (turnCount === 0) { scroll.style.display = ''; empty.remove(); }
     turnCount++;
 
@@ -361,6 +374,32 @@ export function createCopilotConsole({ onSubmit, onClose } = {}) {
 
     // Auto-scroll only when the reader was already at (or near) the bottom —
     // otherwise a new line while reading history would yank the view down.
+    if (wasNearBottom) scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  function clearInterim() {
+    if (interimLine && interimLine.parentNode) interimLine.parentNode.removeChild(interimLine);
+    interimLine = null;
+  }
+
+  // The live, in-progress transcript for a hands-free utterance: one line that
+  // updates in place as speech recognition revises it, instead of spamming a
+  // new bubble per partial result. Call with '' (or nothing) to clear it —
+  // recognition can abort mid-utterance (permission revoked, mode switched,
+  // the co-pilot stopped), and that must never leave a stale ghost line behind.
+  function setInterim(text) {
+    const trimmed = (text || '').trim();
+    if (!trimmed) { clearInterim(); return; }
+    if (turnCount === 0) { scroll.style.display = ''; empty.remove(); }
+    if (!interimLine) {
+      interimLine = document.createElement('div');
+      interimLine.className = 'cc-line cc-line-user cc-line-interim';
+      scroll.appendChild(interimLine);
+    }
+    const wasNearBottom = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < NEAR_BOTTOM_PX;
+    // textContent only, same as every other line here — this is live speech
+    // transcription, never markup.
+    interimLine.textContent = trimmed;
     if (wasNearBottom) scroll.scrollTop = scroll.scrollHeight;
   }
 
@@ -382,8 +421,9 @@ export function createCopilotConsole({ onSubmit, onClose } = {}) {
     input.removeEventListener('keydown', onInputKeydown);
     closeBtn.removeEventListener('click', onCloseClick);
     for (const cleanup of chipCleanups) cleanup();
+    clearInterim();
     if (root.parentNode) root.parentNode.removeChild(root);
   }
 
-  return { push, setState, show, hide, destroy };
+  return { push, setInterim, setState, show, hide, destroy };
 }
