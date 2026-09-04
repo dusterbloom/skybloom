@@ -8,7 +8,7 @@ import { VoiceCopilot } from '../../agents/VoiceCopilot.js';
 import { createCopilotConsole } from '../ui/CopilotConsole.js';
 import { autoModelFor } from '../../agents/modelRouting.js';
 import { llmBudget } from '../../agents/llmBudget.js';
-import { discoverLocalEndpoints, describeEndpoint, preferredModel } from '../../agents/localEndpoints.js';
+import { discoverLocalEndpoints, describeEndpoint, preferredModel, probeEndpoint } from '../../agents/localEndpoints.js';
 import { useGameState, GameStates } from '../state/gameState.js';
 import { ensureVibeTheme } from '../ui/theme.js';
 
@@ -77,12 +77,54 @@ const BUILD_VERSION = typeof __SKYBLOOM_BUILD_VERSION__ !== 'undefined'
   ? __SKYBLOOM_BUILD_VERSION__
   : 'dev';
 
-// Default model id per Brain provider. Also used to detect "the user never
-// customized the model", so switching provider can swap the default in.
+// Default model id per Brain. Also used to detect "the user never customized
+// the model", so switching brain can swap the default in. Groq and OpenRouter
+// have no entry (''): their model catalogs get retired, so a hardcoded id here
+// would eventually rot — the form fetches real ids live instead (see
+// BRAIN_PRESETS / fetchPresetModels in _createAgentConfigForm).
 const PROVIDER_DEFAULT_MODELS = {
   cloud: 'claude-haiku-4-5',
   openai: 'local-model',
   local: 'Llama-3.2-1B-Instruct-q4f32_1-MLC',
+  groq: '',
+  openrouter: '',
+};
+
+/**
+ * The Brain dropdown, in offer order. Everything but 'local' resolves to
+ * `provider: 'openai'` — Groq and OpenRouter are OpenAI-compatible chat
+ * endpoints (createOpenAIProvider in llmProviders.js already speaks to both),
+ * so this is a table of presets, not a new provider. `id` is what gets saved
+ * as `cfg.provider` in vc.voice AND what keys `cfg.apiKeys` — see the big
+ * comment on _agentConfig() for why identity has to be the preset, not the
+ * runtime provider name (Groq and OpenRouter would otherwise collide).
+ *
+ * 'cloud' (the paid Anthropic path) is deliberately NOT listed here — it's
+ * still fully wired (createCloudProvider, modelRouting, llmBudget all
+ * untouched), just no longer offered to a player who doesn't already have it
+ * saved. See the `legacyCloud` handling in _createAgentConfigForm.
+ */
+const BRAIN_PRESETS = {
+  groq: {
+    label: 'Groq (free)', provider: 'openai',
+    baseURL: 'https://api.groq.com/openai/v1',
+    keyURL: 'https://console.groq.com/keys', keyLabel: 'Get a free Groq API key',
+    // Groq's /models needs a key (401 without one) — the form only fetches
+    // once a key is entered, and falls back to free-text if that fails too.
+    liveModels: true, needsKeyForModels: true,
+  },
+  openrouter: {
+    label: 'OpenRouter (free)', provider: 'openai',
+    baseURL: 'https://openrouter.ai/api/v1',
+    keyURL: 'https://openrouter.ai/keys', keyLabel: 'Get a free OpenRouter API key',
+    // OpenRouter's /models is public — fetch it immediately, filter to the
+    // ids that actually cost nothing.
+    liveModels: true, freeOnly: true,
+  },
+  // Baseless on purpose: baseURL is whatever the player typed or the local
+  // scan found (see urlRow / adoptLocal below), not a fixed remote host.
+  openai: { label: 'local server (free)', provider: 'openai' },
+  local: { label: 'on-device (free, no key)', provider: 'local' },
 };
 
 /**
@@ -604,13 +646,30 @@ export class RaceSystem extends System {
   }
 
   /** Current agent/LLM config from the in-panel form (localStorage), with defaults.
-   *  Keys are stored PER PROVIDER (`apiKeys`); the flat `apiKey` field exposed here
-   *  is always the current provider's key only, so a key saved for one provider is
-   *  never sent as a Bearer token to another provider's endpoint. */
+   *
+   *  `cfg.provider` is really a BRAIN id, not a runtime provider name: 'cloud'
+   *  and 'local' happen to be both, but 'groq' and 'openrouter' are presets
+   *  that both run through provider:'openai' underneath (see BRAIN_PRESETS) —
+   *  _resolveBrain() does that last translation, only at the point a config is
+   *  handed to createProvider().
+   *
+   *  Keys are stored PER BRAIN (`apiKeys`), not per runtime provider — that
+   *  distinction is the whole point. Groq and OpenRouter are BOTH provider
+   *  'openai' under the hood; keying by provider would send a key saved for
+   *  one straight to the other's endpoint as a Bearer token. Keying by brain
+   *  id (the select's value: 'groq' | 'openrouter' | 'openai' | 'local' |
+   *  'cloud') keeps every saved key pinned to the one endpoint it was issued
+   *  for. The flat `apiKey` field exposed here is always the CURRENT brain's
+   *  key only, for the same reason. */
   _agentConfig() {
     let cfg = {};
     try { const raw = localStorage.getItem('vc.voice'); if (raw) cfg = JSON.parse(raw); } catch (error) { /* defaults below */ }
-    const provider = cfg.provider || 'cloud';
+    // No migration needed for existing saves: 'cloud', 'openai' and 'local'
+    // were already exactly these ids before Groq/OpenRouter existed, so old
+    // apiKeys entries land in the same slots they always did. A fresh install
+    // lands on 'groq' — first in the Brain dropdown, and unconfigured, so the
+    // settings form opens the same way an unconfigured 'cloud' default used to.
+    const provider = cfg.provider || 'groq';
     const apiKeys = (cfg.apiKeys && typeof cfg.apiKeys === 'object') ? { ...cfg.apiKeys } : {};
     // Migrate the legacy single `apiKey` field into the saved provider's slot.
     if (cfg.apiKey && !apiKeys[provider]) apiKeys[provider] = cfg.apiKey;
@@ -619,7 +678,11 @@ export class RaceSystem extends System {
       baseURL: cfg.baseURL || 'http://localhost:1234/v1',
       apiKeys,
       apiKey: apiKeys[provider] || '',
-      model: cfg.model || PROVIDER_DEFAULT_MODELS[provider] || PROVIDER_DEFAULT_MODELS.cloud,
+      // No universal fallback here on purpose: falling back to e.g. the cloud
+      // default would silently send a Claude model id to Groq. An unknown
+      // brain with nothing saved just gets an empty model — the form's live
+      // fetch (or the free-text field) is what fills it in.
+      model: cfg.model || PROVIDER_DEFAULT_MODELS[provider] || '',
       // 'auto' lets modelRouting pick a model per agent (cheap advisor, capable
       // voice brain); 'manual' pins whatever is in `model` for both. Saved configs
       // predating this field default to auto — the model they hold was the shipped
@@ -636,18 +699,34 @@ export class RaceSystem extends System {
     };
   }
 
+  /** Translate a saved brain id into the {provider, baseURL} createProvider()
+   *  actually understands. Only Groq/OpenRouter need this — both are brain
+   *  ids that are NOT their own provider name (see BRAIN_PRESETS); 'cloud',
+   *  'local' and 'openai' (the local-server slot) already are, and pass
+   *  through unchanged (an id outside BRAIN_PRESETS, i.e. legacy 'cloud', is
+   *  passed through too — cloud's own baseURL is unused by createCloudProvider). */
+  _resolveBrain(cfg) {
+    const preset = BRAIN_PRESETS[cfg.provider];
+    if (!preset) return { provider: cfg.provider, baseURL: cfg.baseURL };
+    // A preset's fixed baseURL always wins — cfg.baseURL is the player's local-
+    // server address and must never leak into a Groq/OpenRouter request.
+    return { provider: preset.provider, baseURL: preset.baseURL || cfg.baseURL };
+  }
+
   _saveAgentConfig(cfg) {
     try { localStorage.setItem('vc.voice', JSON.stringify(cfg)); } catch (error) { /* private mode */ }
     // 'vc.pilot' was a duplicate write (plaintext key included) that nothing reads.
     try { localStorage.removeItem('vc.pilot'); } catch (error) { /* private mode */ }
   }
 
-  /** A usable brain: an API key saved for 'cloud', or a local/openai provider
-   *  (which needs no key — either on-device or a locally reachable server).
-   *  Pure predicate, no side effects — the Agent tab UI reuses this to decide
-   *  whether to show the settings form collapsed or expanded. */
+  /** A usable brain: an API key saved for a keyed brain ('cloud', 'groq',
+   *  'openrouter'), or a local/openai brain (which needs no key — either
+   *  on-device or a locally reachable server, though that server may want one
+   *  too). Pure predicate, no side effects — the Agent tab UI reuses this to
+   *  decide whether to show the settings form collapsed or expanded. */
   _brainConfigured(cfg) {
-    return !(cfg.provider === 'cloud' && !cfg.apiKey);
+    const needsKey = cfg.provider === 'cloud' || cfg.provider === 'groq' || cfg.provider === 'openrouter';
+    return !(needsKey && !cfg.apiKey);
   }
 
   /** Same check as _brainConfigured, but toasts an actionable hint on failure —
@@ -670,7 +749,9 @@ export class RaceSystem extends System {
     if (!this._requireBrain(cfg)) return null;
     // Agents get only the current provider's key, never the whole key map.
     const { apiKeys, ...runtime } = cfg;
-    return runtime;
+    // Translate the brain id (e.g. 'groq') to the runtime provider/baseURL
+    // createProvider() understands (e.g. provider:'openai') — see _resolveBrain.
+    return { ...runtime, ...this._resolveBrain(cfg) };
   }
 
   /** Start the in-browser hybrid LLM pilot (SimpleBot floor + LLM directive overrides). */
@@ -720,7 +801,9 @@ export class RaceSystem extends System {
     if (!this._requireBrain(cfg)) return null;
     // Agents get only the current provider's key, never the whole key map.
     const { apiKeys, ...runtime } = cfg;
-    return { ...runtime, lang: 'en-US' };
+    // Translate the brain id (e.g. 'openrouter') to the runtime provider/baseURL
+    // createProvider() understands (e.g. provider:'openai') — see _resolveBrain.
+    return { ...runtime, ...this._resolveBrain(cfg), lang: 'en-US' };
   }
 
   /** In-panel Agent/LLM settings form — edit provider, endpoint, key, model, voice
@@ -756,15 +839,32 @@ export class RaceSystem extends System {
     };
     const input = (val, type, ph) => { const i = style(document.createElement('input')); i.type = type || 'text'; i.value = val || ''; if (ph) i.placeholder = ph; return i; };
 
-    const provider = select(['cloud', 'openai', 'local'], cfg.provider, {
-      cloud: 'cloud API (paid)',
+    // 'cloud' (paid Anthropic) is only ever in this list when it's already what
+    // the player has saved — never offered fresh. That keeps an existing saved
+    // key fully working (the code behind it is untouched) without pointing new
+    // players at a paid option now that Groq/OpenRouter cover the free case.
+    const brainOpts = ['groq', 'openrouter', 'openai', 'local'];
+    const legacyCloud = cfg.provider === 'cloud';
+    if (legacyCloud) brainOpts.push('cloud');
+    const provider = select(brainOpts, cfg.provider, {
+      groq: 'Groq (free)',
+      openrouter: 'OpenRouter (free)',
       openai: 'local server (free)',
       local: 'on-device (free)',
+      cloud: 'cloud API (your saved Anthropic key)',
     });
     const modelMode = select(['auto', 'manual'], cfg.modelMode);
-    const model = input(cfg.model, 'text', 'claude-haiku-4-5');
+    const model = input(cfg.model, 'text', 'model id');
+    // Live picks for Groq/OpenRouter (see fetchPresetModels) replace `model`
+    // with this <select> in the same grid cell; falls back to the free-text
+    // field above whenever the fetch comes up empty.
+    const modelSelect = style(document.createElement('select'));
+    modelSelect.style.display = 'none';
+    const modelField = document.createElement('div');
+    modelField.appendChild(model);
+    modelField.appendChild(modelSelect);
     const baseURL = input(cfg.baseURL, 'text', 'http://localhost:1234/v1');
-    const apiKey = input(cfg.apiKey, 'password', 'sk-ant-… (blank for local)');
+    const apiKey = input(cfg.apiKey, 'password', 'API key (blank for local/on-device)');
     // OS voice listed first (and the default): free, instant, no download.
     // Neural voices are an explicit opt-in — the label says why they cost more.
     const tts = select(['browser', 'supertonic', 'kokoro'], cfg.tts, {
@@ -800,8 +900,21 @@ export class RaceSystem extends System {
     wrap.appendChild(localBanner);
     const urlRow = row('Base URL', baseURL);
     const keyRow = row('API key', apiKey);
+    // Plain link, no new styling system — points at wherever the selected
+    // preset issues its free key, so "picked Groq" -> "working" has no dead end.
+    const keyLink = document.createElement('a');
+    keyLink.target = '_blank';
+    keyLink.rel = 'noopener noreferrer';
+    keyLink.style.cssText = 'display:none;font-size:10px;margin:-2px 0 6px;color:var(--vc-ink-dim,#aaa);';
+    wrap.appendChild(keyLink);
     const modeRow = row('Model', modelMode);
-    const modelRow = row('Model id', model);
+    const modelRow = row('Model id', modelField);
+    // Status line for the live model fetch: loading / count found / needs a
+    // key first / fell back to free text. Empty for brains with no live list.
+    const modelHint = document.createElement('div');
+    modelHint.className = 'vc-label';
+    modelHint.style.cssText = 'font-size:10px;opacity:0.7;margin:-2px 0 6px;line-height:1.4;';
+    wrap.appendChild(modelHint);
 
     // What auto mode resolves to, so "auto" isn't a black box.
     const autoNote = document.createElement('div');
@@ -846,16 +959,78 @@ export class RaceSystem extends System {
     const apiKeys = { ...cfg.apiKeys };
     let prevProvider = provider.value;
 
+    // Offer the ids a live fetch actually found, as a real <select> in place
+    // of the free-text field — empty ids falls straight back to free text so
+    // picking Groq/OpenRouter never blocks on the network.
+    const setModelChoices = (ids) => {
+      modelSelect.replaceChildren();
+      if (!ids || !ids.length) {
+        modelSelect.style.display = 'none';
+        model.style.display = '';
+        return;
+      }
+      for (const id of ids) {
+        const opt = document.createElement('option');
+        opt.value = id; opt.textContent = id;
+        modelSelect.appendChild(opt);
+      }
+      const current = model.value.trim();
+      modelSelect.value = ids.includes(current) ? current : ids[0];
+      model.value = modelSelect.value;
+      modelSelect.style.display = '';
+      model.style.display = 'none';
+    };
+    modelSelect.addEventListener('change', () => { model.value = modelSelect.value; });
+
+    // Fetch live model ids for a Groq/OpenRouter preset (GET {baseURL}/models
+    // via probeEndpoint — see localEndpoints.js; never a second fetch). Never
+    // throws: a missing key, a failed probe or an empty result all just fall
+    // back to the free-text Model id field instead of blocking the form.
+    let modelFetchToken = 0;
+    const fetchPresetModels = async (brainId) => {
+      const preset = BRAIN_PRESETS[brainId];
+      if (!preset || !preset.liveModels) return;
+      const key = apiKey.value.trim();
+      const token = ++modelFetchToken;
+      if (preset.needsKeyForModels && !key) {
+        setModelChoices([]);
+        modelHint.textContent = `Paste a key above to load ${preset.label.replace(' (free)', '')}'s model list.`;
+        return;
+      }
+      modelHint.textContent = 'Loading models…';
+      const found = await probeEndpoint(
+        { name: preset.label, baseURL: preset.baseURL },
+        { apiKey: preset.needsKeyForModels ? key : undefined },
+      );
+      // Stale response — the brain (or the key) moved on while this was in flight.
+      if (token !== modelFetchToken) return;
+      let ids = (found && found.models) || [];
+      if (preset.freeOnly) ids = ids.filter((id) => id.endsWith(':free'));
+      setModelChoices(ids);
+      modelHint.textContent = ids.length
+        ? `${ids.length} free model${ids.length === 1 ? '' : 's'} found`
+        : 'No models found — type a model id below.';
+    };
+
     const sync = () => {
       const isCloud = provider.value === 'cloud';
+      const preset = BRAIN_PRESETS[provider.value];
       urlRow.style.display = provider.value === 'openai' ? 'grid' : 'none';
       keyRow.style.display = provider.value === 'local' ? 'none' : 'grid';
+      keyLink.style.display = preset && preset.keyURL ? 'block' : 'none';
+      if (preset && preset.keyURL) { keyLink.href = preset.keyURL; keyLink.textContent = preset.keyLabel; }
       // Per-task routing only means anything for the cloud provider — a local
-      // server serves whatever model it has loaded, so always ask for the id.
+      // server (or Groq/OpenRouter) serves whatever model it's asked for, so
+      // always ask for the id there.
       modeRow.style.display = isCloud ? 'grid' : 'none';
       const auto = isCloud && modelMode.value === 'auto';
       modelRow.style.display = auto ? 'none' : 'grid';
       autoNote.style.display = auto ? 'block' : 'none';
+      if (!preset || !preset.liveModels) {
+        modelSelect.style.display = 'none';
+        model.style.display = '';
+        modelHint.textContent = '';
+      }
     };
     modelMode.addEventListener('change', sync);
     provider.addEventListener('change', () => {
@@ -871,8 +1046,20 @@ export class RaceSystem extends System {
       }
       prevProvider = provider.value;
       sync();
+      const preset = BRAIN_PRESETS[provider.value];
+      if (preset && preset.liveModels) fetchPresetModels(provider.value);
+    });
+    // The key field's own value is what fetchPresetModels reads for Groq — a
+    // key pasted in and blurred should load the list without a brain switch.
+    apiKey.addEventListener('change', () => {
+      if (provider.value === 'groq') fetchPresetModels('groq');
     });
     sync();
+    // Panel just opened on an already-saved Groq/OpenRouter brain — load its
+    // model list without waiting for a change event that won't come.
+    if (BRAIN_PRESETS[provider.value] && BRAIN_PRESETS[provider.value].liveModels) {
+      fetchPresetModels(provider.value);
+    }
 
     // Write the form to storage. Shared by the Save button and the one-click
     // "use the local server" path so both restart a running voice co-pilot.
@@ -901,9 +1088,10 @@ export class RaceSystem extends System {
       apiKey.value = apiKeys.openai || '';
       baseURL.value = found.baseURL;
       model.value = preferredModel(found);
-      // Assigning .value doesn't fire 'change', so retire the offer by hand —
-      // otherwise we'd keep proposing the server we just switched to.
+      // Assigning .value doesn't fire 'change', so retire the offer — and any
+      // Groq/OpenRouter live model list still showing — by hand.
       localBanner.style.display = 'none';
+      setModelChoices([]);
       sync();
       persist(`Using ${describeEndpoint(found)} — free`);
     };

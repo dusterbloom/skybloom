@@ -44,12 +44,14 @@ Pick a brain in the Agent tab:
 
 | Brain | Cost | Notes |
 |---|---|---|
-| Local server | Free | Any OpenAI-compatible endpoint. LM Studio, Jan, Ollama, llama.cpp and vLLM are detected on their default ports and offered before you are asked for a key. |
-| Cloud API | Paid | Your own Anthropic key. Kept in this browser, sent only to Anthropic. |
-| On-device | Free | WebLLM on WebGPU. No key, and offline once the weights are cached. |
+| Groq | Free tier | Needs a Groq API key (the panel links to where you get one). Model list is fetched live from Groq once the key is entered. |
+| OpenRouter | Free tier | Needs an OpenRouter API key (the panel links to where you get one). The model dropdown is filtered to the `:free` models only — the ones that actually cost nothing. |
+| Local server | Free, no key | Any OpenAI-compatible endpoint. LM Studio, Jan, Ollama, llama.cpp and vLLM are detected on their default ports and offered before you are asked for anything. |
+| On-device | Free, no key | WebLLM on WebGPU. Offline once the weights are cached. |
 
-A meter in the panel counts calls, tokens and cost, so the model routing is checkable rather
-than claimed.
+Every key is scoped to the brain it was issued for — a key saved for Groq is never sent to
+OpenRouter, or vice versa. A meter in the panel counts calls, tokens and cost, so the model
+routing is checkable rather than claimed.
 
 Speech uses the browser's own engines, so nothing downloads by default and the reply starts
 immediately — on macOS that is the same speech stack Siri uses. Kokoro and Supertonic-3 are
@@ -94,8 +96,8 @@ Tip: diving trades altitude for speed. The first race is meant to be readable: f
 - Agent API with information/action/tempo fairness constraints: `observe()`, `act()`, `startRace()`, replay/ghost helpers, config, WebSocket transport, and result export.
 - Reference SimpleBot that uses only `window.agentAPI`.
 - Voice co-pilot: speech or typing into one conversation, a spoken reply, and an intent it acts
-  on. Runs entirely in the page against a local, cloud or on-device model, with per-task model
-  routing and a token/cost meter.
+  on. Runs entirely in the page against Groq, OpenRouter, a local server, or an on-device model,
+  with per-task model routing and a token/cost meter.
 - **Creative "genie" API** (`window.worldAPI`) — a separate, non-fairness godmode surface: conjure shapes and animated rigs, import real models from curated repos (flapping birds, propeller planes), fly any of them or **roam as an animal on the ground**, persist everything in a catalogue, and reshape terrain/sky. Speakable by voice or a small LLM. See [docs/AGENT_API.md](docs/AGENT_API.md#creative-mode-the-genie-windowworldapi).
 - Optional socket.io multiplayer co-presence for casual local experimentation.
 - GitHub Pages workflow, CI build check, local smoke script, and one-command local launcher.
@@ -112,8 +114,9 @@ Tip: diving trades altitude for speed. The first race is meant to be readable: f
 - Speech recognition is the browser's, not ours. Chrome sends microphone audio to Google's
   servers, Safari on macOS uses on-device dictation, and Firefox has none. Only the on-device
   brain paired with the OS voice keeps a whole turn local.
-- A cloud API key typed into the settings lives in this browser's localStorage and goes straight
-  from the page to Anthropic. Fine for your own key; never use a shared one.
+- A Groq or OpenRouter key typed into the settings lives in this browser's localStorage and goes
+  straight from the page to that provider — each key is scoped to the brain it was saved for, so
+  a Groq key is never sent to OpenRouter or back. Fine for your own key; never use a shared one.
 - The co-pilot's world edits go through `window.worldAPI`, which is deliberately outside the
   fairness constraints. Reshaping terrain mid-race does not produce a comparable benchmark run.
 

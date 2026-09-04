@@ -52,10 +52,16 @@ const DEFAULT_TIMEOUT_MS = 4000;
  * never rejects, because "this port isn't a model server" is the normal case
  * for most of the list and isn't worth a stack trace.
  *
+ * Also doubles as the model-list fetch for the hosted free presets (Groq,
+ * OpenRouter) — same endpoint shape (`GET {baseURL}/models`), just remote and,
+ * for Groq, keyed. `apiKey` is the ONLY addition for that: Groq's /models
+ * returns 401 without one, which already resolves to null here (a plain
+ * !res.ok), so the keyless local-server path is completely unaffected.
+ *
  * @param {{name?:string, baseURL:string}} candidate
- * @param {{timeoutMs?:number, signal?:AbortSignal}} [opts]
+ * @param {{timeoutMs?:number, signal?:AbortSignal, apiKey?:string}} [opts]
  */
-export async function probeEndpoint(candidate, { timeoutMs = DEFAULT_TIMEOUT_MS, signal } = {}) {
+export async function probeEndpoint(candidate, { timeoutMs = DEFAULT_TIMEOUT_MS, signal, apiKey } = {}) {
   const baseURL = String(candidate && candidate.baseURL || '').trim();
   if (!baseURL) return null;
   const url = baseURL.replace(/\/+$/, '') + '/models';
@@ -70,7 +76,10 @@ export async function probeEndpoint(candidate, { timeoutMs = DEFAULT_TIMEOUT_MS,
   }
 
   try {
-    const res = await fetch(url, ctrl ? { method: 'GET', signal: ctrl.signal } : { method: 'GET' });
+    const opts = { method: 'GET' };
+    if (ctrl) opts.signal = ctrl.signal;
+    if (apiKey) opts.headers = { authorization: `Bearer ${apiKey}` };
+    const res = await fetch(url, opts);
     if (!res.ok) return null;
     const data = await res.json();
     // OpenAI shape is {data:[{id}]}; be tolerant of servers that return a bare list.
