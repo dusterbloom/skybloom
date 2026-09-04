@@ -177,6 +177,12 @@ export function ensureVibeTheme() {
         left: 50% !important;
         right: auto !important;
         transform: translate(-50%, -50%) !important;
+        /* box-sizing: border-box so the width below is the panel's full
+           rendered width (padding + border included), not content-only —
+           without it the padding/border added on top blew the panel past
+           the viewport on phones. Scoped to this id + media query only, so
+           desktop's #settings-menu-panel (still content-box) is untouched. */
+        box-sizing: border-box !important;
         width: min(440px, calc(100vw - 20px)) !important;
         max-height: 82vh !important;
         padding: 18px 20px !important;
