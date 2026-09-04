@@ -440,8 +440,12 @@ export class VoiceCopilot {
 
   // ponytail: Kokoro loads from a CDN only when chosen — no npm dep. Defensive
   // about the kokoro-js return shape so a minor API bump won't break it.
+  //
+  // Pinned for the same reason as WEBLLM_CDN in llmProviders.js: this is
+  // third-party code executing in our origin next to the player's saved API key,
+  // so the version it runs is a decision, not whatever the registry serves today.
   async _initKokoro() {
-    const mod = await import(/* @vite-ignore */ 'https://esm.run/kokoro-js');
+    const mod = await import(/* @vite-ignore */ 'https://esm.run/kokoro-js@1.2.1');
     const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS) || mod.default;
     const model = this.config.kokoroModel || 'onnx-community/Kokoro-82M-v1.0-ONNX';
     const gpu = typeof navigator !== 'undefined' && !!navigator.gpu;

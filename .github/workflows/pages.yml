@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # match-screenshots-to-commits.mjs reads `git log --all`; the default
+          # shallow checkout gives it one commit, so every history card would
+          # render "No nearby commit found".
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20

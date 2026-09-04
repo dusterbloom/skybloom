@@ -16,7 +16,12 @@ import { llmBudget } from './llmBudget.js';
 // ponytail: WebLLM is loaded from a CDN via dynamic import ONLY when chosen — so
 // there's no npm dependency and no bundle cost otherwise. Upgrade path: pin it
 // with `npm i @mlc-ai/web-llm` if you want it offline-cached.
-const WEBLLM_CDN = 'https://esm.run/@mlc-ai/web-llm';
+//
+// The version is PINNED on purpose. This import runs third-party code in the
+// page's own origin, alongside the API key the player saved in localStorage, so
+// an unpinned specifier would silently adopt whatever the registry serves that
+// day. Bump it deliberately, the way you would a package.json dependency.
+const WEBLLM_CDN = 'https://esm.run/@mlc-ai/web-llm@0.2.84';
 
 /**
  * Tolerant JSON extraction, shared by every agent that reads model output.
