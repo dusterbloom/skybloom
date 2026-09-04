@@ -696,6 +696,13 @@ export class RaceSystem extends System {
       // 'ptt' (press Talk each turn) is the default and what an unset/legacy
       // config resolves to — see listenModes.js for what 'handsfree' opts into.
       listenMode: cfg.listenMode === 'handsfree' ? 'handsfree' : 'ptt',
+      // Model ids that turned out to be unusable (not a bad key — see
+      // _maybeHandleUnusableModel), remembered so the picker stops offering
+      // them. Keyed exactly like apiKeys, for the same reason: 'groq' and
+      // 'openrouter' are both provider 'openai' underneath, so keying by
+      // runtime provider instead of brain id would leak one brain's blocked
+      // ids onto the other's model catalog.
+      blockedModels: (cfg.blockedModels && typeof cfg.blockedModels === 'object') ? cfg.blockedModels : {},
     };
   }
 
@@ -717,6 +724,49 @@ export class RaceSystem extends System {
     try { localStorage.setItem('vc.voice', JSON.stringify(cfg)); } catch (error) { /* private mode */ }
     // 'vc.pilot' was a duplicate write (plaintext key included) that nothing reads.
     try { localStorage.removeItem('vc.pilot'); } catch (error) { /* private mode */ }
+  }
+
+  /** Blocked model ids for one brain (see _maybeHandleUnusableModel). */
+  _blockedModelsFor(brainId) {
+    return this._agentConfig().blockedModels[brainId] || [];
+  }
+
+  /** Record a model id as unusable for one brain. Read-modify-write against
+   *  the full agent config (not a partial patch) so this can't collide with
+   *  the settings form's own save — see the `persist()` comment in
+   *  _createAgentConfigForm. Returns false when the id was already
+   *  blocklisted, so a caller doesn't re-announce the same block twice. */
+  _blockModel(brainId, modelId) {
+    const cfg = this._agentConfig();
+    const existing = cfg.blockedModels[brainId] || [];
+    if (existing.includes(modelId)) return false;
+    cfg.blockedModels = { ...cfg.blockedModels, [brainId]: [...existing, modelId] };
+    this._saveAgentConfig(cfg);
+    return true;
+  }
+
+  /** Escape hatch for the blocklist: a model can stop being gated upstream,
+   *  or the player may want to force one back in. Wired to a button in
+   *  _createAgentConfigForm. Returns false when there was nothing to clear. */
+  _clearBlockedModels(brainId) {
+    const cfg = this._agentConfig();
+    if (!(cfg.blockedModels[brainId] || []).length) return false;
+    cfg.blockedModels = { ...cfg.blockedModels, [brainId]: [] };
+    this._saveAgentConfig(cfg);
+    return true;
+  }
+
+  /** Next usable candidate for a brain, from the last live model fetch
+   *  (fetchPresetModels in _createAgentConfigForm caches the raw, pre-
+   *  blocklist list on `this._presetModelCache` so this needs no network
+   *  round trip). Re-filters against the CURRENT blocklist rather than
+   *  trusting a stale cached filter. null when no live fetch has completed
+   *  yet this session — the caller then has nothing to switch to. */
+  _nextCandidateModel(brainId, excludeModel) {
+    const cached = this._presetModelCache && this._presetModelCache[brainId];
+    if (!cached || !cached.length) return null;
+    const blocked = this._blockedModelsFor(brainId);
+    return cached.find((id) => id !== excludeModel && !blocked.includes(id)) || null;
   }
 
   /** A usable brain: an API key saved for a keyed brain ('cloud', 'groq',
@@ -804,6 +854,54 @@ export class RaceSystem extends System {
     // Translate the brain id (e.g. 'openrouter') to the runtime provider/baseURL
     // createProvider() understands (e.g. provider:'openai') — see _resolveBrain.
     return { ...runtime, ...this._resolveBrain(cfg), lang: 'en-US' };
+  }
+
+  /** Watches each finished voice turn for the "wrong model, not a wrong key"
+   *  failure. createOpenAIProvider (llmProviders.js) throws `OpenAI-compat
+   *  ${res.status}${errDetail}` on a non-OK response, but VoiceCopilot's
+   *  _sayTurn never lets that reach us as its own event — it folds ANY thrown
+   *  error into a normal assistant reply, "Comms trouble — <message>" — so
+   *  that reply text is the only signal available here.
+   *
+   *  A bare 403 is not enough on its own: a bad/revoked API key also fails
+   *  with a 4xx, and treating every 403 as "this model is broken" would
+   *  blocklist whatever model the player happened to be on when their key
+   *  went bad. The narrow, safe test is requiring the error text to name the
+   *  CURRENT session's own model id — a key problem reads identically no
+   *  matter which model was asked for, but an OpenRouter/Groq availability
+   *  rejection always names the one gated id (confirmed against the real
+   *  thinkingmachines/inkling-small:free 403 this bug was filed with: its
+   *  `pricing`/`per_request_limits` fields carry no gating flag to check
+   *  instead — see the BRAIN_PRESETS comment above). */
+  _maybeHandleUnusableModel(turn, brainId, sessionModel) {
+    if (!turn || turn.role !== 'assistant' || !sessionModel) return;
+    if (this._modelAdvancedForSession) return; // one advance per running session — never a cascade
+    const text = turn.text || '';
+    if (!text.includes('OpenAI-compat 403') || !text.includes(sessionModel)) return;
+    if (!this._blockModel(brainId, sessionModel)) return; // already known-bad, nothing new to report
+    this._modelAdvancedForSession = true;
+    const next = this._nextCandidateModel(brainId, sessionModel);
+    if (next) {
+      // Persist the switch regardless of whether the live session below can
+      // be restarted cleanly — the NEXT start (of this session or a fresh
+      // one) must land on a model that actually works.
+      const cfg = this._agentConfig();
+      cfg.model = next;
+      this._saveAgentConfig(cfg);
+    }
+    Logger.warn(`RaceSystem: ${sessionModel} isn't usable on this brain (blocked it) — `
+      + (next ? `switched to ${next}` : 'no other free model cached yet, open Settings to pick one'));
+    this._toast(next
+      ? `${sessionModel} isn't usable here — switched to ${next}. Press Talk to resume.`
+      : `${sessionModel} isn't usable here — open Settings to pick another model.`, '#ffcc66', 6000);
+    // The running session's HTTP client already has the bad model id baked
+    // into its closure (createOpenAIProvider captures `model` once, at
+    // construction) — stop it exactly like a settings Save does (persist() →
+    // stopVoiceChat(), "press Talk to restart"), rather than reaching into
+    // VoiceCopilot to hot-swap a live provider. Deferred to the next tick so
+    // it doesn't unwind _sayTurn's own call stack out from under it — we're
+    // still inside VoiceCopilot's onText callback, mid-turn.
+    setTimeout(() => this.stopVoiceChat(), 0);
   }
 
   /** In-panel Agent/LLM settings form — edit provider, endpoint, key, model, voice
@@ -916,6 +1014,32 @@ export class RaceSystem extends System {
     modelHint.style.cssText = 'font-size:10px;opacity:0.7;margin:-2px 0 6px;line-height:1.4;';
     wrap.appendChild(modelHint);
 
+    // Escape hatch for the auto-blocklist (see _maybeHandleUnusableModel): a
+    // model can stop being gated upstream, or the player may want to force
+    // one back in. Only ever shown for a live-list preset with something
+    // actually blocked — updateBlocklistButton (wired below) keeps it synced.
+    const unblockRow = document.createElement('div');
+    unblockRow.style.cssText = 'display:none;margin:-2px 0 6px;';
+    const unblock = document.createElement('button');
+    unblock.type = 'button';
+    unblock.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'
+      + 'border:1px solid rgba(255,255,255,0.2);background:transparent;color:var(--vc-ink-dim,#aaa);';
+    unblockRow.appendChild(unblock);
+    wrap.appendChild(unblockRow);
+    const updateBlocklistButton = (brainId) => {
+      const preset = BRAIN_PRESETS[brainId];
+      const blocked = preset && preset.liveModels ? this._blockedModelsFor(brainId) : [];
+      unblockRow.style.display = blocked.length ? 'block' : 'none';
+      unblock.textContent = `Clear ${blocked.length} blocked model${blocked.length === 1 ? '' : 's'}`;
+    };
+    unblock.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (this._clearBlockedModels(provider.value)) {
+        this._toast('Blocked models cleared for this brain', '#66ffee');
+        fetchPresetModels(provider.value); // repopulate now that the filter is gone
+      }
+    });
+
     // What auto mode resolves to, so "auto" isn't a black box.
     const autoNote = document.createElement('div');
     autoNote.className = 'vc-label';
@@ -995,6 +1119,7 @@ export class RaceSystem extends System {
       if (preset.needsKeyForModels && !key) {
         setModelChoices([]);
         modelHint.textContent = `Paste a key above to load ${preset.label.replace(' (free)', '')}'s model list.`;
+        updateBlocklistButton(brainId);
         return;
       }
       modelHint.textContent = 'Loading models…';
@@ -1006,10 +1131,19 @@ export class RaceSystem extends System {
       if (token !== modelFetchToken) return;
       let ids = (found && found.models) || [];
       if (preset.freeOnly) ids = ids.filter((id) => id.endsWith(':free'));
-      setModelChoices(ids);
-      modelHint.textContent = ids.length
-        ? `${ids.length} free model${ids.length === 1 ? '' : 's'} found`
-        : 'No models found — type a model id below.';
+      // Cache the RAW (pre-blocklist) ids so a later turn-time auto-advance
+      // (_maybeHandleUnusableModel, which runs outside this form and can't
+      // afford to hit the network again) has real candidates to pick from —
+      // re-filtered fresh below, and again whenever it's actually used.
+      this._presetModelCache = this._presetModelCache || {};
+      this._presetModelCache[brainId] = ids.slice();
+      const blocked = this._blockedModelsFor(brainId);
+      const visible = blocked.length ? ids.filter((id) => !blocked.includes(id)) : ids;
+      setModelChoices(visible);
+      modelHint.textContent = visible.length
+        ? `${visible.length} free model${visible.length === 1 ? '' : 's'} found`
+        : (ids.length ? 'All found models are blocked — see below.' : 'No models found — type a model id below.');
+      updateBlocklistButton(brainId);
     };
 
     const sync = () => {
@@ -1031,6 +1165,7 @@ export class RaceSystem extends System {
         model.style.display = '';
         modelHint.textContent = '';
       }
+      updateBlocklistButton(provider.value);
     };
     modelMode.addEventListener('change', sync);
     provider.addEventListener('change', () => {
@@ -1069,6 +1204,11 @@ export class RaceSystem extends System {
         provider: provider.value, baseURL: baseURL.value.trim(), apiKeys,
         model: model.value.trim(), modelMode: modelMode.value, tts: tts.value,
         listenMode: listenMode.value,
+        // Re-read fresh rather than the `cfg` this form opened with — a turn
+        // failure can blocklist a model in the background (see
+        // _maybeHandleUnusableModel) while this panel is sitting open, and
+        // Save must not clobber that with a stale snapshot.
+        blockedModels: this._agentConfig().blockedModels,
       });
       const wasVoice = !!this._voiceCopilot;
       if (wasVoice) this.stopVoiceChat();
@@ -1217,6 +1357,12 @@ export class RaceSystem extends System {
     }
     const cfg = this._resolveVoiceConfig();
     if (!cfg) return false;
+    // _resolveVoiceConfig() overwrites cfg.provider with the runtime provider
+    // name (see _resolveBrain) — the blocklist has to be keyed by the actual
+    // BRAIN id (e.g. 'openrouter'), the same way apiKeys already is, so read
+    // it back separately rather than trusting cfg.provider here.
+    const brainId = this._agentConfig().provider;
+    this._modelAdvancedForSession = false; // fresh session — allow one auto-advance again
     // The console is the conversation surface now — _toast stays for
     // transient operational notices only (loading/failed/off), never turns.
     // Created before the VoiceCopilot so onText/onState have somewhere to
@@ -1229,7 +1375,10 @@ export class RaceSystem extends System {
     try {
       const vc = new VoiceCopilot(api, {
         config: cfg,
-        onText: (turn) => { if (this._copilotConsole) this._copilotConsole.push(turn); },
+        onText: (turn) => {
+          if (this._copilotConsole) this._copilotConsole.push(turn);
+          this._maybeHandleUnusableModel(turn, brainId, cfg.model);
+        },
         onInterim: (text) => { if (this._copilotConsole) this._copilotConsole.setInterim(text); },
         onState: (s) => { this._voiceState = s; if (this._copilotConsole) this._copilotConsole.setState(s); },
         // When the companion actually takes the controls, stop any other autonomous driver.
