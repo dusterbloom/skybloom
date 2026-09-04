@@ -27,7 +27,11 @@ const WEBLLM_CDN = 'https://esm.run/@mlc-ai/web-llm@0.2.84';
  * Tolerant JSON extraction, shared by every agent that reads model output.
  * Tries a straight parse first, then scans a BALANCED {...} block from the
  * first '{' — robust to prose before AND after the JSON (a greedy regex is
- * not). Returns the parsed object, or null.
+ * not). If the object never balances — a turn cut short by maxTokens, a
+ * dropped connection — that means it was truncated mid-stream, and
+ * repairTruncatedObject() gets one last-resort attempt at salvaging it rather
+ * than losing a reply (and any world ops in it) that was otherwise complete.
+ * Returns the parsed object, or null. Never throws.
  */
 export function extractJSON(text) {
   if (!text) return null;
@@ -50,7 +54,100 @@ export function extractJSON(text) {
       }
     }
   }
-  return null;
+  // Fell off the end without ever closing the top-level object — truncated.
+  return repairTruncatedObject(text, start);
+}
+
+/**
+ * Last-resort repair for a JSON object cut off mid-stream (hit maxTokens, a
+ * dropped connection, a provider that just stops). Re-walks the text from the
+ * first '{' with the same string/escape tracking as the scan above, but also
+ * tracks what each open object/array is currently expecting — a key, a colon,
+ * a value, or a comma — so it knows exactly how much of the tail is still
+ * well-formed.
+ *
+ * Two cases at EOF:
+ *  - The cut lands inside a VALUE string (e.g. `"name":"Flamin`): every
+ *    character seen is real content, only the closing quote never arrived, so
+ *    it's appended and every still-open array/object is closed around it —
+ *    no field is lost, e.g. a fully-typed `import` op keeps its `name`.
+ *  - Anything else unfinished — a dangling key, a bare literal (number/
+ *    true/false/null) cut mid-token, a trailing comma, a colon with nothing
+ *    after it — can't be completed without guessing a value, so instead the
+ *    text is rewound to the last point a key/value pair (or array element)
+ *    fully completed, and everything after that point — the incomplete
+ *    element only — is dropped.
+ * Either way this only ever drops trailing text or adds closing punctuation;
+ * it never invents a field's value. If the result still doesn't parse, null.
+ */
+function repairTruncatedObject(text, start) {
+  const stack = [];   // '{' or '[' for each currently open container
+  const expect = [];  // per-frame, parallel to stack: 'key' | 'colon' | 'value' | 'comma'
+  let inStr = false, esc = false;
+  let litStart = -1;  // start index of an in-progress bare literal (number/true/false/null), or -1
+  let safeCut = -1, safeSnapshot = null; // last index + stack shape where the structure was complete
+
+  const markSafe = (idx) => { safeCut = idx; safeSnapshot = stack.slice(); };
+  const endLiteral = (idx) => {
+    if (litStart < 0) return;
+    if (expect.length && expect[expect.length - 1] === 'value') {
+      expect[expect.length - 1] = 'comma';
+      markSafe(idx);
+    }
+    litStart = -1;
+  };
+
+  let i = start;
+  for (; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') {
+        inStr = false;
+        const e = expect.length ? expect[expect.length - 1] : null;
+        if (e === 'key') expect[expect.length - 1] = 'colon';
+        else if (e === 'value') { expect[expect.length - 1] = 'comma'; markSafe(i + 1); }
+      }
+      continue;
+    }
+    if (c === '"') { inStr = true; continue; }
+    if (c === '{' || c === '[') {
+      endLiteral(i);
+      stack.push(c);
+      expect.push(c === '{' ? 'key' : 'value');
+      markSafe(i + 1); // an empty container is already well-formed on its own
+      continue;
+    }
+    if (c === '}' || c === ']') {
+      endLiteral(i);
+      stack.pop();
+      expect.pop();
+      if (expect.length) expect[expect.length - 1] = 'comma';
+      markSafe(i + 1);
+      continue;
+    }
+    if (c === ':') { endLiteral(i); if (expect.length) expect[expect.length - 1] = 'value'; continue; }
+    if (c === ',') {
+      endLiteral(i);
+      if (expect.length) expect[expect.length - 1] = (stack[stack.length - 1] === '{') ? 'key' : 'value';
+      continue;
+    }
+    if (c === ' ' || c === '\t' || c === '\n' || c === '\r') { endLiteral(i); continue; }
+    if (litStart < 0) litStart = i; // part of a bare literal token (number/true/false/null)
+  }
+
+  if (inStr && expect.length && expect[expect.length - 1] === 'value') {
+    // Cut mid-value-string: keep every character seen, just close what's open.
+    let repaired = text.slice(start) + '"';
+    for (let k = stack.length - 1; k >= 0; k--) repaired += stack[k] === '{' ? '}' : ']';
+    try { return JSON.parse(repaired); } catch (e) { /* fall through and rewind instead */ }
+  }
+
+  if (safeCut < 0 || !safeSnapshot) return null;
+  let repaired = text.slice(start, safeCut);
+  for (let k = safeSnapshot.length - 1; k >= 0; k--) repaired += safeSnapshot[k] === '{' ? '}' : ']';
+  try { return JSON.parse(repaired); } catch (e) { return null; }
 }
 
 export async function createProvider(config = {}) {

@@ -42,6 +42,18 @@ import { createMicInput } from './listenModes.js';
 import { resolveTask } from './modelRouting.js';
 import { Companion } from './Companion.js';
 
+// extractJSON (repair pass included) can still come back empty on a badly
+// mangled turn. When that happens but the raw text is clearly the model's
+// structured format — not free-form prose — never speak or show the blob:
+// pull just the reply field's string value out with a targeted match. This is
+// deliberately not another JSON.parse attempt (the object may genuinely be
+// too broken for that); it only needs the one field a player should hear.
+function extractReplyText(raw) {
+  const m = /"reply"\s*:\s*"((?:\\.|[^"\\])*)"/.exec(raw || '');
+  if (!m) return '';
+  try { return JSON.parse(`"${m[1]}"`); } catch (e) { return m[1]; } // unescape \", \n, etc.
+}
+
 const SYSTEM = `You are the voice of a magical flying carpet — a warm, witty co-pilot in the game SkyBloom, free to roam an open world, visit landmarks, gather mana, fly alongside the player, or race.
 Each turn you get the live GAME STATE. Reply with ONLY a JSON object, nothing else:
 {"reply":"<one or two short SPOKEN sentences — no markdown, no emoji>","intent":"chat|roam|goto|collect|race|hover|manual","target":<a landmark type for goto else null>,"world":<null, one creative world edit, or an ARRAY of them applied in order (see below)>}
@@ -319,7 +331,17 @@ export class VoiceCopilot {
         // "world" may be one op or an array of ops applied in order.
         world = obj.world && typeof obj.world === 'object' ? obj.world : null;
       } else {
-        reply = (raw || '').trim(); // model ignored the format — just say it
+        const trimmed = (raw || '').trim();
+        // Structured-looking but unrecoverable (extractJSON's repair pass
+        // already tried) — the player must never hear or see the raw JSON, so
+        // pull out just the reply sentence instead of dumping the blob. Plain
+        // prose (no JSON markers at all — the model just ignored the format)
+        // keeps working exactly as before: spoken as-is.
+        if (trimmed.startsWith('{') || trimmed.includes('"reply"')) {
+          reply = extractReplyText(trimmed) || "Something got garbled there — mind trying that again?";
+        } else {
+          reply = trimmed; // model ignored the format — just say it
+        }
       }
     } catch (e) {
       reply = (e && e.name === 'AbortError')

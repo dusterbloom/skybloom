@@ -46,10 +46,18 @@ export const MODELS = {
  * generated, not for the cap. The pilot answers with one small JSON object, so a
  * tight cap just stops a chatty model from padding. Voice needs room for a spoken
  * reply plus an array of world ops.
+ *
+ * voice's 400 clipped real turns: a two-sentence reply plus a two-op world
+ * array (e.g. import + vehicle, each carrying op/repo/name/ride) runs past it
+ * on its own, and some providers spend part of the budget on preamble before
+ * the object even starts — extractJSON's repair pass (llmProviders.js) covers
+ * whatever still gets cut, but a turn that fits needs no repair at all. 900
+ * gives a two-op turn comfortable headroom with margin for preamble, while
+ * staying far short of anything that reads as an unbounded reply.
  */
 export const TASKS = {
   pilot: { model: 'claude-haiku-4-5', maxTokens: 96, cache: false },
-  voice: { model: 'claude-sonnet-5', maxTokens: 400, cache: true },
+  voice: { model: 'claude-sonnet-5', maxTokens: 900, cache: true },
 };
 
 const FALLBACK_TASK = { model: 'claude-haiku-4-5', maxTokens: 200, cache: false };
