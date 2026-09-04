@@ -1,5 +1,6 @@
 import { useGameState, GameStates } from '../state/gameState';
 import { System } from '../core/System.js';
+import { InputManager } from '../core/InputManager.js';
 import { Logger } from '../../utils/Logger.js';
 import { ensureVibeTheme } from '../ui/theme.js';
 
@@ -58,6 +59,7 @@ export class UISystem extends System {
 
     // Quest tracker toggle (Q) — panel is non-blocking, gameplay never pauses
     this._questKeyHandler = (e) => {
+      if (InputManager.isEditableTarget(e.target)) return;
       if (e.code === 'KeyQ' && !e.repeat && this.engine.gameStarted) {
         this.showQuestLog();
       }
@@ -177,7 +179,12 @@ export class UISystem extends System {
   }
 
     createManaDisplay() {
-      // Mana pill, top-right — Twilight Glass chip with the cyan accent
+      // Mana pill, top-right — Twilight Glass chip with the cyan accent. Stays
+      // a plain absolutely-positioned DIRECT CHILD <div> of #ui-container:
+      // Engine.js's mobile sweep (`#ui-container > div:not(#health-bar):not(#battery-toggle)`,
+      // ~500ms after mobile UI init) hides bare top-level HUD divs like this
+      // one on phones on purpose — the mobile UI takes over — so this must not
+      // move into a wrapping div or that intended hide breaks.
       const manaContainer = document.createElement('div');
     manaContainer.className = 'vc-chip';
     manaContainer.style.position = 'absolute';
@@ -204,6 +211,74 @@ export class UISystem extends System {
     this.container.appendChild(manaContainer);
 
       this.elements.manaText = manaText;
+
+      this.createMusicToggle(manaContainer);
+    }
+
+    /**
+     * Always-visible music kill switch — a single-click mute, no menu. Reads
+     * ProceduralMusicSystem's already-restored `muted` (loaded from
+     * localStorage['vc.music'] in its constructor, which runs before any
+     * System's initialize()) so the icon is correct on first paint, and calls
+     * setMuted() rather than keeping a second persisted copy of the flag.
+     *
+     * A bare <button>, appended as its own direct child of #ui-container —
+     * NOT inside manaContainer or any wrapping div. That matters on mobile:
+     * Engine.js's post-init sweep only matches `#ui-container > div`, so a
+     * button sitting at that same level is already invisible to it and
+     * survives untouched, while manaContainer (a div) still gets hidden as
+     * intended. Sits immediately left of the mana pill; a ResizeObserver
+     * tracks the pill's real rendered width (mana can grow to more digits,
+     * and the pill itself collapses to 0 width when the sweep hides it) so
+     * the gap is always correct with no magic-number offset to go stale.
+     */
+    createMusicToggle(manaContainer) {
+      const music = this.engine.systemManager.get('proceduralMusic');
+      if (!music) return; // not registered — degrade quietly, no button
+
+      const toggle = document.createElement('button');
+      toggle.id = 'music-mute-toggle';
+      toggle.type = 'button';
+      toggle.className = 'vc-chip';
+      toggle.style.position = 'absolute';
+      toggle.style.top = 'var(--vc-safe-y)';
+      toggle.style.zIndex = '1001';
+      toggle.style.cursor = 'pointer';
+      toggle.style.pointerEvents = 'auto';
+      toggle.style.padding = '6px 10px';
+      toggle.style.fontSize = '15px';
+      toggle.style.lineHeight = '1';
+
+      const GAP = 8;
+      const reposition = () => {
+        const w = manaContainer.offsetWidth || 0;
+        toggle.style.right = `calc(var(--vc-safe-right) + ${w + GAP}px)`;
+      };
+      reposition();
+      if (typeof ResizeObserver !== 'undefined') {
+        this._musicToggleResizeObserver = new ResizeObserver(reposition);
+        this._musicToggleResizeObserver.observe(manaContainer);
+      }
+
+      const render = () => {
+        const muted = !!music.muted;
+        toggle.textContent = muted ? '🔇' : '🔊';
+        toggle.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        toggle.title = muted ? 'Unmute music' : 'Mute music';
+      };
+      render();
+
+      toggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        music.setMuted(!music.muted);
+        render();
+      });
+
+      // Direct child of #ui-container (a sibling of manaContainer, not nested
+      // inside it) — see the class comment above for why that placement matters.
+      this.container.appendChild(toggle);
+      this.elements.musicToggle = toggle;
     }
 
     createSettingsMenu() {
@@ -265,10 +340,12 @@ export class UISystem extends System {
       tabbar.className = 'vc-tabbar';
       const panes = {};
       const tabs = {};
+      // 3 tabs max: Flight holds both the flight sliders and the time-of-day control.
+      // Agent opens by default — see the 'agent' checks below for the default pane.
       const defs = [
+        ['agent', 'Agent'],
+        ['flight', 'Flight'],
         ['race', 'Race'],
-        ['speed', 'Speed'],
-        ['time', 'Time'],
       ];
 
       defs.forEach(([key, label]) => {
@@ -276,14 +353,14 @@ export class UISystem extends System {
         tab.type = 'button';
         tab.className = 'vc-tab';
         tab.textContent = label;
-        tab.setAttribute('aria-selected', key === 'race' ? 'true' : 'false');
+        tab.setAttribute('aria-selected', key === 'agent' ? 'true' : 'false');
         tab.addEventListener('click', () => this.showSettingsPane(key));
         tabs[key] = tab;
         tabbar.appendChild(tab);
 
         const pane = document.createElement('div');
         pane.dataset.settingsPane = key;
-        pane.style.display = key === 'race' ? 'block' : 'none';
+        pane.style.display = key === 'agent' ? 'block' : 'none';
         panes[key] = pane;
       });
 
@@ -303,6 +380,14 @@ export class UISystem extends System {
       this.elements.settingsPanel = panel;
       this.elements.settingsTabs = tabs;
       this.elements.settingsPanes = panes;
+
+      // Flush any panes that registered before the menu existed (init-order safe).
+      if (this._pendingPanes && this._pendingPanes.length) {
+        for (const p of this._pendingPanes) {
+          if (panes[p.key] && p.node.parentElement !== panes[p.key]) panes[p.key].appendChild(p.node);
+        }
+        this._pendingPanes = [];
+      }
     }
 
     setSettingsVisible(visible) {
@@ -330,10 +415,18 @@ export class UISystem extends System {
       });
     }
 
+    // Append a panel into a tab pane. Multiple panels can share a tab (e.g. the
+    // flight sliders + the time-of-day control both live under 'flight'). If the
+    // settings menu isn't built yet, the registration is queued and flushed once
+    // it is — so callers don't depend on init order.
     registerSettingsPane(key, node) {
-      const pane = this.elements.settingsPanes && this.elements.settingsPanes[key];
-      if (!pane || !node) return false;
-      pane.replaceChildren(node);
+      if (!node) return false;
+      const panes = this.elements.settingsPanes;
+      if (panes && panes[key]) {
+        if (node.parentElement !== panes[key]) panes[key].appendChild(node);
+        return true;
+      }
+      (this._pendingPanes = this._pendingPanes || []).push({ key, node });
       return true;
     }
 
@@ -343,14 +436,22 @@ export class UISystem extends System {
   // every frame, so writes here apply live. Persisted per browser.
   // ---------------------------------------------------------------------
 
-  static FLIGHT_DEFAULTS = { cruise: 210, rush: 420, punch: 400 };
+  static FLIGHT_DEFAULTS = { cruise: 140, rush: 280, punch: 300 };
 
   loadFlightSettings() {
+    const settings = { ...UISystem.FLIGHT_DEFAULTS };
     try {
       const raw = localStorage.getItem('vc.flight');
-      if (raw) return { ...UISystem.FLIGHT_DEFAULTS, ...JSON.parse(raw) };
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Validate per key: these values feed straight into the physics every
+        // frame, so a corrupted store must never NaN player.maxSpeed & co.
+        for (const key of Object.keys(UISystem.FLIGHT_DEFAULTS)) {
+          if (Number.isFinite(parsed?.[key])) settings[key] = parsed[key];
+        }
+      }
     } catch (e) { /* corrupted/unavailable storage — use defaults */ }
-    return { ...UISystem.FLIGHT_DEFAULTS };
+    return settings;
   }
 
   applyFlightSettings(settings) {
@@ -449,7 +550,7 @@ export class UISystem extends System {
     });
     panel.appendChild(reset);
 
-      this.registerSettingsPane('speed', panel);
+      this.registerSettingsPane('flight', panel);
       this.elements.flightPanel = panel;
     }
 
@@ -553,6 +654,7 @@ export class UISystem extends System {
 
     // Listen for key presses to select spells
     window.addEventListener('keydown', (event) => {
+      if (InputManager.isEditableTarget(event.target)) return;
       if (event.key >= '1' && event.key <= '3') {
         const index = parseInt(event.key) - 1;
         this.selectSpell(index);
@@ -1728,7 +1830,7 @@ export class UISystem extends System {
       container.appendChild(toggleContainer);
     }
 
-      this.registerSettingsPane('time', container);
+      this.registerSettingsPane('flight', container);
       this.elements.timePanel = container;
     }
 
@@ -1835,6 +1937,12 @@ export class UISystem extends System {
     clearInterval(this._questPanelTimer);
     if (this.elements.toastStack) this.elements.toastStack.remove();
     if (this.elements.questPanel) this.elements.questPanel.remove();
+    if (this._musicToggleResizeObserver) {
+      this._musicToggleResizeObserver.disconnect();
+      this._musicToggleResizeObserver = null;
+    }
+    if (this.elements.musicToggle) this.elements.musicToggle.remove();
+    this.elements.musicToggle = null;
     // Clean up state subscription
     if (this.unsubscribeState) {
       this.unsubscribeState();
@@ -1857,7 +1965,7 @@ export class UISystem extends System {
      */
     showTimeControls() {
       this.setSettingsVisible(true);
-      this.openSettingsMenu('time');
+      this.openSettingsMenu('flight');
     }
 
 }

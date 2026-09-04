@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { createNoise2D } from "simplex-noise";
 import { System } from "../core/System.js";
 import { Logger } from "../../utils/Logger.js";
+import { CURVE_UNIFORMS_GLSL, CURVE_DROP_GLSL } from "../shaders/curvature.js";
 
 export class WorldSystem extends System {
   constructor(engine) {
@@ -15,6 +16,31 @@ export class WorldSystem extends System {
     // Initialize maps and collections
     this.currentChunks = new Map();
     this.manaNodes = [];
+    this.terrainEdits = []; // creative terraform brushes: sparse additive height edits
+    // Coarse spatial hash over terrainEdits so getTerrainHeight (hot path: physics,
+    // chunk-gen, vegetation, mana) only scans edits in the 3×3 neighbouring cells.
+    // Cell size = the max edit radius (raiseTerrain clamps to 1500), so any edit
+    // that can reach a query point lives in one of those 9 cells. The saved format
+    // stays the flat terrainEdits array; the index is rebuilt on load.
+    this._editIndex = new Map(); // "cx,cz" -> [edit, ...]
+    this._editCellSize = 1500;
+
+    // World shape: a camera-relative visual curvature that bends distant terrain
+    // DOWN like a planet's horizon, while generation and physics stay a flat 2D
+    // heightfield. 'flat' = strength 0 (identical to before); 'round' = 1/(2R).
+    // 'strength' eases toward 'targetStrength' so flipping the toggle morphs.
+    this.curvature = { shape: 'flat', radius: 30000, strength: 0, targetStrength: 0, centerX: 0, centerZ: 0 };
+    // Uniform sets ({uCurveCenter, uCurveAmount}) that WorldSystem re-centers and
+    // eases every frame. Terrain registers its own; water/vegetation pull a set via
+    // getCurveUniforms() and wire it into their own shaders, so the whole world
+    // shares ONE curvature value and centre.
+    this._curveUniformSets = [];
+
+    // Season recolour: a shared fragment-shader tint (luminance re-coloured toward a
+    // season hue, blended by mix). One shared uniform set drives terrain + trees, so
+    // setSeason() just mutates these values — no per-frame work, no respawn.
+    this.season = 'summer';
+    this._seasonUniforms = { uSeasonColor: { value: new THREE.Color(1, 1, 1) }, uSeasonMix: { value: 0 } };
 
     // Height cache system
     this.heightCache = new Map(); // Key format: `${gridX},${gridZ}`
@@ -30,7 +56,7 @@ export class WorldSystem extends System {
     this.minHeight = -50;
     this.viewDistance = 8;  // Increased view distance for better horizon rendering
     this.waterLevel = 0;    // Sea level (read by WaterSystem and LandmarkSystem)
-    this.maxManaNodes = 30; // Target number of live mana nodes around the player
+    this.maxManaNodes = 80; // Target number of live mana nodes around the player
 
     // Initialize frustum culling objects
     this._frustum = new THREE.Frustum();
@@ -177,6 +203,7 @@ export class WorldSystem extends System {
           // Logger.debug("WorldSystem: Creating initial terrain...");
          this.createInitialTerrain();
           // Logger.debug("WorldSystem: Initial terrain created");
+         this._exposeWorldAPI(); // window.worldAPI — live creative world editing
 
          // Don't create mana nodes here - wait for player to be initialized
 
@@ -224,11 +251,417 @@ export class WorldSystem extends System {
         this.materials.terrainLOD.polygonOffset = true;
         this.materials.terrainLOD.polygonOffsetFactor = -2;
         this.materials.terrainLOD.polygonOffsetUnits = -2;
+
+    // Give both terrain materials the world-curvature bend (a no-op at strength 0).
+    this._patchCurvatureMaterial(this.materials.terrain);
+    this._patchCurvatureMaterial(this.materials.terrainLOD);
+  }
+
+  // Inject a camera-relative downward bend into a material's vertex shader. Chunk
+  // meshes are translation-only (no rotation/scale), so local Y equals world Y and
+  // we can lower `transformed.y` directly. The drop is distance² / (2R) — the
+  // parabolic approximation of a sphere — so the ground falls away like a horizon.
+  // Generation and physics are untouched; near the camera the drop is ~0, so what
+  // you actually fly over still matches the flat collision heightfield.
+  _patchCurvatureMaterial(material) {
+    if (!material || material.userData.curveUniforms) return;
+    const uniforms = this.getCurveUniforms();
+    const season = this._seasonUniforms;
+    material.userData.curveUniforms = uniforms;
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.uCurveCenter = uniforms.uCurveCenter;
+      shader.uniforms.uCurveAmount = uniforms.uCurveAmount;
+      shader.vertexShader = CURVE_UNIFORMS_GLSL + CURVE_DROP_GLSL + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        transformed.y -= curveDrop((modelMatrix * vec4(transformed, 1.0)).xyz);`
+      );
+      WorldSystem.applySeasonShader(shader, season);
+    };
+    material.needsUpdate = true;
+  }
+
+  // Shared season recolour: re-tint the lit fragment toward the season hue
+  // (luminance * season colour), blended by mix. Reused for terrain and trees so
+  // both recolour from the same shared uniforms. Static so other systems can call it.
+  static applySeasonShader(shader, seasonUniforms) {
+    shader.uniforms.uSeasonColor = seasonUniforms.uSeasonColor;
+    shader.uniforms.uSeasonMix = seasonUniforms.uSeasonMix;
+    shader.fragmentShader = 'uniform vec3 uSeasonColor;\nuniform float uSeasonMix;\n' + shader.fragmentShader;
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <dithering_fragment>',
+      `#include <dithering_fragment>
+        {
+          float _slum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(_slum) * uSeasonColor, uSeasonMix);
+        }`
+    );
+  }
+
+  getSeasonUniforms() { return this._seasonUniforms; }
+
+  // Live season recolour: 'spring' | 'summer' | 'autumn' | 'winter'.
+  setSeason(name) {
+    const SEASONS = {
+      spring: { color: [0.78, 1.35, 0.72], mix: 0.40 },
+      summer: { color: [1.0, 1.0, 1.0], mix: 0.0 },
+      autumn: { color: [1.75, 1.0, 0.40], mix: 0.60 },
+      winter: { color: [1.15, 1.28, 1.55], mix: 0.50 },
+    };
+    const key = String(name || 'summer').toLowerCase();
+    const s = SEASONS[key] || SEASONS.summer;
+    this.season = SEASONS[key] ? key : 'summer';
+    this._seasonUniforms.uSeasonColor.value.setRGB(s.color[0], s.color[1], s.color[2]);
+    this._seasonUniforms.uSeasonMix.value = s.mix;
+    return { season: this.season };
+  }
+
+  // A fresh uniform set, registered so _updateCurvature keeps it in sync. Other
+  // systems (water, vegetation) call this and wire the uniforms into their shaders.
+  getCurveUniforms() {
+    const u = { uCurveCenter: { value: new THREE.Vector3() }, uCurveAmount: { value: 0 } };
+    this._curveUniformSets.push(u);
+    return u;
+  }
+
+  // Per-frame: ease the bend toward its target and re-center every registered set
+  // on the viewer, so terrain, water and vegetation all curve about the same point.
+  _updateCurvature(delta) {
+    const c = this.curvature;
+    // critically-damped-ish ease so flat<->round morphs smoothly instead of popping.
+    // Delta-scaled (exponential decay) so the morph speed is frame-rate independent
+    // — k = 5 matches the old 0.08-per-frame feel at 60 Hz.
+    const ease = 1 - Math.exp(-5 * (Number.isFinite(delta) ? delta : 1 / 60));
+    c.strength += (c.targetStrength - c.strength) * ease;
+    if (Math.abs(c.strength - c.targetStrength) < 1e-9) c.strength = c.targetStrength;
+    const cam = this.engine.camera;
+    const center = cam ? cam.position : (this.engine.systems.player?.localPlayer?.position);
+    if (center) { c.centerX = center.x; c.centerZ = center.z; }
+    for (let i = 0; i < this._curveUniformSets.length; i++) {
+      const u = this._curveUniformSets[i];
+      u.uCurveAmount.value = c.strength;
+      if (center) u.uCurveCenter.value.set(center.x, center.y, center.z);
+    }
+  }
+
+  // World-Y drop of the visual ground at (x,z) under the current curvature — the
+  // CPU twin of the shader bend. Rigid world objects (landmarks) subtract this from
+  // their base height so they ride the curved ground instead of floating.
+  curveDropAt(x, z) {
+    const c = this.curvature;
+    if (!c.strength) return 0;
+    const dx = x - c.centerX;
+    const dz = z - c.centerZ;
+    return c.strength * (dx * dx + dz * dz);
+  }
+
+  // Public: switch world shape. 'flat' | 'round' (aka 'sphere'/'spheric').
+  setWorldShape(shape) {
+    const round = /^(round|sphere|spheric|spherical|curved)$/i.test(String(shape));
+    this.curvature.shape = round ? 'round' : 'flat';
+    this.curvature.targetStrength = round ? 1 / (2 * this.curvature.radius) : 0;
+    return { shape: this.curvature.shape, radius: this.curvature.radius };
+  }
+
+  // Public: tune how aggressively the world curves (smaller R = stronger curve).
+  setCurveRadius(radius) {
+    const r = Math.max(4000, Math.min(500000, Number(radius) || this.curvature.radius));
+    this.curvature.radius = r;
+    if (this.curvature.shape === 'round') this.curvature.targetStrength = 1 / (2 * r);
+    return { radius: r, shape: this.curvature.shape };
+  }
+
+  // ===== "World DJ" knobs the companion can twist. Each takes a friendly LEVEL
+  // where 1 = normal, more/less scales around it; delegates to the owning system.
+  // These are LLM-called entry points, so a dropped/garbled arg is LIKELY: a
+  // missing level must mean "normal" (the neutral 1), never "delete everything". =====
+  _setTrees(level) {
+    const trees = this.engine.systemManager.get('simpleTrees');
+    const lv = Number(level);
+    if (trees && trees.setDensity) return trees.setDensity(Number.isFinite(lv) ? lv : 1);
+    return null;
+  }
+
+  _setLandmarks(level) {
+    const lm = this.engine.systemManager.get('landmarks');
+    const lv = Number(level);
+    if (lm && lm.setMaxLandmarks) return lm.setMaxLandmarks(Math.round((Number.isFinite(lv) ? lv : 1) * 8));
+    return null;
+  }
+
+  _setMana(level) {
+    const lv = Number(level);
+    this.maxManaNodes = Math.max(0, Math.min(400, Math.round((Number.isFinite(lv) ? lv : 1) * 80)));
+    while (this.manaNodes.length > this.maxManaNodes) this.removeManaNode(this.manaNodes.pop());
+    if (this.manaNodes.length < this.maxManaNodes) this.topUpManaNodes();
+    return { maxMana: this.maxManaNodes };
+  }
+
+  _setClouds(on) {
+    const atmo = this.engine.systemManager.get('atmosphere');
+    const cs = atmo && atmo.cloudSystem;
+    if (cs && cs.setVisible) return cs.setVisible(!!on);
+    return null;
+  }
+
+  _setSeaLevel(level) {
+    const lv = Number(level);
+    const y = (Number.isFinite(lv) ? lv : 0) * 150; // level 1 ~ floods lowlands, 2 ~ water planet; missing = normal
+    const water = this.engine.systemManager.get('water');
+    if (water && water.setSeaLevel) return water.setSeaLevel(y);
+    this.waterLevel = y;
+    return { seaLevel: y };
   }
 
 
-  // --- getTerrainHeight method remains unchanged ---
+  // getTerrainHeight = procedural base + live creative terraform edits. Mesh, physics
+  // and the agent's own vision all read this ONE oracle, so an edit changes the whole
+  // world at once. The base is cached; the deform is recomputed live (cheap, and only
+  // when edits exist) so an edit never needs a base-cache flush.
   getTerrainHeight(x, z) {
+    const h = this._baseTerrainHeight(x, z);
+    return this.terrainEdits.length ? h + this._deformHeight(x, z) : h;
+  }
+
+  // Sum of smooth additive brushes. amount > 0 raises (hill/mountain), < 0 carves.
+  // Only the 3×3 cells around the query point are scanned (see _editIndex).
+  _deformHeight(x, z) {
+    const cs = this._editCellSize;
+    const cx = Math.floor(x / cs);
+    const cz = Math.floor(z / cs);
+    let d = 0;
+    for (let ix = cx - 1; ix <= cx + 1; ix++) {
+      for (let iz = cz - 1; iz <= cz + 1; iz++) {
+        const bucket = this._editIndex.get(`${ix},${iz}`);
+        if (!bucket) continue;
+        for (let i = 0; i < bucket.length; i++) {
+          const e = bucket[i];
+          const dx = x - e.x;
+          const dz = z - e.z;
+          const dist2 = dx * dx + dz * dz;
+          const r2 = e.radius * e.radius;
+          if (dist2 >= r2) continue;
+          const t = 1 - dist2 / r2;             // 1 at the centre -> 0 at the rim
+          d += e.amount * t * t * (3 - 2 * t);  // smoothstep -> rounded, seamless bump
+        }
+      }
+    }
+    return d;
+  }
+
+  // Add one edit to the spatial hash (keyed by the cell its CENTRE falls in).
+  _indexEdit(e) {
+    const cs = this._editCellSize;
+    const key = `${Math.floor(e.x / cs)},${Math.floor(e.z / cs)}`;
+    const bucket = this._editIndex.get(key);
+    if (bucket) bucket.push(e); else this._editIndex.set(key, [e]);
+  }
+
+  // Rebuild the hash from the flat terrainEdits array (after load/replace).
+  _rebuildEditIndex() {
+    this._editIndex.clear();
+    for (let i = 0; i < this.terrainEdits.length; i++) this._indexEdit(this.terrainEdits[i]);
+  }
+
+  // ===== Save / load the whole creative planet state to localStorage =====
+  savePlanet() {
+    const sm = this.engine.systemManager;
+    const atmo = sm.get('atmosphere');
+    const trees = sm.get('simpleTrees');
+    const lm = sm.get('landmarks');
+    const cs = atmo && atmo.cloudSystem;
+    // Never persist NaN (JSON turns it into null, which loads back as 0 and bakes
+    // an accident in) — fall back to each field's neutral value instead.
+    const fin = (v, dflt) => (Number.isFinite(Number(v)) ? Number(v) : dflt);
+    const snap = {
+      v: 1,
+      seed: fin(this.seed, 0),
+      terrainEdits: this.terrainEdits.map((e) => ({ x: e.x, z: e.z, radius: e.radius, amount: e.amount })),
+      shape: this.curvature.shape,
+      curveRadius: fin(this.curvature.radius, 30000),
+      season: this.season,
+      seaLevel: fin(this.waterLevel, 0),
+      trees: fin(trees && trees.densityScale != null ? trees.densityScale : 1, 1),
+      landmarks: fin(lm ? lm.maxLandmarks : 8, 8),
+      clouds: cs ? !cs._hidden : true,
+      timeOfDay: fin(atmo ? atmo.timeOfDay : 0.5, 0.5),
+      maxMana: fin(this.maxManaNodes, 80),
+    };
+    try { localStorage.setItem('vc.planet', JSON.stringify(snap)); } catch (e) { /* private mode */ }
+    return snap;
+  }
+
+  loadPlanet(snap) {
+    if (!snap) { try { snap = JSON.parse(localStorage.getItem('vc.planet')); } catch (e) { return null; } }
+    if (!snap || typeof snap !== 'object') return null;
+    const sm = this.engine.systemManager;
+    // Distrust the input: a bad numeric field keeps the current value rather than
+    // zeroing the world. null is "missing", NOT 0 — legacy saves serialized NaN
+    // as null, and Number(null) === 0 would bake that accident back in.
+    const fin = (v) => (v == null || !Number.isFinite(Number(v))) ? undefined : Number(v);
+    // terrain: restore seed + edits, then re-mesh everything from the flat oracle
+    if (fin(snap.seed) !== undefined) this.seed = fin(snap.seed);
+    this.terrainEdits = Array.isArray(snap.terrainEdits)
+      ? snap.terrainEdits
+          .map((e) => ({ x: +e.x, z: +e.z, radius: +e.radius, amount: +e.amount }))
+          .filter((e) => Number.isFinite(e.x) && Number.isFinite(e.z) && Number.isFinite(e.radius) && Number.isFinite(e.amount))
+      : [];
+    this._rebuildEditIndex();
+    this.heightCache.clear();
+    this._remeshAll();
+    // world shape + curve tightness
+    if (fin(snap.curveRadius) !== undefined) this.curvature.radius = fin(snap.curveRadius);
+    this.setWorldShape(snap.shape === 'round' ? 'round' : 'flat');
+    if (snap.season) this.setSeason(snap.season);
+    if (fin(snap.seaLevel) !== undefined) { const w = sm.get('water'); if (w && w.setSeaLevel) w.setSeaLevel(fin(snap.seaLevel)); else this.waterLevel = fin(snap.seaLevel); }
+    if (fin(snap.trees) !== undefined) { const t = sm.get('simpleTrees'); if (t && t.setDensity) t.setDensity(fin(snap.trees)); }
+    if (fin(snap.landmarks) !== undefined) { const l = sm.get('landmarks'); if (l && l.setMaxLandmarks) l.setMaxLandmarks(fin(snap.landmarks)); }
+    if (snap.clouds !== undefined) { const a = sm.get('atmosphere'); if (a && a.cloudSystem && a.cloudSystem.setVisible) a.cloudSystem.setVisible(!!snap.clouds); }
+    if (fin(snap.timeOfDay) !== undefined) { const a = sm.get('atmosphere'); if (a) a.timeOfDay = fin(snap.timeOfDay); }
+    if (fin(snap.maxMana) !== undefined) { this.maxManaNodes = Math.max(0, Math.min(400, fin(snap.maxMana))); this.topUpManaNodes(); }
+    // the ground moved under everything — re-pin landmarks, mana and genie spawns
+    this._resyncWorldObjects();
+    return snap;
+  }
+
+  // Terrain changed wholesale (reroll/loadPlanet): re-derive the base heights of
+  // everything pinned to the old ground — landmarks, mana orbs (their per-frame
+  // bob/curve math reads userData.baseY) and genie-spawned objects.
+  _resyncWorldObjects() {
+    const sm = this.engine.systemManager;
+    const lm = sm.get('landmarks');
+    if (lm && typeof lm.resyncHeights === 'function') lm.resyncHeights();
+    for (const node of this.manaNodes) {
+      if (!node.userData || node.userData.collected) continue;
+      const h = this.getTerrainHeight(node.position.x, node.position.z);
+      if (Number.isFinite(h)) node.userData.baseY = Math.max(h, this.waterLevel) + 20 + Math.random() * 25;
+    }
+    const genie = sm.get('genie');
+    if (genie && typeof genie.resyncHeights === 'function') genie.resyncHeights();
+  }
+
+  hasSavedPlanet() {
+    try { return !!localStorage.getItem('vc.planet'); } catch (e) { return false; }
+  }
+
+  // ===== Creative world editing — godmode, deliberately NOT the fair-play agentAPI
+  // (which never writes world state). Exposed as window.worldAPI for the companion. =====
+  _exposeWorldAPI() {
+    if (typeof window === 'undefined') return;
+    const atmo = () => this.engine.systemManager && this.engine.systemManager.get('atmosphere');
+    const ops = {
+      raiseTerrain: (x, z, radius, amount) => this.raiseTerrain(x, z, radius, amount),
+      carveTerrain: (x, z, radius, amount) => this.raiseTerrain(x, z, radius, -Math.abs(Number(amount) || 140)),
+      clearTerrain: () => this.clearTerrainEdits(),
+      reroll: (seed) => this.reroll(seed),
+      spawnMana: (x, z) => this.spawnManaAt(x, z),
+      terrainHeight: (x, z) => this.getTerrainHeight(x, z),
+      setTimeOfDay: (t) => { const a = atmo(); const v = Number(t); if (a && Number.isFinite(v)) a.timeOfDay = Math.max(0, Math.min(0.999, v)); return a ? a.timeOfDay : null; },
+      setWorldShape: (shape) => this.setWorldShape(shape),     // 'flat' | 'round'
+      setCurveRadius: (r) => this.setCurveRadius(r),           // smaller = stronger curve
+      worldShape: () => ({ shape: this.curvature.shape, radius: this.curvature.radius }),
+      setTrees: (level) => this._setTrees(level),              // forest density, 1 = normal
+      setLandmarks: (level) => this._setLandmarks(level),      // landmark abundance, 1 = normal
+      setMana: (level) => this._setMana(level),                // mana abundance, 1 = normal
+      setClouds: (on) => this._setClouds(on),                  // clouds on/off
+      setSeaLevel: (level) => this._setSeaLevel(level),        // 0 normal, 1 flood, 2 water planet, <0 drains
+      setSeason: (name) => this.setSeason(name),               // spring | summer | autumn | winter
+      savePlanet: () => this.savePlanet(),                     // persist the whole world to localStorage
+      loadPlanet: (snap) => this.loadPlanet(snap),             // restore it
+      hasSavedPlanet: () => this.hasSavedPlanet(),
+    };
+    // COMPOSE onto the shared creative surface rather than replace it — GenieSystem
+    // adds its object-authoring verbs to the same object, so neither side may wipe
+    // the other regardless of init order or re-invocation.
+    const api = window.worldAPI = Object.assign(window.worldAPI || {}, ops);
+    api.meta = api.meta || {};
+    api.meta.ops = Array.from(new Set([...(api.meta.ops || []), ...Object.keys(ops)]));
+  }
+
+  // Raise (amount>0) or carve (amount<0) terrain at a world point, then re-mesh the
+  // affected loaded chunks and flush physics heights so collision matches the new ground.
+  raiseTerrain(x, z, radius = 220, amount = 140) {
+    radius = Math.max(20, Math.min(1500, Number(radius) || 220));
+    amount = Math.max(-400, Math.min(400, Number(amount) || 0));
+    if (!amount) return { edits: this.terrainEdits.length };
+    const px = Number(x) || 0;
+    const pz = Number(z) || 0;
+    const edit = { x: px, z: pz, radius, amount };
+    this.terrainEdits.push(edit);
+    this._indexEdit(edit);
+    this._remeshRegion(px, pz, radius);
+    return { edits: this.terrainEdits.length, op: amount > 0 ? 'raise' : 'carve', at: [px, pz], radius, amount };
+  }
+
+  // Undo all terraform edits and restore the procedural ground.
+  clearTerrainEdits() {
+    if (!this.terrainEdits.length) return { edits: 0 };
+    const edits = this.terrainEdits.slice();
+    this.terrainEdits = [];
+    this._editIndex.clear();
+    for (const e of edits) this._remeshRegion(e.x, e.z, e.radius);
+    return { edits: 0 };
+  }
+
+  // Re-roll the whole procedural world to a new seed, live.
+  reroll(seed) {
+    const s = Number(seed);
+    this.seed = Number.isFinite(s) ? s : Math.random() * 1000;
+    this.terrainEdits = [];
+    this._editIndex.clear();
+    this.heightCache.clear(); this.cacheHits = 0; this.cacheMisses = 0;
+    this._remeshAll();
+    // the ground moved under everything — re-pin landmarks, mana and genie spawns
+    this._resyncWorldObjects();
+    return { seed: this.seed };
+  }
+
+  // Drop a mana node at a world point (auto-placed above the ground).
+  spawnManaAt(x, z) {
+    const px = Number(x) || 0;
+    const pz = Number(z) || 0;
+    const py = this.getTerrainHeight(px, pz) + 30;
+    return this.spawnManaNode({ position: { x: px, y: py, z: pz }, value: 1 });
+  }
+
+  _remeshRegion(x, z, radius) {
+    const pad = this.chunkSize / 2;
+    for (const [key, mesh] of this.currentChunks.entries()) {
+      const c = key.split(',');
+      const cx = Number(c[0]);
+      const cz = Number(c[1]);
+      if (Math.abs(cx - x) <= radius + pad && Math.abs(cz - z) <= radius + pad) this._rebuildChunk(mesh, cx, cz);
+    }
+    this._invalidatePhysicsHeights();
+  }
+
+  _remeshAll() {
+    for (const [key, mesh] of this.currentChunks.entries()) {
+      const c = key.split(',');
+      this._rebuildChunk(mesh, Number(c[0]), Number(c[1]));
+    }
+    this._invalidatePhysicsHeights();
+  }
+
+  _rebuildChunk(mesh, cx, cz) {
+    try {
+      const geo = this.createChunkGeometry(cx, cz);
+      const old = mesh.geometry;
+      mesh.geometry = geo;
+      if (old && old.dispose) old.dispose();
+    } catch (e) { /* skip a bad chunk */ }
+  }
+
+  _invalidatePhysicsHeights() {
+    try {
+      const phys = this.engine && this.engine.physicsSystem;
+      if (phys && phys.heightCache && typeof phys.heightCache.clear === 'function') phys.heightCache.clear();
+    } catch (e) { /* ignore */ }
+  }
+
+  // --- base procedural height (cached) ------------------------------------------
+  _baseTerrainHeight(x, z) {
     const gridX = Math.floor(x / this.cacheResolution) * this.cacheResolution;
     const gridZ = Math.floor(z / this.cacheResolution) * this.cacheResolution;
     const cacheKey = `${gridX},${gridZ}`;
@@ -607,9 +1040,9 @@ export class WorldSystem extends System {
   // All positions sit safely above terrain and water, with minimum spacing enforced
   // against both each other and any existing nodes passed in.
   generateManaNodePositions(player, count, existingNodes = []) {
-    const minSpacing = 80;
-    const minDistance = 300;
-    const maxDistance = 1500;
+    const minSpacing = 70;
+    const minDistance = 250;
+    const maxDistance = 1200;
     const coneHalfAngle = THREE.MathUtils.degToRad(35);
     const heading = player.rotation ? player.rotation.y : 0; // forward = (sin(y), cos(y)) in XZ
     const positions = [];
@@ -672,7 +1105,7 @@ export class WorldSystem extends System {
     );
     nodeMesh.add(glowMesh);
     nodeMesh.position.copy(posData.position);
-    nodeMesh.userData = { type: 'mana', value: posData.value, collected: false };
+    nodeMesh.userData = { type: 'mana', value: posData.value, collected: false, baseY: posData.position.y };
     this.manaNodes.push(nodeMesh);
     this.scene.add(nodeMesh);
     return nodeMesh;
@@ -2013,16 +2446,20 @@ updateLandmarks(delta, elapsed) {
 
     // Check if we need more mana nodes (top up without despawning live ones)
     const uncollectedNodes = this.manaNodes.filter(node => node.userData && !node.userData.collected).length;
-    if (uncollectedNodes < 10) {
+    if (uncollectedNodes < this.maxManaNodes * 0.6) {
        // Logger.debug(`[WorldSystem] Need more mana nodes. Uncollected: ${uncollectedNodes}, Total: ${this.manaNodes.length}`);
       this.topUpManaNodes();
     }
     
-    // Create initial mana nodes if none exist and player is ready
-    if (this.manaNodes.length === 0 && player && player.position) {
+    // Create initial mana nodes if none exist and player is ready (skip entirely
+    // when setMana(0) zeroed the target — otherwise this branch re-runs every frame)
+    if (this.manaNodes.length === 0 && this.maxManaNodes > 0 && player && player.position) {
        // Logger.info('[WorldSystem] No mana nodes exist, creating initial set');
       this.createManaNodes();
     }
+
+    // Ease + re-center the world-curvature bend on the viewer
+    this._updateCurvature(delta);
 
     // Update terrain chunks
     this.updateChunks();
@@ -2033,7 +2470,11 @@ updateLandmarks(delta, elapsed) {
     // Animate mana nodes
     this.manaNodes.forEach((node, index) => {
       if (node.userData && !node.userData.collected) {
-        node.position.y += Math.sin(elapsed * 2 + index * 0.5) * 0.03;
+        // Bob around the spawn height, then drop onto the curved ground so orbs
+        // don't hang in the air on a round/tiny planet (logic Y unchanged on flat).
+        const base = node.userData.baseY != null ? node.userData.baseY : node.position.y;
+        const bob = Math.sin(elapsed * 2 + index * 0.5) * 3;
+        node.position.y = base + bob - this.curveDropAt(node.position.x, node.position.z);
         node.rotation.y += delta * 0.5;
       }
     });

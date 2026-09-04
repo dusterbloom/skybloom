@@ -14,11 +14,11 @@ export class PlayerPhysics extends System {
     this.altitudeDamping = 0.95; // Per-frame at 60fps; applied as pow(damping, delta * 60)
     this.bankingSensitivity = 0.08;
     this.turnDamping = 0.97;
-    this.velocityAlignRate = 2.5; // Velocity-to-facing easing: 1 - exp(-rate * delta)
+    this.velocityAlignRate = 5.0; // Velocity-to-facing easing: 1 - exp(-rate * delta). Higher = velocity follows the nose faster (less "supertanker" drift after turning past a gate)
     this.maxAltitudeVelocity = 90;
     this.divePower = 150; // Extra forward accel per unit of nose-down forward.y
     this.diveCapStretch = 0.4; // Speed cap stretches to 1.4x in a full dive
-    this.absoluteMaxSpeed = 420; // Hard ceiling regardless of boost/dive stacking
+    this.absoluteMaxSpeed = 280; // Hard ceiling regardless of boost/dive stacking (overridden live by the Rush slider)
     this.climbDragCoefficient = 0.5; // Extra drag per unit of nose-up forward.y
     
     // Add reusable vector objects to eliminate allocations
@@ -265,28 +265,9 @@ export class PlayerPhysics extends System {
       }
     }
 
-    // Check landmark collisions
-    if (this.landmarkSystem && this.landmarkSystem.landmarks) {
-      for (const landmark of this.landmarkSystem.landmarks.values()) {
-        const dx = player.position.x - landmark.position.x;
-        const dz = player.position.z - landmark.position.z;
-        const distanceXZ = Math.sqrt(dx * dx + dz * dz);
-
-        // Landmark collision radius based on size
-        const landmarkRadius = landmark.size * 0.5;
-        const collisionDistance = this.playerRadius + landmarkRadius;
-
-        if (distanceXZ < collisionDistance && distanceXZ < closestDistance) {
-          // Check vertical distance (landmarks are on ground, player can fly over)
-          const dy = player.position.y - landmark.position.y;
-          if (dy < landmark.size * 0.8) { // Within landmark height
-            closestDistance = distanceXZ;
-            // Calculate collision normal (direction from landmark to player)
-            collisionNormal = new THREE.Vector3(dx, 0, dz).normalize();
-          }
-        }
-      }
-    }
+    // Landmarks are deliberately NOT solid: they're fly-through waypoints (visiting
+    // one by flying over it advances quests). Their old size-based collision bounced
+    // the carpet out of a 30-200 unit zone for no gameplay value, so it's gone.
 
     // Handle collision response with bounce
     if (collisionNormal) {

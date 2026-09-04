@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
 import { resolveAsset } from '../../utils/assetPath.js';
+import { CURVE_UNIFORMS_GLSL, CURVE_DROP_GLSL } from '../shaders/curvature.js';
 
 /**
  * SimpleTreeSystem - Loads and spawns GLTF tree models
@@ -80,7 +81,59 @@ export class SimpleTreeSystem extends System {
       this.createProceduralTreeModels();
     }
 
+    // Curve the forest with the world (flat/round toggle)
+    this.applyCurvatureToModels();
+
     Logger.info(`Simple Tree System initialized with ${this.treeModels.length} tree types`);
+  }
+
+  // Inject the world-curvature bend into every tree material. Trees are rigid, so we
+  // drop the WHOLE tree by distance²/(2R) evaluated at its base (the mesh origin)
+  // rather than bending each vertex — it stays upright and just settles onto the
+  // curved ground. Spawned trees are clones that share these template materials, so
+  // patching the models patches every tree. Keyed off WorldSystem's shared uniforms.
+  applyCurvatureToModels() {
+    const world = this.worldSystem || this.engine.systemManager.get('world');
+    if (!world || typeof world.getCurveUniforms !== 'function' || !Array.isArray(this.treeModels)) return;
+    const cu = world.getCurveUniforms(); // one shared set for the whole forest
+    const season = world.getSeasonUniforms ? world.getSeasonUniforms() : null;
+    const inject = `vec4 mvPosition = vec4( transformed, 1.0 );
+        #ifdef USE_INSTANCING
+          mvPosition = instanceMatrix * mvPosition;
+        #endif
+        {
+          vec4 _vwp = modelMatrix * mvPosition;
+          vec3 _io = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+          _vwp.y -= curveDrop(_io);
+          mvPosition = viewMatrix * _vwp;
+        }
+        gl_Position = projectionMatrix * mvPosition;`;
+    const patched = new Set();
+    const patch = (m) => {
+      if (!m || patched.has(m) || m.userData.curveUniforms) return;
+      patched.add(m);
+      m.userData.curveUniforms = cu;
+      m.onBeforeCompile = (shader) => {
+        shader.uniforms.uCurveCenter = cu.uCurveCenter;
+        shader.uniforms.uCurveAmount = cu.uCurveAmount;
+        shader.vertexShader = CURVE_UNIFORMS_GLSL + CURVE_DROP_GLSL + shader.vertexShader;
+        shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', inject);
+        // recolour the forest with the season (shares WorldSystem's season uniforms)
+        if (season && world.constructor && world.constructor.applySeasonShader) {
+          world.constructor.applySeasonShader(shader, season);
+        }
+      };
+      m.needsUpdate = true;
+    };
+    for (const model of this.treeModels) {
+      if (!model || !model.traverse) continue;
+      model.traverse((node) => {
+        if (node.isMesh && node.material) {
+          if (Array.isArray(node.material)) node.material.forEach(patch);
+          else patch(node.material);
+        }
+      });
+    }
   }
 
   /**
@@ -327,6 +380,21 @@ export class SimpleTreeSystem extends System {
    * Spawn trees for a chunk using cluster-based generation.
    * Returns the array of tree groups spawned for this chunk (possibly empty).
    */
+  // Live forest density: 0 = none, 1 = normal, up to ~4 = jungle. Clears the live
+  // forest so nearby chunks respawn at the new density on the next update ticks.
+  setDensity(scale) {
+    // NaN/missing must never zero the forest (Math.min/max would keep NaN):
+    // keep the current density instead of silently deleting every tree.
+    const s = Number(scale);
+    this.densityScale = Number.isFinite(s) ? Math.max(0, Math.min(4, s)) : (this.densityScale ?? 1);
+    for (const entry of this.chunksWithTrees.values()) {
+      if (entry.trees) for (const t of entry.trees) this.scene.remove(t);
+    }
+    this.chunksWithTrees.clear();
+    this.spawnedTrees.length = 0;
+    return { density: this.densityScale };
+  }
+
   spawnTreesForChunk(chunkX, chunkZ) {
     const chunkTrees = [];
 
@@ -343,8 +411,13 @@ export class SimpleTreeSystem extends System {
 
     let treesSpawned = 0;
 
+    // Live density control (setDensity): scale clusters and the per-chunk cap.
+    const densityScale = this.densityScale ?? 1;
+    const clusters = Math.max(0, Math.round(this.clustersPerChunk * densityScale));
+    const maxTrees = Math.round(this.maxTreesPerChunk * densityScale);
+
     // Generate forest clusters
-    for (let c = 0; c < this.clustersPerChunk && treesSpawned < this.maxTreesPerChunk; c++) {
+    for (let c = 0; c < clusters && treesSpawned < maxTrees; c++) {
       // Random cluster center position in chunk
       const clusterCenterX = minX + Math.random() * chunkSize;
       const clusterCenterZ = minZ + Math.random() * chunkSize;
@@ -359,7 +432,7 @@ export class SimpleTreeSystem extends System {
       // Spawn trees around this cluster center
       const treesInThisCluster = Math.floor(this.treesPerCluster * (0.7 + Math.random() * 0.6)); // 70-130% variation
 
-      for (let t = 0; t < treesInThisCluster && treesSpawned < this.maxTreesPerChunk; t++) {
+      for (let t = 0; t < treesInThisCluster && treesSpawned < maxTrees; t++) {
         // Use exponential distribution for natural clustering (more trees near center)
         const distance = this.clusterRadius * Math.pow(Math.random(), 0.5);
         const angle = Math.random() * Math.PI * 2;

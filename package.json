@@ -10,8 +10,8 @@
     "play": "node scripts/play.mjs --build",
     "play:dist": "node scripts/play.mjs",
     "host": "npm run build && npm start",
-    "build": "vite build && node scripts/copy-docs.mjs",
-    "build:pages": "vite build --base=/skybloom/ && node scripts/copy-docs.mjs",
+    "build": "node scripts/match-screenshots-to-commits.mjs && node scripts/build-history-page.mjs && vite build && node scripts/copy-docs.mjs && node scripts/copy-screenshots.mjs",
+    "build:pages": "node scripts/match-screenshots-to-commits.mjs && node scripts/build-history-page.mjs && vite build --base=/skybloom/ && node scripts/copy-docs.mjs && node scripts/copy-screenshots.mjs",
     "preview": "vite preview",
     "smoke": "node scripts/smoke.mjs",
     "test:smoke": "npm run smoke"

@@ -157,6 +157,17 @@ export function ensureVibeTheme() {
       }
       /* The minimap reads as clutter and is hard to use on a phone — hide it. */
       #minimap-container { display: none !important; }
+      /* The phone's top-right corner is already the mobile HUD's own turf
+         (MobileUI's Power Save toggle, then MENU below it) — the mana pill
+         living there is hidden by Engine.js's mobile sweep anyway, so put
+         the music toggle in the now-empty top-left corner instead (the
+         minimap that lived there is hidden above). !important overrides the
+         inline right-offset createMusicToggle() computes for desktop. */
+      #music-mute-toggle {
+        left: var(--vc-safe-x) !important;
+        right: auto !important;
+        top: var(--vc-safe-y) !important;
+      }
       /* Make the in-game settings menu readable + thumb-friendly on a phone: a
          centred, wide, large-type modal with chunky sliders and 44px tap targets.
          !important overrides the panel's inline sizing/positioning. */
@@ -166,6 +177,12 @@ export function ensureVibeTheme() {
         left: 50% !important;
         right: auto !important;
         transform: translate(-50%, -50%) !important;
+        /* box-sizing: border-box so the width below is the panel's full
+           rendered width (padding + border included), not content-only —
+           without it the padding/border added on top blew the panel past
+           the viewport on phones. Scoped to this id + media query only, so
+           desktop's #settings-menu-panel (still content-box) is untouched. */
+        box-sizing: border-box !important;
         width: min(440px, calc(100vw - 20px)) !important;
         max-height: 82vh !important;
         padding: 18px 20px !important;
@@ -204,9 +221,11 @@ export function ensureVibeTheme() {
         border: 2px solid #1a1303;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
       }
+      /* Keep toasts at the TOP on phones so they never sit over the thumb
+         controls (joystick / W-S / camera) along the bottom edge. */
       .vc-toast-stack {
-        top: auto;
-        bottom: max(92px, calc(env(safe-area-inset-bottom) + 18px));
+        top: calc(var(--vc-safe-y) + 96px);
+        bottom: auto;
         width: min(340px, calc(100vw - 28px));
       }
     }

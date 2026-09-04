@@ -1,6 +1,11 @@
 import * as THREE from "three";
 import { Logger } from '../../../utils/Logger.js';
 import { resolveAsset } from '../../../utils/assetPath.js';
+import { CELESTIAL_DISTANCE_FRACTION } from './constants.js';
+
+// The moon's original fixed distance, kept as the reference for its apparent
+// (angular) size now that the render distance tracks the camera far plane.
+const MOON_TRUE_DISTANCE = 8000;
 
 /**
  * MoonSystem - Manages the moon appearance and night lighting
@@ -80,10 +85,13 @@ export class MoonSystem {
     this.moonMesh.layers.set(10); // Same layer as sun for consistent rendering
     this.scene.add(this.moonMesh);
     
-    // Add moonlight
+    // Add moonlight. Keep it origin-relative in the scene (NOT parented to the
+    // camera-anchored mesh): only its DIRECTION matters, and (light at the arc
+    // offset, target at world origin) stays correct wherever the camera flies —
+    // the same trap the sun's light avoids.
     this.moonLight = new THREE.DirectionalLight(0xdedeff, 0.2);
     this.moonLight.position.set(0, 1, 0);
-    this.moonMesh.add(this.moonLight);
+    this.scene.add(this.moonLight);
   }
   
   /**
@@ -103,26 +111,38 @@ export class MoonSystem {
     // Moon is opposite to sun (PI radians offset)
     const moonAngle = sunAngle + Math.PI;
 
-    // Calculate moon position on arc
-    const moonDistance = 8000; // Distance from camera
+    // Calculate moon position on arc. Keep it INSIDE the camera far plane (and the
+    // sky dome) or it gets clipped and the moon vanishes — it's camera-anchored, so
+    // the absolute distance is arbitrary; only the direction matters.
+    const moonDistance = ((this.engine.camera && this.engine.camera.far) || 5000) * CELESTIAL_DISTANCE_FRACTION;
     const x = Math.cos(moonAngle) * moonDistance;
     const y = Math.max(0, Math.sin(moonAngle) * moonDistance); // Only show when above horizon
     const z = 0;
 
     this.moonPosition.set(x, y, z);
 
-    // Moon visible when above horizon AND at night
-    const isAboveHorizon = y > 300; // Above minimum height
+    // Moon visible when above horizon AND at night. Angular threshold (~2.1
+    // degrees, the old 300/8000 ratio) so it doesn't vary with the far plane.
+    const isAboveHorizon = y > moonDistance * 0.0375;
     this.moonMesh.visible = isAboveHorizon && nightFactor > 0.1;
 
     // If visible, update position and appearance
     if (this.moonMesh.visible) {
-      this.moonMesh.position.copy(this.moonPosition);
+      // Anchor to the camera so the moon, like the sun, rides at infinity —
+      // moonPosition is an arc OFFSET around the viewer, never a world point.
+      const cam = this.engine.camera;
+      if (cam) this.moonMesh.position.copy(cam.position).add(this.moonPosition);
+      else this.moonMesh.position.copy(this.moonPosition);
 
       // Make moon face camera
-      if (this.engine.camera) {
-        this.moonMesh.lookAt(this.engine.camera.position);
+      if (cam) {
+        this.moonMesh.lookAt(cam.position);
       }
+
+      // Scale the sphere to the angular size it had at its original 8000
+      // distance — moonDistance now tracks the far plane, so without this the
+      // disc looms ~2x too big on desktop and shrinks ~5x on mobile.
+      this.moonMesh.scale.setScalar(moonDistance / MOON_TRUE_DISTANCE);
 
       // Update moon appearance based on phase and night factor
       if (this.moonMesh.material) {
@@ -135,6 +155,9 @@ export class MoonSystem {
     // moonlit even around the new moon - the night scene must remain
     // readable (the ambient floor handles the rest).
     if (this.moonLight) {
+      // Origin-relative arc offset (like the sun's light) so the direction
+      // toward the default world-origin target is camera-independent.
+      this.moonLight.position.copy(this.moonPosition);
       this.moonLight.intensity = isAboveHorizon
         ? 0.35 * nightFactor * (0.3 + 0.7 * moonIllumination)
         : 0;

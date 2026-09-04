@@ -2,6 +2,10 @@
 
 SkyBloom is a cozy browser flying game and a small benchmark for human-vs-agent racing. Fly a magic carpet through an infinite procedural world, press **R** to start a seeded 12-gate time trial, save local replays, race your best ghost, or let the bundled SimpleBot fly through the same public Agent API a researcher would use.
 
+You can also just talk to it. A co-pilot listens, answers out loud, flies you to landmarks and
+reshapes the world on request — against a local model server, your own API key, or fully
+on-device. It runs in the page; there is no server of ours in the loop.
+
 
 ![SkyBloom screenshot](https://github.com/dusterbloom/skybloom/blob/main/screenshots/image.png)
 
@@ -18,10 +22,9 @@ The research loop is visible in-game through the Race Panel:
 
 - **Start Race** creates a seeded 12-gate course.
 - **Load Ghost** loads the best local replay for that seed.
-- **Run SimpleBot** starts the reference agent through `window.agentAPI`.
 - **Export JSON** downloads an honest benchmark result with `courseSeed`, `worldSeed`, `finalTimeMs`, `splits`, `pilot`, fairness config, replay samples, optional action log, build version, and `verificationStatus`.
 
-Quick SimpleBot run from DevTools:
+The bundled SimpleBot reference agent flies through the same public `window.agentAPI` a researcher would use — no panel button, drive it from DevTools:
 
 ```js
 const { SimpleBot } = await import('/src/agents/SimpleBot.js');
@@ -31,10 +34,41 @@ bot.start();
 
 More detail: [docs/BENCHMARK.md](docs/BENCHMARK.md), [docs/AGENT_QUICKSTART.md](docs/AGENT_QUICKSTART.md), and [docs/AGENT_API.md](docs/AGENT_API.md).
 
+## Talk to the Carpet
+
+Open the menu and press **Talk**. A chat panel appears — type at it or speak to it, both go to
+the same conversation. It answers out loud and acts: *take me to the crystal formation*,
+*raise a mountain ahead*, *make it sunset*, *let me fly the fox*, *make the music epic*.
+
+Pick a brain in the Agent tab:
+
+| Brain | Cost | Notes |
+|---|---|---|
+| Groq | Free tier | Needs a Groq API key (the panel links to where you get one). Model list is fetched live from Groq once the key is entered. |
+| OpenRouter | Free tier | Needs an OpenRouter API key (the panel links to where you get one). The model dropdown is filtered to the `:free` models only — the ones that actually cost nothing. |
+| Local server | Free, no key | Any OpenAI-compatible endpoint. LM Studio, Jan, Ollama, llama.cpp and vLLM are detected on their default ports and offered before you are asked for anything. |
+| Apple FM | Free, no key | macOS 26+ with `fm serve` running (`localhost:1976`) — auto-detected like the other local servers, no key, no model to download. Two models: `pcc` is the default here — fast and consistently accurate — but it is a call to Apple's Private Cloud Compute, not your Mac; `system` runs fully on-device but measured noticeably less reliable and about 2x slower. |
+| On-device | Free, no key | WebLLM on WebGPU. Offline once the weights are cached. |
+
+Every key is scoped to the brain it was issued for — a key saved for Groq is never sent to
+OpenRouter, or vice versa. A meter in the panel counts calls, tokens and cost, so the model
+routing is checkable rather than claimed.
+
+Speech uses the browser's own engines, so nothing downloads by default and the reply starts
+immediately — on macOS that is the same speech stack Siri uses. Kokoro and Supertonic-3 are
+opt-in neural voices that fetch weights on first use.
+
+Set **Listen** to hands-free and the mic stays open across turns, ending each one when you
+sound finished rather than on a fixed timer, so it stops cutting you off mid-sentence. Press
+**V** to talk, or to interrupt the co-pilot while it is speaking.
+
+Typing works in every browser. Speech needs the Web Speech API — Chrome or Safari; Firefox has
+no speech recognition, and there the chat panel is the whole feature.
+
 ## Play
 
 1. Open the deployed site or run locally.
-2. Press **Play** for free flight, **Race 12 gates** to start a race after loading, or **Run SimpleBot** to watch the reference agent.
+2. Press **Play** for free flight, or **R** once flying to start a seeded 12-gate race.
 3. Fly through the lit ring to start the race clock.
 4. Follow the next-gate beacon until all 12 gates are passed.
 5. Finish to save a local replay, then load the ghost and race it.
@@ -52,6 +86,7 @@ Controls:
 | **1-4 / E** | Select / cast spell |
 | **M** | Toggle map |
 | **R** | Start a race when not already racing |
+| **V** | Talk to the co-pilot, or interrupt it mid-sentence |
 
 Tip: diving trades altitude for speed. The first race is meant to be readable: follow the gold gate and beacon, use the Race Panel for status, and load a ghost after a clean finish.
 
@@ -61,6 +96,10 @@ Tip: diving trades altitude for speed. The first race is meant to be readable: f
 - Seeded 12-gate time trials with local splits, best times, replay storage, and ghost playback.
 - Agent API with information/action/tempo fairness constraints: `observe()`, `act()`, `startRace()`, replay/ghost helpers, config, WebSocket transport, and result export.
 - Reference SimpleBot that uses only `window.agentAPI`.
+- Voice co-pilot: speech or typing into one conversation, a spoken reply, and an intent it acts
+  on. Runs entirely in the page against Groq, OpenRouter, a local server, or an on-device model,
+  with per-task model routing and a token/cost meter.
+- **Creative "genie" API** (`window.worldAPI`) — a separate, non-fairness godmode surface: conjure shapes and animated rigs, import real models from curated repos (flapping birds, propeller planes), fly any of them or **roam as an animal on the ground**, persist everything in a catalogue, and reshape terrain/sky. Speakable by voice or a small LLM. See [docs/AGENT_API.md](docs/AGENT_API.md#creative-mode-the-genie-windowworldapi).
 - Optional socket.io multiplayer co-presence for casual local experimentation.
 - GitHub Pages workflow, CI build check, local smoke script, and one-command local launcher.
 
@@ -73,6 +112,14 @@ Tip: diving trades altitude for speed. The first race is meant to be readable: f
 - GitHub Pages is static hosting. It runs the game, races, ghosts, SimpleBot, and browser Agent API, but it does not host the socket.io multiplayer server.
 - External local agents from a Pages tab may need `wss://`; for `ws://localhost` research, use a local dev/preview page.
 - Mobile should load and fly, but the research panel is intentionally compact rather than a full mobile leaderboard UI.
+- Speech recognition is the browser's, not ours. Chrome sends microphone audio to Google's
+  servers, Safari on macOS uses on-device dictation, and Firefox has none. Only the on-device
+  brain paired with the OS voice keeps a whole turn local.
+- A Groq or OpenRouter key typed into the settings lives in this browser's localStorage and goes
+  straight from the page to that provider — each key is scoped to the brain it was saved for, so
+  a Groq key is never sent to OpenRouter or back. Fine for your own key; never use a shared one.
+- The co-pilot's world edits go through `window.worldAPI`, which is deliberately outside the
+  fairness constraints. Reshaping terrain mid-race does not produce a comparable benchmark run.
 
 ## Run Locally
 

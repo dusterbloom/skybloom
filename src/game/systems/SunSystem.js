@@ -8,9 +8,12 @@ import {
   SUN_DISC_KEYFRAMES,
   sampleKeyframes
 } from '../../config/SunConfig.js';
+import { CELESTIAL_DISTANCE_FRACTION } from './atmosphere/constants.js';
 
 // Scratch color for deriving the glow tint from the disc color (no per-frame allocs)
 const _glowWhite = new THREE.Color(0xffffff);
+// Scratch vector for the per-frame sun direction (no per-frame allocs)
+const _sunDir = new THREE.Vector3();
 
 // SunSystem - manages sun lighting and appearance
 export class SunSystem extends System {
@@ -167,17 +170,34 @@ export class SunSystem extends System {
     this.sunPosition.y = Math.max(-200, this.rawSunAltitude);
     this.sunPosition.z = 0;
 
-    // Update sun mesh position
+    // Anchor the disc to the camera: sunPosition is an arc OFFSET around the
+    // viewer, not a fixed world point, so the sun sits at infinity — you can fly
+    // forever and never reach it. (sunPosition stays the camera-relative offset,
+    // so getSunDirection()/normalize() is unchanged.)
+    const cam = this.engine.camera;
     if (this.sunMesh) {
-      this.sunMesh.position.copy(this.sunPosition);
-
-      // Face camera for billboarding effect
-      if (this.engine.camera) {
-        this.sunMesh.lookAt(this.engine.camera.position);
+      if (cam) {
+        // Place the disc along the sun DIRECTION at a fixed distance that stays
+        // inside the camera far plane (and sky dome) — otherwise the disc is
+        // clipped at low sun angles where the arc offset is far past the far plane.
+        const viewDist = (cam.far || 5000) * CELESTIAL_DISTANCE_FRACTION;
+        const trueDist = Math.max(1, this.sunPosition.length()); // the real arc distance
+        const dir = this.sunPosition.lengthSq() > 0 ? _sunDir.copy(this.sunPosition).normalize() : _sunDir.set(0, 1, 0);
+        this.sunMesh.position.copy(cam.position).addScaledVector(dir, viewDist);
+        this.sunMesh.lookAt(cam.position);
+        // Shrink the disc to the angular size it WOULD have at its true distance,
+        // so pulling it inside the far plane doesn't make it loom large at the
+        // horizon (where it used to be ~15000 away and small).
+        this._sunSizeScale = viewDist / trueDist;
+      } else {
+        this.sunMesh.position.copy(this.sunPosition);
       }
     }
 
-    // Update light position
+    // The directional light only needs its DIRECTION, which (light at the arc
+    // offset, target at world origin) is constant wherever the camera flies, so
+    // the light is left origin-relative. Shadow-frustum centering is a separate,
+    // out-of-scope concern.
     if (this.sunLight) {
       this.sunLight.position.copy(this.sunPosition);
     }
@@ -201,8 +221,9 @@ export class SunSystem extends System {
       this.sunGlow.material.opacity = this.config.GLOW_OPACITY * glowBoost * belowHorizonFactor;
     }
 
-    // Scale at horizon for more dramatic effect
-    const scale = 1.0 + (horizonProximity * 0.2);
+    // Scale at horizon for more dramatic effect, then shrink to the disc's true
+    // angular size (so it doesn't loom large now that it sits inside the far plane).
+    const scale = (1.0 + horizonProximity * 0.2) * (this._sunSizeScale || 1);
     this.sunMesh.scale.set(scale, scale, 1);
 
     // Update colors based on time of day
@@ -268,7 +289,9 @@ export class SunSystem extends System {
     return this.sunLight;
   }
 
-  getSunDirection() {
+  getSunDirection(target) {
+    // Pass a target to avoid the per-frame clone (see SkySystem's scratch vector)
+    if (target) return target.copy(this.sunPosition).normalize();
     return this.sunPosition.clone().normalize();
   }
 

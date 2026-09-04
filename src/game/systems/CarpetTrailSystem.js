@@ -93,6 +93,33 @@ export class CarpetTrailSystem extends System {
     // Carpet dimensions (emission anchored at back-center, slightly below deck)
     this.carpetWidth = 5;
     this.carpetLength = 8;
+
+    // Emission anchor in player-local space (forward = +Z). Defaults to the
+    // carpet's back edge; a swapped genie vehicle overrides this via
+    // setEmitOffset() so the stream starts right at the new model, not 4 units
+    // behind where the carpet used to be.
+    this._defaultEmitOffset = new THREE.Vector3(0, -0.2, -this.carpetLength / 2);
+    this.emitOffset = this._defaultEmitOffset.clone();
+
+    // Emission can be suppressed entirely (e.g. a fox running on the ground
+    // shouldn't leave a flight contrail).
+    this.emitEnabled = true;
+  }
+
+  /** Enable/disable trail emission; turning it off clears the current ribbon. */
+  setEmitEnabled(on) {
+    this.emitEnabled = !!on;
+    if (!this.emitEnabled) this.resetTrail();
+  }
+
+  /** Move the trail's emission anchor (player-local). Used on vehicle swaps. */
+  setEmitOffset(x, y, z) {
+    this.emitOffset.set(x, y, z);
+  }
+
+  /** Restore the carpet's default emission anchor. */
+  resetEmitOffset() {
+    this.emitOffset.copy(this._defaultEmitOffset);
   }
 
   async _initialize() {
@@ -157,7 +184,7 @@ export class CarpetTrailSystem extends System {
 
     // Emission gating (min speed + fixed interval)
     this.timeSinceLastEmission += delta;
-    const emitting = speed > this.minSpeedForEmission;
+    const emitting = this.emitEnabled && speed > this.minSpeedForEmission;
     if (emitting && this.timeSinceLastEmission >= this.emissionInterval) {
       this.addPoint(player, speed);
       this.timeSinceLastEmission = 0;
@@ -191,8 +218,8 @@ export class CarpetTrailSystem extends System {
       'YXZ'
     );
 
-    // Back-center of the carpet, slightly below the deck
-    this._center.set(0, -0.2, -this.carpetLength / 2);
+    // Emission anchor (carpet back-edge by default, or a swapped vehicle's body)
+    this._center.copy(this.emitOffset);
     this._center.applyEuler(this._emitEuler);
     this._center.add(player.position);
 

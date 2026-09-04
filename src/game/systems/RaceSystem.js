@@ -1,7 +1,14 @@
 import * as THREE from 'three';
 import { Logger } from '../../utils/Logger.js';
 import { System } from '../core/System.js';
+import { InputManager } from '../core/InputManager.js';
 import { SimpleBot } from '../../agents/SimpleBot.js';
+import { LLMPilot } from '../../agents/LLMPilot.js';
+import { VoiceCopilot } from '../../agents/VoiceCopilot.js';
+import { createCopilotConsole } from '../ui/CopilotConsole.js';
+import { autoModelFor } from '../../agents/modelRouting.js';
+import { llmBudget } from '../../agents/llmBudget.js';
+import { discoverLocalEndpoints, describeEndpoint, preferredModel, probeEndpoint } from '../../agents/localEndpoints.js';
 import { useGameState, GameStates } from '../state/gameState.js';
 import { ensureVibeTheme } from '../ui/theme.js';
 
@@ -69,6 +76,56 @@ const COLOR_GHOST = 0x66ffee;
 const BUILD_VERSION = typeof __SKYBLOOM_BUILD_VERSION__ !== 'undefined'
   ? __SKYBLOOM_BUILD_VERSION__
   : 'dev';
+
+// Default model id per Brain. Also used to detect "the user never customized
+// the model", so switching brain can swap the default in. Groq and OpenRouter
+// have no entry (''): their model catalogs get retired, so a hardcoded id here
+// would eventually rot — the form fetches real ids live instead (see
+// BRAIN_PRESETS / fetchPresetModels in _createAgentConfigForm).
+const PROVIDER_DEFAULT_MODELS = {
+  cloud: 'claude-haiku-4-5',
+  openai: 'local-model',
+  local: 'Llama-3.2-1B-Instruct-q4f32_1-MLC',
+  groq: '',
+  openrouter: '',
+};
+
+/**
+ * The Brain dropdown, in offer order. Everything but 'local' resolves to
+ * `provider: 'openai'` — Groq and OpenRouter are OpenAI-compatible chat
+ * endpoints (createOpenAIProvider in llmProviders.js already speaks to both),
+ * so this is a table of presets, not a new provider. `id` is what gets saved
+ * as `cfg.provider` in vc.voice AND what keys `cfg.apiKeys` — see the big
+ * comment on _agentConfig() for why identity has to be the preset, not the
+ * runtime provider name (Groq and OpenRouter would otherwise collide).
+ *
+ * 'cloud' (the paid Anthropic path) is deliberately NOT listed here — it's
+ * still fully wired (createCloudProvider, modelRouting, llmBudget all
+ * untouched), just no longer offered to a player who doesn't already have it
+ * saved. See the `legacyCloud` handling in _createAgentConfigForm.
+ */
+const BRAIN_PRESETS = {
+  groq: {
+    label: 'Groq (free)', provider: 'openai',
+    baseURL: 'https://api.groq.com/openai/v1',
+    keyURL: 'https://console.groq.com/keys', keyLabel: 'Get a free Groq API key',
+    // Groq's /models needs a key (401 without one) — the form only fetches
+    // once a key is entered, and falls back to free-text if that fails too.
+    liveModels: true, needsKeyForModels: true,
+  },
+  openrouter: {
+    label: 'OpenRouter (free)', provider: 'openai',
+    baseURL: 'https://openrouter.ai/api/v1',
+    keyURL: 'https://openrouter.ai/keys', keyLabel: 'Get a free OpenRouter API key',
+    // OpenRouter's /models is public — fetch it immediately, filter to the
+    // ids that actually cost nothing.
+    liveModels: true, freeOnly: true,
+  },
+  // Baseless on purpose: baseURL is whatever the player typed or the local
+  // scan found (see urlRow / adoptLocal below), not a fixed remote host.
+  openai: { label: 'local server (free)', provider: 'openai' },
+  local: { label: 'on-device (free, no key)', provider: 'local' },
+};
 
 /**
  * mulberry32 — tiny deterministic PRNG. Same seed → same course, everywhere.
@@ -156,6 +213,7 @@ export class RaceSystem extends System {
     this._tmpB = new THREE.Vector3();
 
     this._onKeyDown = null;
+    this._onVoiceKeyDown = null;
     this._onAgentActionQueued = null;
     this._hintTimer = null;
   }
@@ -180,12 +238,24 @@ export class RaceSystem extends System {
     // stray keypress mid-race can't wipe a good run — call start() for that).
     this._onKeyDown = (event) => {
       if (event.code !== 'KeyR' || event.repeat) return;
-      const t = event.target;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if (InputManager.isEditableTarget(event.target)) return;
       if (!this._isGamePlaying()) return;
       if (this.state !== 'running') this.start();
     };
     window.addEventListener('keydown', this._onKeyDown);
+
+    // KeyV: talk to the co-pilot and, while it's mid-sentence, barge in on it
+    // (VoiceCopilot#bargeIn() aborts the utterance and reopens the mic). It is
+    // deliberately inert when no co-pilot is running — MENU -> Agent -> Talk is
+    // still what starts one, because starting needs a resolved provider/voice
+    // config that this key has no business improvising.
+    this._onVoiceKeyDown = (event) => {
+      if (event.code !== 'KeyV' || event.repeat) return;
+      if (InputManager.isEditableTarget(event.target)) return;
+      if (!this._isGamePlaying()) return;
+      if (this._voiceCopilot) this._voiceCopilot.bargeIn();
+    };
+    window.addEventListener('keydown', this._onVoiceKeyDown);
 
     this._onAgentActionQueued = (event) => this.recordAgentAction(event);
     this.engine.eventBus.on('agentActionQueued', this._onAgentActionQueued);
@@ -203,6 +273,11 @@ export class RaceSystem extends System {
   }
 
   _update(delta, elapsed) {
+    // Keep the rings on the curved ground (flat/round world shape): logic stays
+    // flat, only the visuals drop, so a far ring sits on the curve and rises back
+    // to its true spot as you approach. Without this the rings fly off a tiny planet.
+    this._applyCurvatureToGates();
+
     // Pulse the next-gate ring/beacon whenever a course exists (also in the
     // idle preview, where gate 0 stays lit as the start ring).
     if (this._nextGateMesh) this._animateNextGate(elapsed);
@@ -242,9 +317,22 @@ export class RaceSystem extends System {
       window.removeEventListener('keydown', this._onKeyDown);
       this._onKeyDown = null;
     }
+    if (this._onVoiceKeyDown) {
+      window.removeEventListener('keydown', this._onVoiceKeyDown);
+      this._onVoiceKeyDown = null;
+    }
     if (this._hintTimer) {
       clearTimeout(this._hintTimer);
       this._hintTimer = null;
+    }
+    if (this._budgetUnsub) {
+      this._budgetUnsub();
+      this._budgetUnsub = null;
+    }
+    if (this._localScanCtrl) {
+      // Don't leave probes in flight against a torn-down panel.
+      try { this._localScanCtrl.abort(); } catch (error) { /* already settled */ }
+      this._localScanCtrl = null;
     }
     if (this._hudRoot && this._hudRoot.parentNode) {
       this._hudRoot.parentNode.removeChild(this._hudRoot);
@@ -255,11 +343,15 @@ export class RaceSystem extends System {
     if (this._panelToggle && this._panelToggle.parentNode) {
       this._panelToggle.parentNode.removeChild(this._panelToggle);
     }
+    if (this._agentRoot && this._agentRoot.parentNode) {
+      this._agentRoot.parentNode.removeChild(this._agentRoot);
+    }
     this._hudRoot = null;
     this._raceChip = null;
     this._ghostChip = null;
     this._panelRoot = null;
     this._panelToggle = null;
+    this._agentRoot = null;
     this._panelFields = {};
     this._panelButtons = {};
 
@@ -267,7 +359,7 @@ export class RaceSystem extends System {
       this.engine.eventBus.off('agentActionQueued', this._onAgentActionQueued);
       this._onAgentActionQueued = null;
     }
-    this.stopSimpleBot();
+    this.stopAutonomousDrivers();
 
     if (this.courseGroup) {
       this.engine.scene.remove(this.courseGroup);
@@ -486,6 +578,36 @@ export class RaceSystem extends System {
     return this.start(this.courseSeed || undefined);
   }
 
+  /**
+   * Only ONE autonomous driver may steer at a time. SimpleBot, the LLM pilot (which
+   * already embeds its own SimpleBot floor) and the voice companion all push actions
+   * through window.agentAPI.act(); if two run together they overwrite each other every
+   * frame and the carpet thrashes / loops. Starting any one stops the others first.
+   */
+  _stopOtherDrivers(keep) {
+    if (keep !== 'simpleBot' && this._simpleBotRunning) this.stopSimpleBot();
+    if (keep !== 'llmPilot' && this._llmPilotRunning) this.stopLLMPilot();
+    if (keep !== 'voice' && this._voiceCopilot && this._voiceCopilot.companion) {
+      try { this._voiceCopilot.companion.setGoal('manual'); } catch (error) { /* best effort */ }
+    }
+    // GenieSystem's ground roamer drives the same virtualPad at 10 Hz — it counts
+    // as an autonomous driver too, so kick it out along with the others.
+    try { this.engine.systems.get('genie')?.stopRoam?.(); } catch (error) { /* best effort */ }
+  }
+
+  /**
+   * Stop EVERY autonomous driver this system owns: SimpleBot, the LLM pilot and
+   * the voice co-pilot. Public contract — GenieSystem calls this before starting
+   * a ground roamer, and destroy() uses it so a hot-reload never leaves an
+   * orphaned pilot steering the carpet.
+   */
+  stopAutonomousDrivers() {
+    this.stopSimpleBot();
+    this.stopLLMPilot();
+    if (this._voiceCopilot) this.stopVoiceChat();
+    return true;
+  }
+
   /** Start the bundled reference agent through the same public Agent API users get. */
   runSimpleBot() {
     if (this._simpleBotRunning) return true;
@@ -494,6 +616,7 @@ export class RaceSystem extends System {
       this._toast('Agent API is not ready yet', '#ffcc66');
       return false;
     }
+    this._stopOtherDrivers('simpleBot');
     try {
       this._simpleBot = new SimpleBot(api, {
         courseSeed: this.courseSeed || undefined,
@@ -519,6 +642,801 @@ export class RaceSystem extends System {
     this._simpleBot = null;
     this._simpleBotRunning = false;
     this._panelDirty = true;
+    return true;
+  }
+
+  /** Current agent/LLM config from the in-panel form (localStorage), with defaults.
+   *
+   *  `cfg.provider` is really a BRAIN id, not a runtime provider name: 'cloud'
+   *  and 'local' happen to be both, but 'groq' and 'openrouter' are presets
+   *  that both run through provider:'openai' underneath (see BRAIN_PRESETS) —
+   *  _resolveBrain() does that last translation, only at the point a config is
+   *  handed to createProvider().
+   *
+   *  Keys are stored PER BRAIN (`apiKeys`), not per runtime provider — that
+   *  distinction is the whole point. Groq and OpenRouter are BOTH provider
+   *  'openai' under the hood; keying by provider would send a key saved for
+   *  one straight to the other's endpoint as a Bearer token. Keying by brain
+   *  id (the select's value: 'groq' | 'openrouter' | 'openai' | 'local' |
+   *  'cloud') keeps every saved key pinned to the one endpoint it was issued
+   *  for. The flat `apiKey` field exposed here is always the CURRENT brain's
+   *  key only, for the same reason. */
+  _agentConfig() {
+    let cfg = {};
+    try { const raw = localStorage.getItem('vc.voice'); if (raw) cfg = JSON.parse(raw); } catch (error) { /* defaults below */ }
+    // No migration needed for existing saves: 'cloud', 'openai' and 'local'
+    // were already exactly these ids before Groq/OpenRouter existed, so old
+    // apiKeys entries land in the same slots they always did. A fresh install
+    // lands on 'groq' — first in the Brain dropdown, and unconfigured, so the
+    // settings form opens the same way an unconfigured 'cloud' default used to.
+    const provider = cfg.provider || 'groq';
+    const apiKeys = (cfg.apiKeys && typeof cfg.apiKeys === 'object') ? { ...cfg.apiKeys } : {};
+    // Migrate the legacy single `apiKey` field into the saved provider's slot.
+    if (cfg.apiKey && !apiKeys[provider]) apiKeys[provider] = cfg.apiKey;
+    return {
+      provider,
+      baseURL: cfg.baseURL || 'http://localhost:1234/v1',
+      apiKeys,
+      apiKey: apiKeys[provider] || '',
+      // No universal fallback here on purpose: falling back to e.g. the cloud
+      // default would silently send a Claude model id to Groq. An unknown
+      // brain with nothing saved just gets an empty model — the form's live
+      // fetch (or the free-text field) is what fills it in.
+      model: cfg.model || PROVIDER_DEFAULT_MODELS[provider] || '',
+      // 'auto' lets modelRouting pick a model per agent (cheap advisor, capable
+      // voice brain); 'manual' pins whatever is in `model` for both. Saved configs
+      // predating this field default to auto — the model they hold was the shipped
+      // default rather than a deliberate choice.
+      modelMode: cfg.modelMode === 'manual' ? 'manual' : 'auto',
+      // The OS voice (id 'browser') is the default: free and instant — no
+      // onnxruntime-web/kokoro-js download, no ONNX weights fetch from
+      // HuggingFace before the first word. A saved 'supertonic'/'kokoro' choice
+      // is left exactly as the player set it; only the *unset* default changed.
+      tts: cfg.tts || 'browser',
+      // 'ptt' (press Talk each turn) is the default and what an unset/legacy
+      // config resolves to — see listenModes.js for what 'handsfree' opts into.
+      listenMode: cfg.listenMode === 'handsfree' ? 'handsfree' : 'ptt',
+      // Model ids that turned out to be unusable (not a bad key — see
+      // _maybeHandleUnusableModel), remembered so the picker stops offering
+      // them. Keyed exactly like apiKeys, for the same reason: 'groq' and
+      // 'openrouter' are both provider 'openai' underneath, so keying by
+      // runtime provider instead of brain id would leak one brain's blocked
+      // ids onto the other's model catalog.
+      blockedModels: (cfg.blockedModels && typeof cfg.blockedModels === 'object') ? cfg.blockedModels : {},
+    };
+  }
+
+  /** Translate a saved brain id into the {provider, baseURL} createProvider()
+   *  actually understands. Only Groq/OpenRouter need this — both are brain
+   *  ids that are NOT their own provider name (see BRAIN_PRESETS); 'cloud',
+   *  'local' and 'openai' (the local-server slot) already are, and pass
+   *  through unchanged (an id outside BRAIN_PRESETS, i.e. legacy 'cloud', is
+   *  passed through too — cloud's own baseURL is unused by createCloudProvider). */
+  _resolveBrain(cfg) {
+    const preset = BRAIN_PRESETS[cfg.provider];
+    if (!preset) return { provider: cfg.provider, baseURL: cfg.baseURL };
+    // A preset's fixed baseURL always wins — cfg.baseURL is the player's local-
+    // server address and must never leak into a Groq/OpenRouter request.
+    return { provider: preset.provider, baseURL: preset.baseURL || cfg.baseURL };
+  }
+
+  _saveAgentConfig(cfg) {
+    try { localStorage.setItem('vc.voice', JSON.stringify(cfg)); } catch (error) { /* private mode */ }
+    // 'vc.pilot' was a duplicate write (plaintext key included) that nothing reads.
+    try { localStorage.removeItem('vc.pilot'); } catch (error) { /* private mode */ }
+  }
+
+  /** Blocked model ids for one brain (see _maybeHandleUnusableModel). */
+  _blockedModelsFor(brainId) {
+    return this._agentConfig().blockedModels[brainId] || [];
+  }
+
+  /** Record a model id as unusable for one brain. Read-modify-write against
+   *  the full agent config (not a partial patch) so this can't collide with
+   *  the settings form's own save — see the `persist()` comment in
+   *  _createAgentConfigForm. Returns false when the id was already
+   *  blocklisted, so a caller doesn't re-announce the same block twice. */
+  _blockModel(brainId, modelId) {
+    const cfg = this._agentConfig();
+    const existing = cfg.blockedModels[brainId] || [];
+    if (existing.includes(modelId)) return false;
+    cfg.blockedModels = { ...cfg.blockedModels, [brainId]: [...existing, modelId] };
+    this._saveAgentConfig(cfg);
+    return true;
+  }
+
+  /** Escape hatch for the blocklist: a model can stop being gated upstream,
+   *  or the player may want to force one back in. Wired to a button in
+   *  _createAgentConfigForm. Returns false when there was nothing to clear. */
+  _clearBlockedModels(brainId) {
+    const cfg = this._agentConfig();
+    if (!(cfg.blockedModels[brainId] || []).length) return false;
+    cfg.blockedModels = { ...cfg.blockedModels, [brainId]: [] };
+    this._saveAgentConfig(cfg);
+    return true;
+  }
+
+  /** Next usable candidate for a brain, from the last live model fetch
+   *  (fetchPresetModels in _createAgentConfigForm caches the raw, pre-
+   *  blocklist list on `this._presetModelCache` so this needs no network
+   *  round trip). Re-filters against the CURRENT blocklist rather than
+   *  trusting a stale cached filter. null when no live fetch has completed
+   *  yet this session — the caller then has nothing to switch to. */
+  _nextCandidateModel(brainId, excludeModel) {
+    const cached = this._presetModelCache && this._presetModelCache[brainId];
+    if (!cached || !cached.length) return null;
+    const blocked = this._blockedModelsFor(brainId);
+    return cached.find((id) => id !== excludeModel && !blocked.includes(id)) || null;
+  }
+
+  /** A usable brain: an API key saved for a keyed brain ('cloud', 'groq',
+   *  'openrouter'), or a local/openai brain (which needs no key — either
+   *  on-device or a locally reachable server, though that server may want one
+   *  too). Pure predicate, no side effects — the Agent tab UI reuses this to
+   *  decide whether to show the settings form collapsed or expanded. */
+  _brainConfigured(cfg) {
+    const needsKey = cfg.provider === 'cloud' || cfg.provider === 'groq' || cfg.provider === 'openrouter';
+    return !(needsKey && !cfg.apiKey);
+  }
+
+  /** Same check as _brainConfigured, but toasts an actionable hint on failure —
+   *  for the call sites that actually need to start something right now. */
+  _requireBrain(cfg) {
+    if (!this._brainConfigured(cfg)) {
+      // If something free is already running here, say so instead of only
+      // demanding a key.
+      this._toast(this._localFound
+        ? `Add an API key in MENU → Agent — or use ${describeEndpoint(this._localFound)}, already running here`
+        : 'Add your API key in MENU → Agent', '#ffcc66', 4000);
+      return false;
+    }
+    return true;
+  }
+
+  /** Resolve pilot config from the saved agent settings (no prompts). */
+  _resolvePilotConfig() {
+    const cfg = this._agentConfig();
+    if (!this._requireBrain(cfg)) return null;
+    // Agents get only the current provider's key, never the whole key map.
+    const { apiKeys, ...runtime } = cfg;
+    // Translate the brain id (e.g. 'groq') to the runtime provider/baseURL
+    // createProvider() understands (e.g. provider:'openai') — see _resolveBrain.
+    return { ...runtime, ...this._resolveBrain(cfg) };
+  }
+
+  /** Start the in-browser hybrid LLM pilot (SimpleBot floor + LLM directive overrides). */
+  runLLMPilot() {
+    if (this._llmPilotRunning) return true;
+    const api = typeof window !== 'undefined' ? window.agentAPI : null;
+    if (!api) { this._toast('Agent API is not ready yet', '#ffcc66'); return false; }
+    const cfg = this._resolvePilotConfig();
+    if (!cfg) return false;
+    this._stopOtherDrivers('llmPilot');
+    try {
+      this._llmPilot = new LLMPilot(api, {
+        config: { ...cfg, onStatus: (s) => this._toast(`Pilot: ${s}`, '#ffcc66') },
+        courseSeed: this.courseSeed || undefined,
+        onDirective: (d) => this._toast(`Pilot ▸ ${d.note || 'aggression ' + d.aggression}`, '#66ffee'),
+      });
+      this._llmPilotRunning = true;
+      this._panelDirty = true;
+      this._toast(cfg.provider === 'local' ? 'Loading on-device model…' : 'LLM pilot starting', '#66ffee');
+      this._llmPilot.start().catch((error) => {
+        Logger.warn('RaceSystem: LLM pilot failed', error);
+        this._toast(`Pilot failed: ${error && error.message ? error.message : 'error'}`, '#ff7777');
+        this.stopLLMPilot();
+      });
+      return true;
+    } catch (error) {
+      Logger.warn('RaceSystem: LLM pilot failed to start', error);
+      this._toast('LLM pilot failed to start', '#ff7777');
+      return false;
+    }
+  }
+
+  /** Stop the LLM pilot and return control to the human. */
+  stopLLMPilot() {
+    if (this._llmPilot) {
+      try { this._llmPilot.stop(); } catch (error) { /* best effort */ }
+    }
+    this._llmPilot = null;
+    this._llmPilotRunning = false;
+    this._panelDirty = true;
+    return true;
+  }
+
+  /** Resolve voice-copilot config from the saved agent settings (no prompts). */
+  _resolveVoiceConfig() {
+    const cfg = this._agentConfig();
+    if (!this._requireBrain(cfg)) return null;
+    // Agents get only the current provider's key, never the whole key map.
+    const { apiKeys, ...runtime } = cfg;
+    // Translate the brain id (e.g. 'openrouter') to the runtime provider/baseURL
+    // createProvider() understands (e.g. provider:'openai') — see _resolveBrain.
+    return { ...runtime, ...this._resolveBrain(cfg), lang: 'en-US' };
+  }
+
+  /** Watches each finished voice turn for the "wrong model, not a wrong key"
+   *  failure. createOpenAIProvider (llmProviders.js) throws `OpenAI-compat
+   *  ${res.status}${errDetail}` on a non-OK response, but VoiceCopilot's
+   *  _sayTurn never lets that reach us as its own event — it folds ANY thrown
+   *  error into a normal assistant reply, "Comms trouble — <message>" — so
+   *  that reply text is the only signal available here.
+   *
+   *  A bare 403 is not enough on its own: a bad/revoked API key also fails
+   *  with a 4xx, and treating every 403 as "this model is broken" would
+   *  blocklist whatever model the player happened to be on when their key
+   *  went bad. The narrow, safe test is requiring the error text to name the
+   *  CURRENT session's own model id — a key problem reads identically no
+   *  matter which model was asked for, but an OpenRouter/Groq availability
+   *  rejection always names the one gated id (confirmed against the real
+   *  thinkingmachines/inkling-small:free 403 this bug was filed with: its
+   *  `pricing`/`per_request_limits` fields carry no gating flag to check
+   *  instead — see the BRAIN_PRESETS comment above). */
+  _maybeHandleUnusableModel(turn, brainId, sessionModel) {
+    if (!turn || turn.role !== 'assistant' || !sessionModel) return;
+    if (this._modelAdvancedForSession) return; // one advance per running session — never a cascade
+    const text = turn.text || '';
+    if (!text.includes('OpenAI-compat 403') || !text.includes(sessionModel)) return;
+    if (!this._blockModel(brainId, sessionModel)) return; // already known-bad, nothing new to report
+    this._modelAdvancedForSession = true;
+    const next = this._nextCandidateModel(brainId, sessionModel);
+    if (next) {
+      // Persist the switch regardless of whether the live session below can
+      // be restarted cleanly — the NEXT start (of this session or a fresh
+      // one) must land on a model that actually works.
+      const cfg = this._agentConfig();
+      cfg.model = next;
+      this._saveAgentConfig(cfg);
+    }
+    Logger.warn(`RaceSystem: ${sessionModel} isn't usable on this brain (blocked it) — `
+      + (next ? `switched to ${next}` : 'no other free model cached yet, open Settings to pick one'));
+    this._toast(next
+      ? `${sessionModel} isn't usable here — switched to ${next}. Press Talk to resume.`
+      : `${sessionModel} isn't usable here — open Settings to pick another model.`, '#ffcc66', 6000);
+    // The running session's HTTP client already has the bad model id baked
+    // into its closure (createOpenAIProvider captures `model` once, at
+    // construction) — stop it exactly like a settings Save does (persist() →
+    // stopVoiceChat(), "press Talk to restart"), rather than reaching into
+    // VoiceCopilot to hot-swap a live provider. Deferred to the next tick so
+    // it doesn't unwind _sayTurn's own call stack out from under it — we're
+    // still inside VoiceCopilot's onText callback, mid-turn.
+    setTimeout(() => this.stopVoiceChat(), 0);
+  }
+
+  /** In-panel Agent/LLM settings form — edit provider, endpoint, key, model, voice
+   *  any time (no more prompt() chain). Saving restarts a running voice co-pilot. */
+  _createAgentConfigForm(root) {
+    if (typeof document === 'undefined') return;
+    const cfg = this._agentConfig();
+    const wrap = document.createElement('div');
+    // No inner heading here — the caller nests this under a "Settings"
+    // <summary>, which already labels it.
+    wrap.style.marginTop = '8px';
+
+    const style = (el) => {
+      el.style.width = '100%'; el.style.boxSizing = 'border-box'; el.style.fontSize = '12px';
+      el.style.padding = '5px 7px'; el.style.borderRadius = '8px';
+      el.style.border = '1px solid rgba(255,255,255,0.2)';
+      el.style.background = 'rgba(0,0,0,0.25)'; el.style.color = 'var(--vc-ink, #fff)';
+      return el;
+    };
+    const row = (labelText, el) => {
+      const r = document.createElement('div');
+      r.style.display = 'grid'; r.style.gridTemplateColumns = 'minmax(56px,0.7fr) minmax(0,1.3fr)';
+      r.style.gap = '4px 8px'; r.style.alignItems = 'center'; r.style.marginBottom = '6px';
+      const l = document.createElement('div'); l.className = 'vc-label'; l.style.fontSize = '10px'; l.textContent = labelText;
+      r.appendChild(l); r.appendChild(el); wrap.appendChild(r); return r;
+    };
+    // `labels` lets an option read differently from the value it stores — used to
+    // put the cost of each brain in front of the player at the point of choosing.
+    const select = (opts, val, labels) => {
+      const s = style(document.createElement('select'));
+      for (const o of opts) { const op = document.createElement('option'); op.value = o; op.textContent = (labels && labels[o]) || o; if (o === val) op.selected = true; s.appendChild(op); }
+      return s;
+    };
+    const input = (val, type, ph) => { const i = style(document.createElement('input')); i.type = type || 'text'; i.value = val || ''; if (ph) i.placeholder = ph; return i; };
+
+    // 'cloud' (paid Anthropic) is only ever in this list when it's already what
+    // the player has saved — never offered fresh. That keeps an existing saved
+    // key fully working (the code behind it is untouched) without pointing new
+    // players at a paid option now that Groq/OpenRouter cover the free case.
+    const brainOpts = ['groq', 'openrouter', 'openai', 'local'];
+    const legacyCloud = cfg.provider === 'cloud';
+    if (legacyCloud) brainOpts.push('cloud');
+    const provider = select(brainOpts, cfg.provider, {
+      groq: 'Groq (free)',
+      openrouter: 'OpenRouter (free)',
+      openai: 'local server (free)',
+      local: 'on-device (free)',
+      cloud: 'cloud API (your saved Anthropic key)',
+    });
+    const modelMode = select(['auto', 'manual'], cfg.modelMode);
+    const model = input(cfg.model, 'text', 'model id');
+    // Live picks for Groq/OpenRouter (see fetchPresetModels) replace `model`
+    // with this <select> in the same grid cell; falls back to the free-text
+    // field above whenever the fetch comes up empty.
+    const modelSelect = style(document.createElement('select'));
+    modelSelect.style.display = 'none';
+    const modelField = document.createElement('div');
+    modelField.appendChild(model);
+    modelField.appendChild(modelSelect);
+    const baseURL = input(cfg.baseURL, 'text', 'http://localhost:1234/v1');
+    const apiKey = input(cfg.apiKey, 'password', 'API key (blank for local/on-device)');
+    // OS voice listed first (and the default): free, instant, no download.
+    // Neural voices are an explicit opt-in — the label says why they cost more.
+    const tts = select(['browser', 'supertonic', 'kokoro'], cfg.tts, {
+      browser: 'system voice (free, instant)',
+      supertonic: 'Supertonic (neural, downloads)',
+      kokoro: 'Kokoro (neural, downloads)',
+    });
+    // Push-to-talk (default) vs. hands-free — see listenModes.js. Saved
+    // alongside tts/provider in the same vc.voice blob; a running voice
+    // co-pilot restarts on Save, same as every other field here.
+    const listenMode = select(['ptt', 'handsfree'], cfg.listenMode, {
+      ptt: 'push-to-talk (press Talk each turn)',
+      handsfree: 'hands-free (mic stays open, V to interrupt)',
+    });
+
+    // Offer whatever is already running on this machine before asking for a key.
+    // Populated asynchronously by _scanLocalEndpoints; hidden until it finds one.
+    const localBanner = document.createElement('div');
+    localBanner.style.cssText = 'display:none;margin:0 0 8px;padding:7px 9px;border-radius:8px;'
+      + 'background:rgba(102,255,238,0.10);border:1px solid rgba(102,255,238,0.35);'
+      + 'font-size:11px;line-height:1.45;gap:6px;';
+    const localText = document.createElement('div');
+    localText.style.cssText = 'margin-bottom:6px;color:var(--vc-ink,#fff);';
+    const localUse = document.createElement('button');
+    localUse.type = 'button';
+    localUse.textContent = 'Use it — no API key, no cost';
+    localUse.style.cssText = 'width:100%;min-height:26px;border-radius:999px;font-size:11px;cursor:pointer;'
+      + 'border:1px solid rgba(102,255,238,0.5);background:rgba(102,255,238,0.18);color:var(--vc-ink,#fff);';
+    localBanner.appendChild(localText);
+    localBanner.appendChild(localUse);
+
+    row('Brain', provider);
+    wrap.appendChild(localBanner);
+    const urlRow = row('Base URL', baseURL);
+    const keyRow = row('API key', apiKey);
+    // Plain link, no new styling system — points at wherever the selected
+    // preset issues its free key, so "picked Groq" -> "working" has no dead end.
+    const keyLink = document.createElement('a');
+    keyLink.target = '_blank';
+    keyLink.rel = 'noopener noreferrer';
+    keyLink.style.cssText = 'display:none;font-size:10px;margin:-2px 0 6px;color:var(--vc-ink-dim,#aaa);';
+    wrap.appendChild(keyLink);
+    const modeRow = row('Model', modelMode);
+    const modelRow = row('Model id', modelField);
+    // Status line for the live model fetch: loading / count found / needs a
+    // key first / fell back to free text. Empty for brains with no live list.
+    const modelHint = document.createElement('div');
+    modelHint.className = 'vc-label';
+    modelHint.style.cssText = 'font-size:10px;opacity:0.7;margin:-2px 0 6px;line-height:1.4;';
+    wrap.appendChild(modelHint);
+
+    // Escape hatch for the auto-blocklist (see _maybeHandleUnusableModel): a
+    // model can stop being gated upstream, or the player may want to force
+    // one back in. Only ever shown for a live-list preset with something
+    // actually blocked — updateBlocklistButton (wired below) keeps it synced.
+    const unblockRow = document.createElement('div');
+    unblockRow.style.cssText = 'display:none;margin:-2px 0 6px;';
+    const unblock = document.createElement('button');
+    unblock.type = 'button';
+    unblock.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'
+      + 'border:1px solid rgba(255,255,255,0.2);background:transparent;color:var(--vc-ink-dim,#aaa);';
+    unblockRow.appendChild(unblock);
+    wrap.appendChild(unblockRow);
+    const updateBlocklistButton = (brainId) => {
+      const preset = BRAIN_PRESETS[brainId];
+      const blocked = preset && preset.liveModels ? this._blockedModelsFor(brainId) : [];
+      unblockRow.style.display = blocked.length ? 'block' : 'none';
+      unblock.textContent = `Clear ${blocked.length} blocked model${blocked.length === 1 ? '' : 's'}`;
+    };
+    unblock.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (this._clearBlockedModels(provider.value)) {
+        this._toast('Blocked models cleared for this brain', '#66ffee');
+        fetchPresetModels(provider.value); // repopulate now that the filter is gone
+      }
+    });
+
+    // What auto mode resolves to, so "auto" isn't a black box.
+    const autoNote = document.createElement('div');
+    autoNote.className = 'vc-label';
+    autoNote.style.cssText = 'font-size:10px;opacity:0.7;margin:-2px 0 6px;line-height:1.4;';
+    autoNote.textContent = `pilot → ${autoModelFor('pilot')} · voice → ${autoModelFor('voice')}`;
+    wrap.appendChild(autoNote);
+
+    row('Voice', tts);
+    row('Listen', listenMode);
+
+    // Live token/cost meter — the only honest way to tell whether the routing and
+    // the prompt cache are doing what they claim.
+    const usage = document.createElement('div');
+    usage.className = 'vc-label';
+    usage.style.cssText = 'font-size:10px;opacity:0.7;margin:2px 0 8px;line-height:1.4;';
+    const renderUsage = () => { usage.textContent = llmBudget.line(); };
+    renderUsage();
+    wrap.appendChild(usage);
+    if (this._budgetUnsub) this._budgetUnsub();
+    this._budgetUnsub = llmBudget.onChange(renderUsage);
+
+    // Model ids the discovered server actually has loaded, offered as completions
+    // on the Model id field so nobody has to guess the exact string.
+    const modelList = document.createElement('datalist');
+    modelList.id = 'vc-local-models';
+    model.setAttribute('list', modelList.id);
+    wrap.appendChild(modelList);
+
+    // Manual rescan: servers get started after the page does.
+    const scanRow = document.createElement('div');
+    scanRow.style.cssText = 'margin-top:6px;text-align:center;';
+    const scan = document.createElement('button');
+    scan.type = 'button';
+    scan.textContent = 'Scan for a local server';
+    scan.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'
+      + 'border:1px solid rgba(255,255,255,0.2);background:transparent;color:var(--vc-ink-dim,#aaa);';
+    scanRow.appendChild(scan);
+
+    // Each provider keeps its own API key; the visible field always shows the
+    // key belonging to the currently selected provider.
+    const apiKeys = { ...cfg.apiKeys };
+    let prevProvider = provider.value;
+
+    // Offer the ids a live fetch actually found, as a real <select> in place
+    // of the free-text field — empty ids falls straight back to free text so
+    // picking Groq/OpenRouter never blocks on the network.
+    const setModelChoices = (ids) => {
+      modelSelect.replaceChildren();
+      if (!ids || !ids.length) {
+        modelSelect.style.display = 'none';
+        model.style.display = '';
+        return;
+      }
+      for (const id of ids) {
+        const opt = document.createElement('option');
+        opt.value = id; opt.textContent = id;
+        modelSelect.appendChild(opt);
+      }
+      const current = model.value.trim();
+      modelSelect.value = ids.includes(current) ? current : ids[0];
+      model.value = modelSelect.value;
+      modelSelect.style.display = '';
+      model.style.display = 'none';
+    };
+    modelSelect.addEventListener('change', () => { model.value = modelSelect.value; });
+
+    // Fetch live model ids for a Groq/OpenRouter preset (GET {baseURL}/models
+    // via probeEndpoint — see localEndpoints.js; never a second fetch). Never
+    // throws: a missing key, a failed probe or an empty result all just fall
+    // back to the free-text Model id field instead of blocking the form.
+    let modelFetchToken = 0;
+    const fetchPresetModels = async (brainId) => {
+      const preset = BRAIN_PRESETS[brainId];
+      if (!preset || !preset.liveModels) return;
+      const key = apiKey.value.trim();
+      const token = ++modelFetchToken;
+      if (preset.needsKeyForModels && !key) {
+        setModelChoices([]);
+        modelHint.textContent = `Paste a key above to load ${preset.label.replace(' (free)', '')}'s model list.`;
+        updateBlocklistButton(brainId);
+        return;
+      }
+      modelHint.textContent = 'Loading models…';
+      const found = await probeEndpoint(
+        { name: preset.label, baseURL: preset.baseURL },
+        { apiKey: preset.needsKeyForModels ? key : undefined },
+      );
+      // Stale response — the brain (or the key) moved on while this was in flight.
+      if (token !== modelFetchToken) return;
+      let ids = (found && found.models) || [];
+      if (preset.freeOnly) ids = ids.filter((id) => id.endsWith(':free'));
+      // Cache the RAW (pre-blocklist) ids so a later turn-time auto-advance
+      // (_maybeHandleUnusableModel, which runs outside this form and can't
+      // afford to hit the network again) has real candidates to pick from —
+      // re-filtered fresh below, and again whenever it's actually used.
+      this._presetModelCache = this._presetModelCache || {};
+      this._presetModelCache[brainId] = ids.slice();
+      const blocked = this._blockedModelsFor(brainId);
+      const visible = blocked.length ? ids.filter((id) => !blocked.includes(id)) : ids;
+      setModelChoices(visible);
+      modelHint.textContent = visible.length
+        ? `${visible.length} free model${visible.length === 1 ? '' : 's'} found`
+        : (ids.length ? 'All found models are blocked — see below.' : 'No models found — type a model id below.');
+      updateBlocklistButton(brainId);
+    };
+
+    const sync = () => {
+      const isCloud = provider.value === 'cloud';
+      const preset = BRAIN_PRESETS[provider.value];
+      urlRow.style.display = provider.value === 'openai' ? 'grid' : 'none';
+      keyRow.style.display = provider.value === 'local' ? 'none' : 'grid';
+      keyLink.style.display = preset && preset.keyURL ? 'block' : 'none';
+      if (preset && preset.keyURL) { keyLink.href = preset.keyURL; keyLink.textContent = preset.keyLabel; }
+      // Per-task routing only means anything for the cloud provider — a local
+      // server (or Groq/OpenRouter) serves whatever model it's asked for, so
+      // always ask for the id there.
+      modeRow.style.display = isCloud ? 'grid' : 'none';
+      const auto = isCloud && modelMode.value === 'auto';
+      modelRow.style.display = auto ? 'none' : 'grid';
+      autoNote.style.display = auto ? 'block' : 'none';
+      if (!preset || !preset.liveModels) {
+        modelSelect.style.display = 'none';
+        model.style.display = '';
+        modelHint.textContent = '';
+      }
+      updateBlocklistButton(provider.value);
+    };
+    modelMode.addEventListener('change', sync);
+    provider.addEventListener('change', () => {
+      // Stash the field under the provider we are leaving, show the key saved
+      // for the one we are entering.
+      apiKeys[prevProvider] = apiKey.value.trim();
+      apiKey.value = apiKeys[provider.value] || '';
+      // Swap the default model id along with the provider — but only when the
+      // field still holds a provider default (i.e. the user never customized it).
+      const m = model.value.trim();
+      if (!m || Object.values(PROVIDER_DEFAULT_MODELS).includes(m)) {
+        model.value = PROVIDER_DEFAULT_MODELS[provider.value];
+      }
+      prevProvider = provider.value;
+      sync();
+      const preset = BRAIN_PRESETS[provider.value];
+      if (preset && preset.liveModels) fetchPresetModels(provider.value);
+    });
+    // The key field's own value is what fetchPresetModels reads for Groq — a
+    // key pasted in and blurred should load the list without a brain switch.
+    apiKey.addEventListener('change', () => {
+      if (provider.value === 'groq') fetchPresetModels('groq');
+    });
+    sync();
+    // Panel just opened on an already-saved Groq/OpenRouter brain — load its
+    // model list without waiting for a change event that won't come.
+    if (BRAIN_PRESETS[provider.value] && BRAIN_PRESETS[provider.value].liveModels) {
+      fetchPresetModels(provider.value);
+    }
+
+    // Write the form to storage. Shared by the Save button and the one-click
+    // "use the local server" path so both restart a running voice co-pilot.
+    const persist = (message) => {
+      apiKeys[provider.value] = apiKey.value.trim();
+      this._saveAgentConfig({
+        provider: provider.value, baseURL: baseURL.value.trim(), apiKeys,
+        model: model.value.trim(), modelMode: modelMode.value, tts: tts.value,
+        listenMode: listenMode.value,
+        // Re-read fresh rather than the `cfg` this form opened with — a turn
+        // failure can blocklist a model in the background (see
+        // _maybeHandleUnusableModel) while this panel is sitting open, and
+        // Save must not clobber that with a stale snapshot.
+        blockedModels: this._agentConfig().blockedModels,
+      });
+      const wasVoice = !!this._voiceCopilot;
+      if (wasVoice) this.stopVoiceChat();
+      // Setup is now done — collapse the disclosure back so Talk is the only
+      // thing in view again (root is the <details> wrapping this form).
+      if (root && root.tagName === 'DETAILS' && this._brainConfigured({ provider: provider.value, apiKey: apiKeys[provider.value] })) {
+        root.open = false;
+      }
+      this._toast(wasVoice ? `${message} — press Talk to restart voice` : message, '#66ffee');
+    };
+
+    // Point the form at a discovered local server and save in one gesture.
+    const adoptLocal = (found) => {
+      provider.value = 'openai';
+      apiKeys[prevProvider] = apiKey.value.trim();
+      prevProvider = 'openai';
+      apiKey.value = apiKeys.openai || '';
+      baseURL.value = found.baseURL;
+      model.value = preferredModel(found);
+      // Assigning .value doesn't fire 'change', so retire the offer — and any
+      // Groq/OpenRouter live model list still showing — by hand.
+      localBanner.style.display = 'none';
+      setModelChoices([]);
+      sync();
+      persist(`Using ${describeEndpoint(found)} — free`);
+    };
+    localUse.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (this._localFound) adoptLocal(this._localFound);
+    });
+
+    const save = document.createElement('button');
+    save.type = 'button'; save.className = 'vc-btn-primary';
+    save.textContent = 'Save agent settings';
+    save.style.width = '100%'; save.style.minHeight = '30px'; save.style.borderRadius = '999px';
+    save.style.fontSize = '12px'; save.style.marginTop = '4px';
+    save.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      persist('Agent settings saved');
+    });
+    wrap.appendChild(save);
+    wrap.appendChild(scanRow);
+    root.appendChild(wrap);
+
+    const runScan = ({ adoptIfUnconfigured = false, announce = false } = {}) => {
+      const started = this._scanLocalEndpoints({
+        baseURL, models: modelList,
+        onDone: (found) => {
+          if (announce) scan.textContent = 'Scan for a local server';
+          if (!found) {
+            localBanner.style.display = 'none';
+            if (announce) this._toast('No local model server found on the usual ports', '#ffcc66', 4000);
+            return;
+          }
+          localText.textContent = `⚡ Found ${describeEndpoint(found)} on this machine.`;
+          // Already pointed at it — nothing to propose.
+          localBanner.style.display = provider.value === 'openai' ? 'none' : 'block';
+          // A player who has never configured anything gets the free option
+          // applied rather than merely offered: there is no key to lose, and the
+          // Brain select reverses it in one click.
+          if (adoptIfUnconfigured && provider.value !== 'openai' && !this._hasSavedAgentConfig()) adoptLocal(found);
+        },
+      });
+      // Only claim to be scanning if a scan actually started — a second click
+      // while one is in flight must not strand the label on "Scanning…".
+      if (announce && started) scan.textContent = 'Scanning…';
+    };
+    scan.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      runScan({ announce: true });
+    });
+    // Switching to "local server" by hand should land on the one we found rather
+    // than the generic placeholder defaults, and retires the offer.
+    provider.addEventListener('change', () => {
+      if (provider.value !== 'openai') {
+        if (this._localFound) localBanner.style.display = 'block';
+        return;
+      }
+      localBanner.style.display = 'none';
+      if (this._localFound) {
+        baseURL.value = this._localFound.baseURL;
+        model.value = preferredModel(this._localFound);
+      }
+    });
+
+    // Look for a server, but not on the critical path: this form is built while
+    // the engine is still starting, and a blocked main thread delays the fetch
+    // and the probe's own abort timer alike — scanning here loses servers that
+    // did reply. Wait for idle, with a timer fallback where that's unavailable.
+    const startScan = () => runScan({ adoptIfUnconfigured: true });
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(startScan, { timeout: 3000 });
+    } else {
+      setTimeout(startScan, 1200);
+    }
+  }
+
+  /** True when the player has saved agent settings at least once. */
+  _hasSavedAgentConfig() {
+    try { return !!localStorage.getItem('vc.voice'); } catch (error) { return false; }
+  }
+
+  /**
+   * Probe the machine for an OpenAI-compatible server and report back.
+   * Best effort by design: a blocked or absent server is silence, not an error.
+   * Returns false when a scan is already in flight and this one was dropped.
+   */
+  _scanLocalEndpoints({ baseURL, models, onFound, onDone } = {}) {
+    if (this._localScanning) return false;
+    this._localScanning = true;
+    this._localScanCtrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    discoverLocalEndpoints({
+      extra: baseURL ? baseURL.value : undefined,
+      signal: this._localScanCtrl ? this._localScanCtrl.signal : undefined,
+    })
+      .then((found) => {
+        const best = found[0] || null;
+        this._localFound = best;
+        // Offer the server's real model ids instead of asking for one blind.
+        if (models && best) {
+          models.replaceChildren();
+          for (const id of best.models) {
+            const opt = document.createElement('option');
+            opt.value = id;
+            models.appendChild(opt);
+          }
+        }
+        if (best && onFound) onFound(best);
+        if (onDone) onDone(best);
+      })
+      .catch(() => { if (onDone) onDone(null); })
+      .finally(() => { this._localScanning = false; });
+    return true;
+  }
+
+  /** Talk to the carpet: one push-to-talk turn (configures + starts on first press). */
+  runVoiceChat() {
+    const api = typeof window !== 'undefined' ? window.agentAPI : null;
+    if (!api) { this._toast('Agent API is not ready yet', '#ffcc66'); return false; }
+    if (this._voiceCopilot) {
+      // Already running — Talk again just re-opens the console (it may have
+      // been closed) and, mic permitting, opens a fresh listen turn.
+      if (this._copilotConsole) this._copilotConsole.show();
+      if (this._hasSpeechRecognition()) this._voiceCopilot.listen();
+      return true;
+    }
+    const cfg = this._resolveVoiceConfig();
+    if (!cfg) return false;
+    // _resolveVoiceConfig() overwrites cfg.provider with the runtime provider
+    // name (see _resolveBrain) — the blocklist has to be keyed by the actual
+    // BRAIN id (e.g. 'openrouter'), the same way apiKeys already is, so read
+    // it back separately rather than trusting cfg.provider here.
+    const brainId = this._agentConfig().provider;
+    this._modelAdvancedForSession = false; // fresh session — allow one auto-advance again
+    // The console is the conversation surface now — _toast stays for
+    // transient operational notices only (loading/failed/off), never turns.
+    // Created before the VoiceCopilot so onText/onState have somewhere to
+    // land the instant vc.start() gets going; the catch below tears it back
+    // down if construction itself fails, so it never outlives the attempt.
+    this._copilotConsole = createCopilotConsole({
+      onSubmit: (text) => { if (this._voiceCopilot) this._voiceCopilot.say(text); },
+      onClose: () => { /* the console just hides — the co-pilot keeps running until Voice Off */ },
+    });
+    try {
+      const vc = new VoiceCopilot(api, {
+        config: cfg,
+        onText: (turn) => {
+          if (this._copilotConsole) this._copilotConsole.push(turn);
+          this._maybeHandleUnusableModel(turn, brainId, cfg.model);
+        },
+        onInterim: (text) => { if (this._copilotConsole) this._copilotConsole.setInterim(text); },
+        onState: (s) => { this._voiceState = s; if (this._copilotConsole) this._copilotConsole.setState(s); },
+        // When the companion actually takes the controls, stop any other autonomous driver.
+        onGoal: (g) => { if (g && g.type !== 'manual') this._stopOtherDrivers('voice'); },
+      });
+      this._voiceCopilot = vc;
+      this._toast(cfg.tts !== 'browser' ? 'Loading voice model…' : 'Starting voice…', '#66ffee');
+      vc.start()
+        .then(() => {
+          if (this._copilotConsole) this._copilotConsole.show();
+          // Speech is a bonus, not a requirement — Firefox and friends have no
+          // SpeechRecognition at all, and the console works fine without it.
+          if (this._hasSpeechRecognition()) {
+            this._toast('Voice ready — press 🎙 Talk and speak', '#66ffee');
+            vc.listen();
+          } else {
+            this._toast('Co-Pilot ready — type below', '#66ffee');
+            if (this._copilotConsole) {
+              this._copilotConsole.push({ role: 'system', text: 'Speech input isn’t available in this browser (try Chrome for voice) — typing works here too.' });
+            }
+          }
+        })
+        .catch((error) => {
+          Logger.warn('RaceSystem: voice failed', error);
+          this._toast(`Voice failed: ${error && error.message ? error.message : 'error'}`, '#ff7777');
+          this.stopVoiceChat();
+        });
+      return true;
+    } catch (error) {
+      Logger.warn('RaceSystem: voice failed to start', error);
+      this._toast('Voice failed to start', '#ff7777');
+      // The VoiceCopilot never came up, so this._voiceCopilot was never set —
+      // stopAutonomousDrivers()/destroy() would have nothing to tear the
+      // console down with. Kill it here instead of leaving an orphaned panel
+      // with a dead input (onSubmit no-ops with no copilot to hand text to).
+      if (this._copilotConsole) {
+        try { this._copilotConsole.destroy(); } catch (destroyError) { /* best effort */ }
+        this._copilotConsole = null;
+      }
+      return false;
+    }
+  }
+
+  _hasSpeechRecognition() {
+    return typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+
+  /** Stop the voice co-pilot, silence any speech, and tear down the console. */
+  stopVoiceChat() {
+    if (this._voiceCopilot) {
+      try { this._voiceCopilot.stop(); } catch (error) { /* best effort */ }
+    }
+    this._voiceCopilot = null;
+    if (this._copilotConsole) {
+      try { this._copilotConsole.destroy(); } catch (error) { /* best effort */ }
+      this._copilotConsole = null;
+    }
+    this._toast('Voice off');
     return true;
   }
 
@@ -663,6 +1581,24 @@ export class RaceSystem extends System {
     this.engine.scene.add(this.courseGroup);
   }
 
+  /** Drop each visible ring + the beacon onto the curved ground (no-op when flat).
+   *  Uses the logical flat gate Y as the base, so collision (gate.position) is
+   *  untouched and the ring rises to its true spot as the player nears it. */
+  _applyCurvatureToGates() {
+    const world = this.engine.systems.get('world');
+    if (!world || typeof world.curveDropAt !== 'function') return;
+    for (let i = 0; i < this._gateMeshes.length; i++) {
+      const mesh = this._gateMeshes[i];
+      const g = this.gates[i];
+      if (!mesh || !mesh.visible || !g) continue;
+      mesh.position.y = g.position.y - world.curveDropAt(g.position.x, g.position.z);
+    }
+    if (this._beaconMesh && this._beaconMesh.visible) {
+      const b = this._beaconMesh.position;
+      b.y = (this._beaconBaseY || 0) - world.curveDropAt(b.x, b.z);
+    }
+  }
+
   /** Position/orient the pooled tori along the freshly built course. */
   _layoutCourseMeshes(player) {
     for (let i = 0; i < this.gates.length; i++) {
@@ -708,6 +1644,7 @@ export class RaceSystem extends System {
 
     if (this._nextGateMesh) {
       this._beaconMesh.position.copy(this.gates[nextIdx].position);
+      this._beaconBaseY = this.gates[nextIdx].position.y; // flat Y; curvature drops the visual
       this._beaconMesh.visible = true;
     } else {
       this._beaconMesh.visible = false;
@@ -1106,17 +2043,22 @@ export class RaceSystem extends System {
     }
     root.appendChild(grid);
 
-    const actions = document.createElement('div');
-    actions.style.display = 'grid';
-    actions.style.gridTemplateColumns = '1fr 1fr';
-    actions.style.gap = '6px';
-    const addButton = (key, text, handler, primary = false) => {
+    const mkActionGrid = () => {
+      const g = document.createElement('div');
+      g.style.display = 'grid';
+      g.style.gridTemplateColumns = '1fr 1fr';
+      g.style.gap = '6px';
+      return g;
+    };
+    const actions = mkActionGrid();        // Race tab
+    const agentActions = mkActionGrid();   // Agent tab
+    const addButton = (key, text, handler, primary = false, container = actions) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = primary ? 'vc-btn-primary' : 'vc-btn-ghost';
       button.textContent = text;
       button.style.minHeight = '30px';
-      button.style.padding = primary ? '6px 8px' : '6px 8px';
+      button.style.padding = '6px 8px';
       button.style.fontSize = '12px';
       button.style.borderRadius = '999px';
       button.addEventListener('click', (event) => {
@@ -1124,31 +2066,80 @@ export class RaceSystem extends System {
         event.stopPropagation();
         handler();
       });
-      actions.appendChild(button);
+      container.appendChild(button);
       this._panelButtons[key] = button;
     };
+
+    // --- Race tab: just the race + ghost + export controls (planet save/load
+    // now lives on the Agent tab, next to Talk — see below) ---
     addButton('start', 'Start Race', () => this.start(), true);
     addButton('restart', 'Same Seed', () => this.restartSameSeed());
-    addButton('abort', 'Stop Race', () => {
-      this.abort();
-      this._toast('Race stopped');
-    });
+    addButton('abort', 'Stop Race', () => { this.abort(); this._toast('Race stopped'); });
     addButton('loadGhost', 'Load Ghost', () => this.loadBestGhost());
-    addButton('clearGhost', 'Clear Ghost', () => {
-      this.clearGhost();
-      this._toast('Ghost cleared');
-    });
-    addButton('runBot', 'Run SimpleBot', () => this.runSimpleBot());
-    addButton('stopBot', 'Stop Bot', () => this.stopSimpleBot());
+    addButton('clearGhost', 'Clear Ghost', () => { this.clearGhost(); this._toast('Ghost cleared'); });
     addButton('export', 'Export JSON', () => {
       const result = this.exportResult(null, { download: true });
       this._toast(result ? 'Benchmark JSON exported' : 'Finish a race before export', result ? '#66ffee' : '#ffcc66');
     });
     root.appendChild(actions);
 
+    // --- Agent tab: the simplest possible UX — Talk, Voice Off, and planet
+    // save/load as one click each; SimpleBot and the LLM pilot stay reachable
+    // through window.agentAPI/DevTools (runSimpleBot/runLLMPilot below) but no
+    // longer clutter this panel with buttons of their own. ---
+    addButton('voiceTalk', 'Talk', () => this.runVoiceChat(), true, agentActions);
+    addButton('voiceOff', 'Voice Off', () => this.stopVoiceChat(), false, agentActions);
+    // Once running, V is the hotkey: talk (or, mid-sentence, barge in on the
+    // co-pilot). It does nothing until Talk has started one — see the KeyV
+    // handler in _initialize().
+    this._panelButtons.voiceTalk.title = 'Or press V once the co-pilot is running — also interrupts it mid-sentence';
+    addButton('savePlanet', 'Save Planet', () => {
+      const api = typeof window !== 'undefined' ? window.worldAPI : null;
+      if (api && api.savePlanet) { api.savePlanet(); this._toast('Planet saved', '#66ffee'); }
+      else this._toast('World not ready yet', '#ffcc66');
+    }, false, agentActions);
+    addButton('loadPlanet', 'Load Planet', () => {
+      const api = typeof window !== 'undefined' ? window.worldAPI : null;
+      const snap = api && api.loadPlanet ? api.loadPlanet() : null;
+      this._toast(snap ? 'Planet restored' : 'No saved planet yet', snap ? '#66ffee' : '#ffcc66');
+    }, false, agentActions);
+
+    const agentRoot = document.createElement('div');
+    agentRoot.id = 'agent-panel';
+    agentRoot.style.pointerEvents = 'auto';
+    const aHead = document.createElement('div');
+    aHead.style.cssText = 'display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px;';
+    const aTitle = document.createElement('div'); aTitle.className = 'vc-label'; aTitle.textContent = 'Agent';
+    const aSub = document.createElement('div'); aSub.className = 'vc-num'; aSub.textContent = 'talk, fly or race the machines';
+    aSub.style.fontSize = '11px'; aSub.style.color = 'var(--vc-ink-dim)';
+    aHead.appendChild(aTitle); aHead.appendChild(aSub); agentRoot.appendChild(aHead);
+    agentRoot.appendChild(agentActions);
+
+    // Settings collapse behind a plain disclosure once there's a usable brain
+    // (a saved key, or a local/openai provider that needs none) — Talk is then
+    // the whole UX. An unconfigured player gets the form open on arrival since
+    // it's their only path to setting one up.
+    const settingsDetails = document.createElement('details');
+    settingsDetails.id = 'agent-settings-details';
+    const settingsSummary = document.createElement('summary');
+    settingsSummary.className = 'vc-label';
+    settingsSummary.textContent = 'Settings';
+    settingsSummary.style.cssText = 'cursor:pointer;margin-top:10px;user-select:none;';
+    settingsDetails.appendChild(settingsSummary);
+    settingsDetails.open = !this._brainConfigured(this._agentConfig());
+    agentRoot.appendChild(settingsDetails);
+    this._createAgentConfigForm(settingsDetails);
+    this._agentRoot = agentRoot;
+
+    // registerSettingsPane always accepts (it queues until the menu exists), so
+    // the direct append only covers a missing/degraded UI system.
     const ui = this.engine.systems.get('ui');
-    if (!ui || typeof ui.registerSettingsPane !== 'function' || !ui.registerSettingsPane('race', root)) {
+    if (ui && typeof ui.registerSettingsPane === 'function') {
+      ui.registerSettingsPane('race', root);
+      ui.registerSettingsPane('agent', agentRoot);
+    } else {
       uiRoot.appendChild(root);
+      uiRoot.appendChild(agentRoot);
     }
     this._panelToggle = null;
     this._panelRoot = root;
@@ -1194,8 +2185,8 @@ export class RaceSystem extends System {
     if (buttons.abort) buttons.abort.disabled = this.state !== 'running';
     if (buttons.loadGhost) buttons.loadGhost.disabled = !best;
     if (buttons.clearGhost) buttons.clearGhost.disabled = !ghost;
-    if (buttons.runBot) buttons.runBot.disabled = this._simpleBotRunning;
-    if (buttons.stopBot) buttons.stopBot.disabled = !this._simpleBotRunning;
+    if (buttons.bot) buttons.bot.textContent = this._simpleBotRunning ? 'Stop Bot' : 'Run SimpleBot';
+    if (buttons.pilot) buttons.pilot.textContent = this._llmPilotRunning ? 'Stop Pilot' : 'LLM Pilot';
     if (buttons.export) buttons.export.disabled = !latest;
   }
 
@@ -1219,9 +2210,10 @@ export class RaceSystem extends System {
 
   _removePanelNodes() {
     if (typeof document === 'undefined') return;
-    document.querySelectorAll('#race-panel, #race-panel-toggle').forEach((node) => node.remove());
+    document.querySelectorAll('#race-panel, #race-panel-toggle, #agent-panel').forEach((node) => node.remove());
     this._panelRoot = null;
     this._panelToggle = null;
+    this._agentRoot = null;
     this._panelOpen = false;
   }
 

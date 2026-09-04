@@ -53,9 +53,10 @@ export class MobileUI {
         // while covering the whole screen and swallowing touches. Heading is
         // controlled by the movement joystick instead.
 
-        // Ensure the minimap is visible on mobile
-        this.ensureMobileMinimapVisibility();
-        
+        // NOTE: the minimap is intentionally hidden on phones by theme.js
+        // (@media max-width: 640px hides #minimap-container) — do not force it
+        // visible here.
+
         console.log("Mobile UI initialized with simplified user controls");
     }
     
@@ -86,169 +87,6 @@ export class MobileUI {
         
         window.addEventListener('resize', setViewportHeight);
         setViewportHeight();
-    }
-    
-    // Helper to check if a touch is on another UI element
-    touchOnUIElement(e) {
-        const touch = e.changedTouches[0];
-        const touchX = touch.clientX;
-        const touchY = touch.clientY;
-        
-        // Check each UI element with 'button' or 'toggle' type
-        for (const [id, info] of this.touchElements.entries()) {
-            if (info.type === 'button' || info.type === 'toggle') {
-                const elem = info.element;
-                if (!elem) continue;
-                
-                const rect = elem.getBoundingClientRect();
-                
-                // Check if touch is within element boundaries
-                if (touchX >= rect.left && touchX <= rect.right && 
-                    touchY >= rect.top && touchY <= rect.bottom) {
-                    return true; // Touch is on a UI element
-                }
-            }
-        }
-        
-        return false; // Touch is not on any UI element
-    }
-    
-    // Setup invisible camera controls (full screen, no visible division)
-    setupCameraControls() {
-        // Camera control area (full screen)
-        const cameraControls = this.getElementFromPool('div') || document.createElement('div');
-        cameraControls.id = 'camera-controls';
-        cameraControls.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%; /* Full screen */
-            height: 100%;
-            z-index: 500; /* Below other UI controls */
-            pointer-events: auto;
-            touch-action: none;
-            user-select: none;
-        `;
-        
-        // Camera control state
-        this.cameraState = {
-            active: false,
-            lastX: 0,
-            lastY: 0,
-            deltaX: 0,
-            deltaY: 0,
-            touchId: null,
-            startX: 0,  // Track start position to determine if it's a tap
-            startY: 0
-        };
-        
-        // Add touch events for camera control
-        cameraControls.addEventListener('touchstart', (e) => {
-            // Check if touch is on a UI element - if so, don't handle it here
-            if (this.touchOnUIElement(e)) return;
-            
-            e.preventDefault(); // Prevent default to avoid scrolling
-            if (this.cameraState.active) return;
-            
-            const touch = e.changedTouches[0];
-            this.cameraState.touchId = touch.identifier;
-            this.cameraState.active = true;
-            this.cameraState.lastX = touch.clientX;
-            this.cameraState.lastY = touch.clientY;
-            this.cameraState.startX = touch.clientX;
-            this.cameraState.startY = touch.clientY;
-            this.cameraState.deltaX = 0;
-            this.cameraState.deltaY = 0;
-        });
-        
-        cameraControls.addEventListener('touchmove', (e) => {
-            if (!this.cameraState.active) return;
-            e.preventDefault(); // Prevent scrolling
-            
-            // Find our touch
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                if (touch.identifier === this.cameraState.touchId) {
-                    // Calculate delta movement
-                    const deltaX = touch.clientX - this.cameraState.lastX;
-                    const deltaY = touch.clientY - this.cameraState.lastY;
-                    
-                    // Update last position
-                    this.cameraState.lastX = touch.clientX;
-                    this.cameraState.lastY = touch.clientY;
-                    
-                    // Set current delta - increase multiplier for more sensitivity
-                    this.cameraState.deltaX = deltaX * 1.0; // Increased sensitivity
-                    this.cameraState.deltaY = deltaY * 1.0; // Increased sensitivity
-                    
-                    // Emit camera movement event
-                    if (this.engine && this.engine.input) {
-                        this.engine.input.emit('mobileCameraMove', {
-                            deltaX: this.cameraState.deltaX,
-                            deltaY: this.cameraState.deltaY
-                        });
-                    }
-                    
-                    break;
-                }
-            }
-        });
-        
-        const endCameraTouch = (e) => {
-            if (!this.cameraState.active) return;
-            e.preventDefault(); // Prevent default
-            
-            // Find our touch
-            let found = false;
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const touch = e.changedTouches[i];
-                if (touch.identifier === this.cameraState.touchId) {
-                    found = true;
-                    
-                    // Check if it was a tap (minimal movement) - can use for firing/selection
-                    const distMoved = Math.sqrt(
-                        Math.pow(touch.clientX - this.cameraState.startX, 2) +
-                        Math.pow(touch.clientY - this.cameraState.startY, 2)
-                    );
-                    
-                    if (distMoved < 10) { // If less than 10px movement, consider it a tap
-                        // Emit tap event if needed
-                        if (this.engine && this.engine.input) {
-                            this.engine.input.emit('mobileTap', {
-                                x: touch.clientX,
-                                y: touch.clientY
-                            });
-                        }
-                    }
-                    
-                    break;
-                }
-            }
-            
-            if (found) {
-                // Reset camera control state
-                this.cameraState.active = false;
-                this.cameraState.touchId = null;
-                this.cameraState.deltaX = 0;
-                this.cameraState.deltaY = 0;
-                
-                // Emit camera stop event
-                if (this.engine && this.engine.input) {
-                    this.engine.input.emit('mobileCameraMove', {
-                        deltaX: 0,
-                        deltaY: 0
-                    });
-                }
-            }
-        };
-        
-        cameraControls.addEventListener('touchend', endCameraTouch);
-        cameraControls.addEventListener('touchcancel', endCameraTouch);
-        
-        this.uiContainer.appendChild(cameraControls);
-        this.uiElements.set('cameraControls', cameraControls);
-        this.visibleElements.add('cameraControls');
-        this.memoryUsage.activeElements += 1;
     }
     
     // Create simple control buttons
@@ -484,56 +322,6 @@ export class MobileUI {
         });
     }
     
-    ensureMobileMinimapVisibility() {
-        // This method ensures the minimap is visible on mobile
-        setTimeout(() => {
-            // Get the minimap container created by MinimapSystem
-            const minimapContainer = document.getElementById('minimap-container');
-            
-            if (minimapContainer) {
-                // Set explicit styles to ensure visibility
-                minimapContainer.style.position = 'absolute';
-                minimapContainer.style.top = 'var(--vc-left-stack-top)';
-                minimapContainer.style.left = 'var(--vc-safe-x)';
-                minimapContainer.style.width = 'var(--vc-minimap-size)';
-                minimapContainer.style.height = 'var(--vc-minimap-size)';
-                minimapContainer.style.zIndex = '1500'; // Higher z-index to ensure visibility
-                minimapContainer.style.display = 'block'; // Force display
-                minimapContainer.style.opacity = '1'; // Ensure it's not transparent
-                minimapContainer.style.visibility = 'visible'; // Ensure it's not hidden
-                
-                console.log('Mobile minimap visibility enforced');
-            } else {
-                console.warn('Minimap container not found, creating it manually');
-                
-                // If the minimap container doesn't exist, create it temporarily
-                const tempContainer = document.createElement('div');
-                tempContainer.id = 'minimap-container';
-                tempContainer.style.cssText = `
-                    position: absolute;
-                    top: var(--vc-left-stack-top);
-                    left: var(--vc-safe-x);
-                    width: var(--vc-minimap-size);
-                    height: var(--vc-minimap-size);
-                    border-radius: 50%;
-                    overflow: hidden;
-                    background-color: rgba(0, 0, 20, 0.5);
-                    border: 2px solid rgba(255, 255, 255, 0.5);
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-                    z-index: 1500;
-                    display: block;
-                    opacity: 1;
-                    visibility: visible;
-                `;
-                
-                // Add it to the UI container
-                this.uiContainer.appendChild(tempContainer);
-                
-                // It will be replaced when MinimapSystem initializes
-            }
-        }, 1000); // Delay execution to ensure the minimap system has initialized
-    }
-    
     toggleBatterySavingMode() {
         this.batterySaving = !this.batterySaving;
         
@@ -678,15 +466,6 @@ export class MobileUI {
             // Skip updates in battery saving mode to reduce CPU usage
             if (this.batterySaving && (this.frameCounter++ % (this.batteryUpdateFrequency || 1) !== 0)) {
                 return;
-            }
-            
-            // Check minimap visibility periodically (every 60 frames)
-            if (this.frameCounter % 60 === 0) {
-                const minimapContainer = document.getElementById('minimap-container');
-                if (minimapContainer && (minimapContainer.style.display === 'none' || !minimapContainer.isConnected)) {
-                    // Re-enforce visibility if needed
-                    this.ensureMobileMinimapVisibility();
-                }
             }
         } catch (error) {
             console.warn('Error updating mobile UI:', error);

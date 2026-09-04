@@ -6,6 +6,7 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import { System } from '../core/System.js';
 import { Logger } from '../../utils/Logger.js';
 import { resolveAsset } from '../../utils/assetPath.js';
+import { CURVE_UNIFORMS_GLSL, CURVE_DROP_GLSL } from '../shaders/curvature.js';
 
 /**
  * Water System - Enhanced with realistic reflections using Three.js Water
@@ -89,7 +90,40 @@ export class WaterSystem extends System {
 
     this.scene.add(this.water);
 
+    // Make the sea curve with the world (flat/round toggle) — shares WorldSystem's
+    // single curvature value/centre so the ocean bows exactly like the terrain.
+    this._applyCurvature();
+
     Logger.info("🌊 Ocean created with realistic reflections");
+  }
+
+  // Inject the world-curvature bend into the Water shader. Water uses its own
+  // ShaderMaterial (no <begin_vertex> include), so we recompute the vertex's view
+  // position from a world position that's been dropped by distance²/(2R). Near the
+  // viewer the drop is ~0; far out the sea falls away under the same horizon as the
+  // land. The bend is keyed off WorldSystem's shared uniforms, kept in sync there.
+  _applyCurvature() {
+    const world = this.engine.systemManager.get('world');
+    if (!world || typeof world.getCurveUniforms !== 'function' || !this.water) return;
+    const cu = world.getCurveUniforms();
+    const m = this.water.material;
+    if (!m || !m.uniforms) return;
+    m.uniforms.uCurveCenter = cu.uCurveCenter;
+    m.uniforms.uCurveAmount = cu.uCurveAmount;
+    m.vertexShader = CURVE_UNIFORMS_GLSL + CURVE_DROP_GLSL + m.vertexShader;
+    m.vertexShader = m.vertexShader.replace(
+      /vec4 mvPosition\s*=\s*modelViewMatrix \* vec4\( position, 1\.0 \);/,
+      `vec4 _wp = modelMatrix * vec4( position, 1.0 );
+       _wp.y -= curveDrop(_wp.xyz);
+       worldPosition = _wp;
+       vec4 mvPosition = viewMatrix * _wp;`
+    );
+    // The regex silently no-ops if three's Water vertex shader ever drifts — shout
+    // instead of leaving the sea flat in 'round' mode with no clue why.
+    if (!m.vertexShader.includes('curveDrop(_wp')) {
+      Logger.warn('WaterSystem: curvature injection failed — three Water shader source changed; the sea will not bend in round mode.');
+    }
+    m.needsUpdate = true;
   }
 
   _update(deltaTime) {
@@ -124,5 +158,16 @@ export class WaterSystem extends System {
   // Public API
   getWaterLevel() {
     return this.waterLevel;
+  }
+
+  // Raise/lower the sea live. Big positive values flood the lowlands into a
+  // "water planet"; negative values drain it. Keeps WorldSystem.waterLevel in
+  // sync so terrain/mana placement and landmarks agree.
+  setSeaLevel(y) {
+    this.waterLevel = Number(y) || 0;
+    if (this.water) this.water.position.y = this.waterLevel + 1.0;
+    const world = this.engine.systems.world || this.engine.systemManager.get('world');
+    if (world) world.waterLevel = this.waterLevel;
+    return { seaLevel: this.waterLevel };
   }
 }

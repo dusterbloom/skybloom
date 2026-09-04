@@ -31,6 +31,7 @@ import { AmbientLifeSystem } from "../systems/AmbientLifeSystem";
 import { ProceduralAudioSystem } from "../systems/ProceduralAudioSystem";
 import { ProceduralMusicSystem } from "../systems/ProceduralMusicSystem";
 import { AgentAPISystem } from "../systems/AgentAPISystem";
+import { GenieSystem } from "../systems/GenieSystem";
 import { RaceSystem } from "../systems/RaceSystem";
 import { OnboardingHints } from "../ui/OnboardingHints.js";
 import { IntroScreen } from "../ui/screens/IntroScreen";
@@ -196,6 +197,7 @@ export class Engine {
       .register(new CarpetTrailSystem(this))
       .register(new LandmarkSystem(this))
       .register(new AgentAPISystem(this))
+      .register(new GenieSystem(this))
       .register(new RaceSystem(this))
       .register(new OnboardingHints(this));
 
@@ -234,6 +236,7 @@ export class Engine {
       "playerState",
       "playerPhysics", // Physics after playerState for localPlayer access
       "agentAPI", // Agent observe/act ticks land on the virtual pad before input reads it
+      "genie", // Creative-mode world authoring (window.worldAPI); after world for terrain-drop
       "playerInput", // Input after physics
       "playerCamera", // Camera after input and physics
       "player", // Orchestrator after sub-systems

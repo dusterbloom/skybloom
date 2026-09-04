@@ -10,6 +10,7 @@ export class LandmarkSystem extends System {
     
     // Landmarks configuration
     this.landmarks = new Map();
+    this.maxLandmarks = 8; // Hard cap on live landmarks — they were overcrowding the world
     this.landmarkTypes = [
       {
         name: "ancient_ruins",
@@ -25,9 +26,9 @@ export class LandmarkSystem extends System {
         name: "magical_circle",
         minHeight: 0,          // Lowered min height
         maxHeight: 120,        // Increased max height
-        minDistance: 600,      // Reduced minimum distance
+        minDistance: 1100,     // Spread out so they don't crowd
         maxSlope: 0.4,         // Increased allowed slope
-        frequency: 0.0004,     // 20x higher frequency
+        frequency: 0.0001,     // toned down — was overcrowding the world
         size: { min: 60, max: 120 },
         requiresWater: false
       },
@@ -35,9 +36,9 @@ export class LandmarkSystem extends System {
         name: "crystal_formation",
         minHeight: 20,          // Lowered min height
         maxHeight: 150,         // Increased max height
-        minDistance: 900,       // Reduced minimum distance
+        minDistance: 1300,      // Spread out so they don't crowd
         maxSlope: 0.8,          // Increased allowed slope
-        frequency: 0.0003,      // 20x higher frequency
+        frequency: 0.0001,      // toned down — was overcrowding the world
         size: { min: 80, max: 160 },
         requiresWater: false
       }
@@ -80,18 +81,99 @@ export class LandmarkSystem extends System {
       magical_circle: 0xcc66ff,
       crystal_formation: 0x66ffee
     };
-    this.beaconGeometry = new THREE.CylinderGeometry(2.5, 4, 300, 8, 1, true);
+    // A tall pillar that dissolves into the sky instead of ending in a hard edge:
+    // a vertical fade is baked into vertex colours (bright at the base, 0 at the
+    // top), so with additive blending the top simply adds nothing and fades to
+    // nothing — a beam reaching skyward, not a stopped laser.
+    this._beaconHeight = 1000;
+    this.beaconGeometry = new THREE.CylinderGeometry(1.2, 6, this._beaconHeight, 10, 24, true);
+    {
+      const pos = this.beaconGeometry.getAttribute('position');
+      const colors = new Float32Array(pos.count * 3);
+      for (let i = 0; i < pos.count; i++) {
+        const yNorm = pos.getY(i) / this._beaconHeight + 0.5; // 0 base .. 1 top
+        const f = Math.pow(Math.max(0, 1 - yNorm), 1.6);       // bright base, fades up
+        colors[i * 3] = f; colors[i * 3 + 1] = f; colors[i * 3 + 2] = f;
+      }
+      this.beaconGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    }
     this.beaconMaterials = {};
     for (const [typeName, color] of Object.entries(this.beaconColors)) {
       this.beaconMaterials[typeName] = new THREE.MeshBasicMaterial({
         color: color,
+        vertexColors: true, // grayscale gradient * type colour = tinted vertical fade
         transparent: true,
-        opacity: 0.22,
+        opacity: 0.5,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
         fog: false // Keep beacons visible at distance despite scene fog
       });
+    }
+
+    // Resources shared across landmarks (never dispose these on removal — only
+    // per-landmark geometries/materials are freed by _disposeLandmark).
+    this._sharedMaterials = new Set([
+      ...Object.values(this.materials),
+      ...Object.values(this.beaconMaterials),
+    ]);
+  }
+
+  // Remove a landmark's mesh from the scene and free its per-landmark GPU
+  // resources. Landmark parts are built with unique geometries (and mostly
+  // unique/cloned materials); only the beacon geometry and the template
+  // materials in this.materials/this.beaconMaterials are shared.
+  _disposeLandmark(landmark) {
+    const mesh = landmark && landmark.mesh;
+    if (!mesh) return;
+    this.scene.remove(mesh);
+    mesh.traverse((node) => {
+      if (node.geometry && node.geometry !== this.beaconGeometry) node.geometry.dispose();
+      if (node.material) {
+        const mats = Array.isArray(node.material) ? node.material : [node.material];
+        for (const m of mats) {
+          if (m && m.dispose && !this._sharedMaterials.has(m)) m.dispose();
+        }
+      }
+    });
+  }
+
+  // Live landmark abundance. Lowering the cap culls the farthest landmarks now;
+  // raising it lets more spawn over the next updates. NaN/missing keeps the
+  // current cap (an LLM-dropped arg must never mean "remove everything").
+  setMaxLandmarks(n) {
+    const v = Math.round(Number(n));
+    this.maxLandmarks = Number.isFinite(v) ? Math.max(0, Math.min(60, v)) : this.maxLandmarks;
+    const player = this.engine.systems.player?.localPlayer;
+    while (this.landmarks.size > this.maxLandmarks) {
+      // remove the landmark farthest from the player (or any, if no player yet)
+      let farId = null, farD = -1;
+      for (const [id, l] of this.landmarks.entries()) {
+        const d = player && l.position ? l.position.distanceToSquared(player.position) : 0;
+        if (d >= farD) { farD = d; farId = id; }
+      }
+      if (farId == null) break;
+      this._disposeLandmark(this.landmarks.get(farId));
+      this.landmarks.delete(farId);
+    }
+    return { maxLandmarks: this.maxLandmarks };
+  }
+
+  // Re-pin every live landmark to the current ground — called by WorldSystem
+  // after a terrain change (reroll/loadPlanet). Cheap: one height probe each;
+  // animateLandmarks keeps re-applying position.y (minus the curve drop) per frame.
+  resyncHeights() {
+    if (!this.worldSystem) {
+      this.worldSystem = this.engine.systems.world || this.engine.systemManager.get('world');
+      if (!this.worldSystem) return;
+    }
+    for (const landmark of this.landmarks.values()) {
+      if (!landmark.position) continue;
+      const h = this.worldSystem.getTerrainHeight(landmark.position.x, landmark.position.z);
+      if (Number.isFinite(h)) {
+        landmark.position.y = h;
+        if (landmark.mesh) landmark.mesh.position.y = h;
+      }
     }
   }
 
@@ -123,7 +205,7 @@ export class LandmarkSystem extends System {
         // Skip landmarks with invalid positions
         if (!landmark.position || isNaN(landmark.position.x) || isNaN(landmark.position.z)) {
           // Clean up invalid landmark
-          if (landmark.mesh) this.scene.remove(landmark.mesh);
+          this._disposeLandmark(landmark);
           this.landmarks.delete(id);
           continue;
         }
@@ -133,8 +215,8 @@ export class LandmarkSystem extends System {
         const distanceSquared = dx * dx + dz * dz;
 
         if (distanceSquared > maxDistance * maxDistance) {
-          // Remove landmark from scene
-          this.scene.remove(landmark.mesh);
+          // Remove landmark from scene (and free its per-landmark resources)
+          this._disposeLandmark(landmark);
           this.landmarks.delete(id);
         }
       }
@@ -303,7 +385,7 @@ export class LandmarkSystem extends System {
   createBeacon(typeName) {
     const material = this.beaconMaterials[typeName] || this.beaconMaterials.ancient_ruins;
     const beacon = new THREE.Mesh(this.beaconGeometry, material);
-    beacon.position.y = 150; // Pillar reaches ~300 units above the terrain
+    beacon.position.y = this._beaconHeight / 2; // base at the landmark, fading up into the sky
     return beacon;
   }
 
@@ -636,6 +718,9 @@ export class LandmarkSystem extends System {
         return; // Skip if worldSystem is not properly initialized
       }
       
+      // Hard cap: don't oversaturate the world with landmarks
+      if (this.landmarks.size >= this.maxLandmarks) return;
+
       // Check more frequently for landmarks
       if (Math.random() > 0.05) return; // 5% chance per call (increased from 1%)
 
@@ -704,6 +789,12 @@ export class LandmarkSystem extends System {
       // Skip if not in scene or invalid
       if (!landmarkMesh || !landmarkMesh.parent) continue;
 
+      // Ride the curved ground: rigid objects subtract the visual drop at their base
+      // from their flat terrain height, so they sit on the slope in 'round' mode.
+      if (this.worldSystem && this.worldSystem.curveDropAt) {
+        landmarkMesh.position.y = landmark.position.y - this.worldSystem.curveDropAt(landmark.position.x, landmark.position.z);
+      }
+
       // Slow beacon pulse (scale only - beacon materials are shared per type)
       if (landmark.beacon) {
         const pulse = 0.85 + 0.15 * Math.sin(elapsed * 0.8 + landmark.beaconPhase);
@@ -746,12 +837,10 @@ export class LandmarkSystem extends System {
       const position = landmark.position;
       if (!position || isNaN(position.x) || isNaN(position.y) || isNaN(position.z)) {
         Logger.debug(`Removing invalid landmark: ${id}`);
-        
-        // Remove from scene
-        if (landmark.mesh) {
-          this.scene.remove(landmark.mesh);
-        }
-        
+
+        // Remove from scene (and free its per-landmark resources)
+        this._disposeLandmark(landmark);
+
         // Remove from collection
         this.landmarks.delete(id);
       }

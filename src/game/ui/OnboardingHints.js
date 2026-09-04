@@ -37,7 +37,7 @@ export class OnboardingHints extends System {
         timeout: 25,
       },
       {
-        text: 'R — race · Q — quests · E — cast',
+        text: 'R — race · Q — quests · E — cast · V — talk',
         done: () => this._finalKeySeen,
         timeout: 12,
       },
@@ -61,7 +61,7 @@ export class OnboardingHints extends System {
 
     ensureVibeTheme();
     this._keyHandler = (e) => {
-      if (e.code === 'KeyR' || e.code === 'KeyQ' || e.code === 'KeyE') {
+      if (e.code === 'KeyR' || e.code === 'KeyQ' || e.code === 'KeyE' || e.code === 'KeyV') {
         this._finalKeySeen = true;
       }
     };

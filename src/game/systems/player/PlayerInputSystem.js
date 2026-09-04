@@ -15,7 +15,7 @@ export class PlayerInputSystem extends System {
     this.throttleSpeed = 1.0;
     this.bankingSensitivity = 0.3;
     this.rotationDamping = 0.92;
-    this.turnRate = 1.6; // rad/s yaw at full A/D or joystick deflection
+    this.turnRate = 2.0; // rad/s yaw at full A/D or joystick deflection
     this.maxBankAngle = Math.PI / 6; // 30 degrees while turning
     this.bankEaseRate = 8; // bank easing: 1 - exp(-rate * delta)
     this.currentThrottle = 0;
@@ -157,7 +157,7 @@ export class PlayerInputSystem extends System {
       }
     } else if (isBraking) {
       // Shift = strong brake, S = gentle slowdown
-      const brakeStrength = (keyboardHardBraking || padHardBraking) ? 3.0 : 1.5;
+      const brakeStrength = (keyboardHardBraking || padHardBraking) ? 3.0 : 1.2;
       this.currentThrottle = Math.max(0.0, this.currentThrottle - this.throttleSpeed * brakeStrength * delta);
     } else {
       // Natural throttle decay when no keys pressed (coast down gently)
@@ -180,6 +180,11 @@ export class PlayerInputSystem extends System {
     // Vertical movement (Space = up, Ctrl = down, Shift is now brake; pad climb merges in, clamped)
     let verticalForce = 0;
     let spacePressed = this.input.isKeyDown('Space');
+    // While ground-roaming (GenieSystem sets engine.groundRoamActive), SPACE means
+    // sprint — the roam controller reads it via its isSprinting callback. It must
+    // NOT also count as climb, or it cancels the roamer's climb -1 ground pin and
+    // the animal floats off crests.
+    if (this.engine.groundRoamActive) spacePressed = false;
     if (spacePressed) verticalForce += 1;
     if (this.input.isKeyDown('ControlLeft') || this.input.isKeyDown('ControlRight')) verticalForce -= 1;
     if (this.touchAltitude.up) verticalForce += 1;

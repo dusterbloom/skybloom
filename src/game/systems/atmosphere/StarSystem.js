@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CELESTIAL_DISTANCE_FRACTION } from './constants.js';
 
 /**
  * StarSystem - Manages star fields
@@ -44,14 +45,12 @@ export class StarSystem {
 
     // Generate star positions, sizes, and colors
     // Position stars on a large sphere around camera
-    const starDistance = 15000; // Very far away, beyond terrain render distance
     this.generateStarAttributes(
       positions,
       sizes,
       colors,
       this.regularStarCount,
-      true,
-      starDistance
+      true
     );
 
     // Set buffer attributes
@@ -87,15 +86,13 @@ export class StarSystem {
     const colors = [];
 
     // Generate star positions, sizes, and colors for horizon
-    // Use same distance as regular stars but positioned near horizon
-    const starDistance = 15000;
+    // Same dome as regular stars but positioned near the horizon
     this.generateStarAttributes(
       positions,
       sizes,
       colors,
       this.horizonStarCount,
-      false,
-      starDistance
+      false
     );
 
     // Set buffer attributes
@@ -133,6 +130,13 @@ export class StarSystem {
     // Initialize fade thresholds array if not already created
     this.starFadeThresholds = this.starFadeThresholds || {};
     this.starFadeThresholds[isRegularField ? 'regular' : 'horizon'] = new Float32Array(count);
+
+    // Dome radius INSIDE the camera far plane — at 6000 the far half sat beyond
+    // the 5000 far plane and got clipped (sparse, "weird" stars). Tie it to the
+    // far plane so the whole field stays visible.
+    const far = (this.engine.camera && this.engine.camera.far) || 5000;
+    const r = far * CELESTIAL_DISTANCE_FRACTION;
+
     for (let i = 0; i < count; i++) {
       // Random angles
       const theta = Math.random() * Math.PI * 2;
@@ -151,8 +155,8 @@ export class StarSystem {
       const y = Math.cos(phi);
       const z = Math.sin(phi) * Math.sin(theta);
       
-      // Scale to place stars far away
-      const scale = isRegularField ? 6000 : (5500 + Math.random() * 500);
+      // Scale to place stars on the dome
+      const scale = isRegularField ? r : r * (0.9 + Math.random() * 0.08);
       positions.push(x * scale, y * scale, z * scale);
       
       // Vary the star sizes with more randomness
