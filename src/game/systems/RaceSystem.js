@@ -642,9 +642,18 @@ export class RaceSystem extends System {
     try { localStorage.removeItem('vc.pilot'); } catch (error) { /* private mode */ }
   }
 
-  /** A brain config needs a key for cloud; local/openai usually don't. */
+  /** A usable brain: an API key saved for 'cloud', or a local/openai provider
+   *  (which needs no key — either on-device or a locally reachable server).
+   *  Pure predicate, no side effects — the Agent tab UI reuses this to decide
+   *  whether to show the settings form collapsed or expanded. */
+  _brainConfigured(cfg) {
+    return !(cfg.provider === 'cloud' && !cfg.apiKey);
+  }
+
+  /** Same check as _brainConfigured, but toasts an actionable hint on failure —
+   *  for the call sites that actually need to start something right now. */
   _requireBrain(cfg) {
-    if (cfg.provider === 'cloud' && !cfg.apiKey) {
+    if (!this._brainConfigured(cfg)) {
       // If something free is already running here, say so instead of only
       // demanding a key.
       this._toast(this._localFound
@@ -720,15 +729,9 @@ export class RaceSystem extends System {
     if (typeof document === 'undefined') return;
     const cfg = this._agentConfig();
     const wrap = document.createElement('div');
-    wrap.style.marginTop = '12px';
-    wrap.style.borderTop = '1px solid rgba(255,255,255,0.15)';
-    wrap.style.paddingTop = '10px';
-
-    const title = document.createElement('div');
-    title.className = 'vc-label';
-    title.textContent = 'Agent / LLM';
-    title.style.marginBottom = '8px';
-    wrap.appendChild(title);
+    // No inner heading here — the caller nests this under a "Settings"
+    // <summary>, which already labels it.
+    wrap.style.marginTop = '8px';
 
     const style = (el) => {
       el.style.width = '100%'; el.style.boxSizing = 'border-box'; el.style.fontSize = '12px';
@@ -882,6 +885,11 @@ export class RaceSystem extends System {
       });
       const wasVoice = !!this._voiceCopilot;
       if (wasVoice) this.stopVoiceChat();
+      // Setup is now done — collapse the disclosure back so Talk is the only
+      // thing in view again (root is the <details> wrapping this form).
+      if (root && root.tagName === 'DETAILS' && this._brainConfigured({ provider: provider.value, apiKey: apiKeys[provider.value] })) {
+        root.open = false;
+      }
       this._toast(wasVoice ? `${message} — press Talk to restart voice` : message, '#66ffee');
     };
 
@@ -1725,7 +1733,8 @@ export class RaceSystem extends System {
       this._panelButtons[key] = button;
     };
 
-    // --- Race tab: just the race + ghost + planet + export controls ---
+    // --- Race tab: just the race + ghost + export controls (planet save/load
+    // now lives on the Agent tab, next to Talk — see below) ---
     addButton('start', 'Start Race', () => this.start(), true);
     addButton('restart', 'Same Seed', () => this.restartSameSeed());
     addButton('abort', 'Stop Race', () => { this.abort(); this._toast('Race stopped'); });
@@ -1735,27 +1744,28 @@ export class RaceSystem extends System {
       const result = this.exportResult(null, { download: true });
       this._toast(result ? 'Benchmark JSON exported' : 'Finish a race before export', result ? '#66ffee' : '#ffcc66');
     });
-    addButton('savePlanet', 'Save Planet', () => {
-      const api = typeof window !== 'undefined' ? window.worldAPI : null;
-      if (api && api.savePlanet) { api.savePlanet(); this._toast('Planet saved', '#66ffee'); }
-      else this._toast('World not ready yet', '#ffcc66');
-    });
-    addButton('loadPlanet', 'Load Planet', () => {
-      const api = typeof window !== 'undefined' ? window.worldAPI : null;
-      const snap = api && api.loadPlanet ? api.loadPlanet() : null;
-      this._toast(snap ? 'Planet restored' : 'No saved planet yet', snap ? '#66ffee' : '#ffcc66');
-    });
     root.appendChild(actions);
 
-    // --- Agent tab: bot/pilot as single toggles + voice + the LLM settings form ---
-    addButton('bot', 'Run SimpleBot', () => { this._simpleBotRunning ? this.stopSimpleBot() : this.runSimpleBot(); }, false, agentActions);
-    addButton('pilot', 'LLM Pilot', () => { this._llmPilotRunning ? this.stopLLMPilot() : this.runLLMPilot(); }, false, agentActions);
-    addButton('voiceTalk', '🎙 Talk', () => this.runVoiceChat(), true, agentActions);
+    // --- Agent tab: the simplest possible UX — Talk, Voice Off, and planet
+    // save/load as one click each; SimpleBot and the LLM pilot stay reachable
+    // through window.agentAPI/DevTools (runSimpleBot/runLLMPilot below) but no
+    // longer clutter this panel with buttons of their own. ---
+    addButton('voiceTalk', 'Talk', () => this.runVoiceChat(), true, agentActions);
     addButton('voiceOff', 'Voice Off', () => this.stopVoiceChat(), false, agentActions);
     // Once running, V is the hotkey: talk (or, mid-sentence, barge in on the
     // co-pilot). It does nothing until Talk has started one — see the KeyV
     // handler in _initialize().
     this._panelButtons.voiceTalk.title = 'Or press V once the co-pilot is running — also interrupts it mid-sentence';
+    addButton('savePlanet', 'Save Planet', () => {
+      const api = typeof window !== 'undefined' ? window.worldAPI : null;
+      if (api && api.savePlanet) { api.savePlanet(); this._toast('Planet saved', '#66ffee'); }
+      else this._toast('World not ready yet', '#ffcc66');
+    }, false, agentActions);
+    addButton('loadPlanet', 'Load Planet', () => {
+      const api = typeof window !== 'undefined' ? window.worldAPI : null;
+      const snap = api && api.loadPlanet ? api.loadPlanet() : null;
+      this._toast(snap ? 'Planet restored' : 'No saved planet yet', snap ? '#66ffee' : '#ffcc66');
+    }, false, agentActions);
 
     const agentRoot = document.createElement('div');
     agentRoot.id = 'agent-panel';
@@ -1767,7 +1777,21 @@ export class RaceSystem extends System {
     aSub.style.fontSize = '11px'; aSub.style.color = 'var(--vc-ink-dim)';
     aHead.appendChild(aTitle); aHead.appendChild(aSub); agentRoot.appendChild(aHead);
     agentRoot.appendChild(agentActions);
-    this._createAgentConfigForm(agentRoot);
+
+    // Settings collapse behind a plain disclosure once there's a usable brain
+    // (a saved key, or a local/openai provider that needs none) — Talk is then
+    // the whole UX. An unconfigured player gets the form open on arrival since
+    // it's their only path to setting one up.
+    const settingsDetails = document.createElement('details');
+    settingsDetails.id = 'agent-settings-details';
+    const settingsSummary = document.createElement('summary');
+    settingsSummary.className = 'vc-label';
+    settingsSummary.textContent = 'Settings';
+    settingsSummary.style.cssText = 'cursor:pointer;margin-top:10px;user-select:none;';
+    settingsDetails.appendChild(settingsSummary);
+    settingsDetails.open = !this._brainConfigured(this._agentConfig());
+    agentRoot.appendChild(settingsDetails);
+    this._createAgentConfigForm(settingsDetails);
     this._agentRoot = agentRoot;
 
     // registerSettingsPane always accepts (it queues until the menu exists), so

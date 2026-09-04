@@ -18,10 +18,9 @@ The research loop is visible in-game through the Race Panel:
 
 - **Start Race** creates a seeded 12-gate course.
 - **Load Ghost** loads the best local replay for that seed.
-- **Run SimpleBot** starts the reference agent through `window.agentAPI`.
 - **Export JSON** downloads an honest benchmark result with `courseSeed`, `worldSeed`, `finalTimeMs`, `splits`, `pilot`, fairness config, replay samples, optional action log, build version, and `verificationStatus`.
 
-Quick SimpleBot run from DevTools:
+The bundled SimpleBot reference agent flies through the same public `window.agentAPI` a researcher would use — no panel button, drive it from DevTools:
 
 ```js
 const { SimpleBot } = await import('/src/agents/SimpleBot.js');
@@ -34,7 +33,7 @@ More detail: [docs/BENCHMARK.md](docs/BENCHMARK.md), [docs/AGENT_QUICKSTART.md](
 ## Play
 
 1. Open the deployed site or run locally.
-2. Press **Play** for free flight, **Race 12 gates** to start a race after loading, or **Run SimpleBot** to watch the reference agent.
+2. Press **Play** for free flight, or **R** once flying to start a seeded 12-gate race.
 3. Fly through the lit ring to start the race clock.
 4. Follow the next-gate beacon until all 12 gates are passed.
 5. Finish to save a local replay, then load the ghost and race it.

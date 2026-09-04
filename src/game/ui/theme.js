@@ -157,6 +157,17 @@ export function ensureVibeTheme() {
       }
       /* The minimap reads as clutter and is hard to use on a phone — hide it. */
       #minimap-container { display: none !important; }
+      /* The phone's top-right corner is already the mobile HUD's own turf
+         (MobileUI's Power Save toggle, then MENU below it) — the mana pill
+         living there is hidden by Engine.js's mobile sweep anyway, so put
+         the music toggle in the now-empty top-left corner instead (the
+         minimap that lived there is hidden above). !important overrides the
+         inline right-offset createMusicToggle() computes for desktop. */
+      #music-mute-toggle {
+        left: var(--vc-safe-x) !important;
+        right: auto !important;
+        top: var(--vc-safe-y) !important;
+      }
       /* Make the in-game settings menu readable + thumb-friendly on a phone: a
          centred, wide, large-type modal with chunky sliders and 44px tap targets.
          !important overrides the panel's inline sizing/positioning. */

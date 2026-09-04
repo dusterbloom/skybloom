@@ -179,7 +179,12 @@ export class UISystem extends System {
   }
 
     createManaDisplay() {
-      // Mana pill, top-right — Twilight Glass chip with the cyan accent
+      // Mana pill, top-right — Twilight Glass chip with the cyan accent. Stays
+      // a plain absolutely-positioned DIRECT CHILD <div> of #ui-container:
+      // Engine.js's mobile sweep (`#ui-container > div:not(#health-bar):not(#battery-toggle)`,
+      // ~500ms after mobile UI init) hides bare top-level HUD divs like this
+      // one on phones on purpose — the mobile UI takes over — so this must not
+      // move into a wrapping div or that intended hide breaks.
       const manaContainer = document.createElement('div');
     manaContainer.className = 'vc-chip';
     manaContainer.style.position = 'absolute';
@@ -206,6 +211,74 @@ export class UISystem extends System {
     this.container.appendChild(manaContainer);
 
       this.elements.manaText = manaText;
+
+      this.createMusicToggle(manaContainer);
+    }
+
+    /**
+     * Always-visible music kill switch — a single-click mute, no menu. Reads
+     * ProceduralMusicSystem's already-restored `muted` (loaded from
+     * localStorage['vc.music'] in its constructor, which runs before any
+     * System's initialize()) so the icon is correct on first paint, and calls
+     * setMuted() rather than keeping a second persisted copy of the flag.
+     *
+     * A bare <button>, appended as its own direct child of #ui-container —
+     * NOT inside manaContainer or any wrapping div. That matters on mobile:
+     * Engine.js's post-init sweep only matches `#ui-container > div`, so a
+     * button sitting at that same level is already invisible to it and
+     * survives untouched, while manaContainer (a div) still gets hidden as
+     * intended. Sits immediately left of the mana pill; a ResizeObserver
+     * tracks the pill's real rendered width (mana can grow to more digits,
+     * and the pill itself collapses to 0 width when the sweep hides it) so
+     * the gap is always correct with no magic-number offset to go stale.
+     */
+    createMusicToggle(manaContainer) {
+      const music = this.engine.systemManager.get('proceduralMusic');
+      if (!music) return; // not registered — degrade quietly, no button
+
+      const toggle = document.createElement('button');
+      toggle.id = 'music-mute-toggle';
+      toggle.type = 'button';
+      toggle.className = 'vc-chip';
+      toggle.style.position = 'absolute';
+      toggle.style.top = 'var(--vc-safe-y)';
+      toggle.style.zIndex = '1001';
+      toggle.style.cursor = 'pointer';
+      toggle.style.pointerEvents = 'auto';
+      toggle.style.padding = '6px 10px';
+      toggle.style.fontSize = '15px';
+      toggle.style.lineHeight = '1';
+
+      const GAP = 8;
+      const reposition = () => {
+        const w = manaContainer.offsetWidth || 0;
+        toggle.style.right = `calc(var(--vc-safe-right) + ${w + GAP}px)`;
+      };
+      reposition();
+      if (typeof ResizeObserver !== 'undefined') {
+        this._musicToggleResizeObserver = new ResizeObserver(reposition);
+        this._musicToggleResizeObserver.observe(manaContainer);
+      }
+
+      const render = () => {
+        const muted = !!music.muted;
+        toggle.textContent = muted ? '🔇' : '🔊';
+        toggle.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        toggle.title = muted ? 'Unmute music' : 'Mute music';
+      };
+      render();
+
+      toggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        music.setMuted(!music.muted);
+        render();
+      });
+
+      // Direct child of #ui-container (a sibling of manaContainer, not nested
+      // inside it) — see the class comment above for why that placement matters.
+      this.container.appendChild(toggle);
+      this.elements.musicToggle = toggle;
     }
 
     createSettingsMenu() {
@@ -268,10 +341,11 @@ export class UISystem extends System {
       const panes = {};
       const tabs = {};
       // 3 tabs max: Flight holds both the flight sliders and the time-of-day control.
+      // Agent opens by default — see the 'agent' checks below for the default pane.
       const defs = [
-        ['race', 'Race'],
         ['agent', 'Agent'],
         ['flight', 'Flight'],
+        ['race', 'Race'],
       ];
 
       defs.forEach(([key, label]) => {
@@ -279,14 +353,14 @@ export class UISystem extends System {
         tab.type = 'button';
         tab.className = 'vc-tab';
         tab.textContent = label;
-        tab.setAttribute('aria-selected', key === 'race' ? 'true' : 'false');
+        tab.setAttribute('aria-selected', key === 'agent' ? 'true' : 'false');
         tab.addEventListener('click', () => this.showSettingsPane(key));
         tabs[key] = tab;
         tabbar.appendChild(tab);
 
         const pane = document.createElement('div');
         pane.dataset.settingsPane = key;
-        pane.style.display = key === 'race' ? 'block' : 'none';
+        pane.style.display = key === 'agent' ? 'block' : 'none';
         panes[key] = pane;
       });
 
@@ -1863,6 +1937,12 @@ export class UISystem extends System {
     clearInterval(this._questPanelTimer);
     if (this.elements.toastStack) this.elements.toastStack.remove();
     if (this.elements.questPanel) this.elements.questPanel.remove();
+    if (this._musicToggleResizeObserver) {
+      this._musicToggleResizeObserver.disconnect();
+      this._musicToggleResizeObserver = null;
+    }
+    if (this.elements.musicToggle) this.elements.musicToggle.remove();
+    this.elements.musicToggle = null;
     // Clean up state subscription
     if (this.unsubscribeState) {
       this.unsubscribeState();
