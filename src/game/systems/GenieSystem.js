@@ -274,7 +274,14 @@ export class GenieSystem extends System {
   async spawn(opts = {}) {
     try {
       const count = clampInt(opts.count, 1, 50, 1);
-      const scale = num(opts.scale, 0.01, 100000, 100);
+      // A conjured object stands on the terrain and is seen from wherever the
+      // player is approaching from — spawn/import drop it ~200-450 units ahead
+      // (see _placeObject/_resolveAnchor) — so it needs a bigger apparent size
+      // than a vehicle (which sits close under the camera; see vehicle()'s own
+      // 20 default). 40 reads clearly at that range — about 5x the carpet's own
+      // 8-unit length — without towering over it the way the old 100 default
+      // did: that was the "giant static fox" left behind by Bug 4.
+      const scale = num(opts.scale, 0.01, 100000, 40);
       const color = parseColor(opts.color);
 
       // Resolve the catalogue entry to instantiate from. For a fresh primitive,
@@ -369,7 +376,7 @@ export class GenieSystem extends System {
       });
 
       // Drop the freshly imported model in front of the player immediately
-      // (caller-provided scale wins; spawn() defaults to 100 otherwise).
+      // (caller-provided scale wins; spawn() defaults to 40 otherwise).
       await this.spawn({ catalog: entryName, at: 'ahead', scale: opts.scale });
       return { name: entry.name, kind: entry.kind, source: entry.source };
     } catch (err) {

@@ -54,14 +54,14 @@ Intents (what to DO):
 - hover: stop and hold position.
 - manual: give control back to the human.
 You can ALSO reshape the world (creative power). When the player asks for it, set "world" to:
-{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setCurveRadius|setTrees|setLandmarks|setMana|setClouds|setSeaLevel|setSeason|savePlanet|loadPlanet|spawn|import|clearObjects|vehicle|setMusic","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round|pyramid|box|sphere|cylinder|cone|falcon|paperplane","level":<number, 1=normal>,"on":<true|false>,"season":"spring|summer|autumn|winter","catalog":"<saved object name>","repo":"khronos","name":"<asset e.g. Duck, Fox, Avocado>","count":<1-20>,"scale":<world size ~100>,"color":"<css color>","ride":"carpet|<saved object name>","mood":"auto|calm|epic|night|off"}
+{"op":"raiseTerrain|carveTerrain|spawnMana|setTimeOfDay|reroll|clearTerrain|setWorldShape|setCurveRadius|setTrees|setLandmarks|setMana|setClouds|setSeaLevel|setSeason|savePlanet|loadPlanet|spawn|import|clearObjects|vehicle|setMusic","where":"ahead|here","radius":<50-800>,"amount":<40-300>,"t":<0..1 time: 0 midnight, 0.25 sunrise, 0.5 noon, 0.65 sunset>,"shape":"flat|round|pyramid|box|sphere|cylinder|cone|falcon|paperplane","level":<number, 1=normal>,"on":<true|false>,"season":"spring|summer|autumn|winter","catalog":"<saved object name>","repo":"khronos|threejs|cesium|local","name":"<asset name>","count":<1-20>,"scale":<world size ~40>,"color":"<css color>","ride":"carpet|<saved object name>","mood":"auto|calm|epic|night|off"}
 - raiseTerrain raises a hill/mountain; carveTerrain digs a crater/canyon; spawnMana drops a mana orb; setTimeOfDay changes the light; reroll regenerates the whole landscape; clearTerrain undoes your terrain edits.
 - setWorldShape flips the world between "flat" (endless plane) and "round" (a planet whose horizon curves away). setCurveRadius rounds the world and sets how tight the planet is via "level": 1 = gentle Earth-like curve, higher = a tiny planet, lower = subtler.
 - World knobs use "level" where 1 = normal, higher = more, 0 = none: setTrees (forest density — 0 barren, 1 normal, 3 jungle), setLandmarks (how many landmarks), setMana (how much mana to collect). setClouds takes "on": true/false. setSeaLevel uses "level": 0 normal, 1 floods the lowlands, 2 = a water planet, negative drains the sea. setSeason recolours the land and trees via "season": spring/summer/autumn/winter. savePlanet stores the whole world and loadPlanet brings it back — use them when asked to save or restore the planet.
-- You can CONJURE objects (the genie's power): spawn builds a shape from scratch — use "shape" (pyramid/box/sphere/cylinder/cone), with optional count/scale/color — or re-places a saved object by "catalog" name. import brings a real model in from a repo: set repo "khronos" and a "name" (e.g. Duck, Fox, Avocado, DamagedHelmet). Everything you conjure is remembered and can be re-spawned by name later. clearObjects removes everything you conjured.
-- Use spawn for geometric things ("three pyramids", "a giant sphere") and import for named real objects ("bring me a duck"). Terrain ops (raiseTerrain etc.) shape the land; spawn/import place objects on it.
-- vehicle changes what the player FLIES: set "ride" to a saved object name to fly it instead of the carpet (import or spawn it first if it isn't saved yet), or "carpet" to switch back. For multi-step edits give "world" an ARRAY of ops, applied in order: e.g. "let me fly the fox" -> "world":[{"op":"import","repo":"khronos","name":"Fox"},{"op":"vehicle","ride":"Fox"}].
-- For a vehicle that MOVES, prefer the built-in animated flyers: shape "falcon" flaps its wings, shape "paperplane" banks as it glides. Imported models only animate if they ship their own clip (e.g. Fox gallops); a plain model just hangs still — so when the player wants something lively to fly, spawn a falcon or paperplane and ride it. e.g. "give me a bird to fly" -> "world":[{"op":"spawn","shape":"falcon","name":"falcon"},{"op":"vehicle","ride":"falcon"}].
+- You can CONJURE objects (the genie's power): spawn builds a shape from scratch — use "shape" (pyramid/box/sphere/cylinder/cone), with optional count/scale/color — or re-places a saved object by "catalog" name. import brings a real model in from one of 4 repos, pick by what you want: khronos (huge general catalog — Duck, Avocado, DamagedHelmet — mostly static), threejs (animated birds — Flamingo, Parrot, Stork, Horse), cesium (animated vehicles — plane, drone, car), local (bundled — carpet, mana). Everything you conjure is remembered and can be re-spawned by name later. clearObjects removes everything you conjured.
+- Use spawn for geometric things ("three pyramids", "a giant sphere") and import for named real objects ("bring me a duck", "a flamingo" -> repo threejs). Terrain ops (raiseTerrain etc.) shape the land; spawn/import place objects on it.
+- vehicle changes what the player FLIES: set "ride" to a saved object name to fly it instead of the carpet (import or spawn it first if it isn't saved yet), or "carpet" to switch back. For multi-step edits give "world" an ARRAY of ops, applied strictly in order — each one finishes before the next starts, so an import is already saved by the time a following vehicle op looks it up: e.g. "let me fly the fox" -> "world":[{"op":"import","repo":"khronos","name":"Fox"},{"op":"vehicle","ride":"Fox"}].
+- For a vehicle that MOVES, prefer something with a real clip: the threejs birds and cesium vehicles animate on import (Flamingo flaps, the plane's prop spins); most khronos assets don't and just hang still. The built-in shapes "falcon" (flaps) and "paperplane" (banks) always animate too. e.g. "give me a bird to fly" -> "world":[{"op":"spawn","shape":"falcon","name":"falcon"},{"op":"vehicle","ride":"falcon"}].
 - When asked what you can summon or conjure, answer in words using the GENIE line you're given (saved objects + importable examples); you don't need a "world" op just to talk about it.
 - setMusic steers the soundtrack via "mood": calm (sparse and gentle), epic (full gallop and brass), night (hushed pads), off (silence), auto (follows the flying). Optional "level" 0..1 sets the volume. Use it when the player asks about the music ("make the music dramatic", "quieter music", "kill the music").
 - "where" places terrain/mana/objects ahead of the carpet (default) or here. Leave "world" null when not editing.
@@ -336,6 +336,13 @@ export class VoiceCopilot {
     this.onText({ role: 'assistant', text: reply });
 
     // Act first (start flying / edit the world immediately), then speak over it.
+    // _applyWorld is now internally sequential (ops within one array await each
+    // other — see its comment) but is deliberately NOT awaited here: the reply
+    // is meant to play OVER the edit, not wait behind it, and a slow import
+    // must not leave the co-pilot silent for seconds. _applyWorldOp never lets
+    // an op's promise reject (every branch funnels through try/catch to
+    // ok()/fail()), so this fire-and-forget can't produce an unhandled
+    // rejection — worst case the on-screen log updates a beat after speech starts.
     this._applyIntent(intent, target);
     this._applyWorld(world);
     this._setState('speaking');
@@ -367,20 +374,32 @@ export class VoiceCopilot {
     return this.companion;
   }
 
-  // "world" from the model may be one op or an array of ops — apply in order.
-  _applyWorld(w) {
+  // "world" from the model may be one op or an array of ops — apply STRICTLY IN
+  // ORDER: each op is awaited before the next starts. _applyWorldOp is async
+  // for the verbs that hit the network/catalogue (spawn/import/vehicle), and
+  // used to be fired without awaiting — so an array like
+  // [{op:'import',name:'Fox'},{op:'vehicle',ride:'Fox'}] started the import's
+  // fetch and then IMMEDIATELY ran vehicle's catalogue lookup, before the
+  // import had saved anything. vehicle always missed, and the player was left
+  // on the carpet next to a freshly-imported, un-ridden fox. Awaiting each op
+  // here fixes that without touching the fire-and-forget call site below (see
+  // _sayTurn) — one bad op still reports and does not abort the ones after it.
+  async _applyWorld(w) {
     if (!w) return;
-    if (Array.isArray(w)) { for (const op of w) this._applyWorldOp(op); return; }
-    this._applyWorldOp(w);
+    if (Array.isArray(w)) { for (const op of w) await this._applyWorldOp(op); return; }
+    await this._applyWorldOp(w);
   }
 
-  _applyWorldOp(w) {
+  async _applyWorldOp(w) {
     if (!w || typeof w !== 'object' || !w.op) return;
     const api = (typeof window !== 'undefined') && window.worldAPI;
     if (!api) { this.onText({ role: 'system', text: '(world editing not available)' }); return; }
     const op = String(w.op);
     // Report the ACTUAL outcome: async ops confirm on resolve, and a missing or
-    // failing op says so instead of claiming success.
+    // failing op says so instead of claiming success. A verb that RESOLVES but
+    // returns a falsy/empty result (vehicle() -> false, spawn() -> [], import()
+    // -> null on a catalogue/name miss) is still a failure — resolving is not
+    // the same as succeeding, so every async branch below checks the value.
     const ok = () => this.onText({ role: 'system', text: `🪄 ${this._worldLabel(w, op)}` });
     const fail = (why) => this.onText({ role: 'system', text: `(world edit "${op}" didn’t take${why ? ` — ${why}` : ''})` });
     try {
@@ -401,21 +420,29 @@ export class VoiceCopilot {
       else if (op === 'clearTerrain') { if (api.clearTerrain) { api.clearTerrain(); done = true; } }
       else if (op === 'spawn') {
         // Genie object-authoring. `where` -> `at`; the rest passes straight through.
-        if (api.spawn) Promise.resolve(api.spawn({ shape: w.shape, catalog: w.catalog, count: w.count, scale: w.scale, color: w.color, at: w.where === 'here' ? 'here' : 'ahead' })).then(ok, (e) => fail(e && e.message));
-        else fail();
+        if (!api.spawn) { fail(); return; }
+        const ids = await api.spawn({ shape: w.shape, catalog: w.catalog, count: w.count, scale: w.scale, color: w.color, at: w.where === 'here' ? 'here' : 'ahead' });
+        if (Array.isArray(ids) && ids.length) ok(); else fail('nothing spawned');
         return;
       }
       else if (op === 'import') {
-        if (api.import) Promise.resolve(api.import({ repo: w.repo || 'khronos', name: w.name, as: w.as })).then(ok, (e) => fail(e && e.message));
-        else fail();
+        if (!api.import) { fail(); return; }
+        // The model doesn't always name a repo (or names the wrong one, e.g.
+        // "flamingo" with no repo defaults to khronos, which has no Flamingo).
+        // Prefer a repo whose curated examples actually list this name before
+        // falling back to khronos — mirrors GenieSystem's own fuzzy matching.
+        const repo = w.repo || this._guessRepo(w.name, api) || 'khronos';
+        const entry = await api.import({ repo, name: w.name, as: w.as });
+        if (entry) ok(); else fail(`"${w.name || '?'}" not found in ${repo}`);
         return;
       }
       else if (op === 'clearObjects') { if (api.clear) { api.clear(); done = true; } }
       else if (op === 'vehicle') {
+        if (!api.vehicle) { fail(); return; }
         const ride = w.ride || w.catalog || 'carpet';
-        // _lastRide grounds the next prompt — only claim the ride once it resolves.
-        if (api.vehicle) Promise.resolve(api.vehicle({ set: ride, scale: w.scale })).then(() => { this._lastRide = ride; ok(); }, (e) => fail(e && e.message));
-        else fail();
+        const swapped = await api.vehicle({ set: ride, scale: w.scale });
+        // _lastRide grounds the next prompt — only claim the ride once it actually took.
+        if (swapped) { this._lastRide = ride; ok(); } else fail(`"${ride}" isn’t saved yet — import or spawn it first`);
         return;
       }
       else if (op === 'raiseTerrain' || op === 'carveTerrain' || op === 'spawnMana') {
@@ -430,6 +457,24 @@ export class VoiceCopilot {
       // Tell the player what just happened, in plain words, so the change is legible.
       if (done) ok(); else fail();
     } catch (e) { fail(e && e.message); /* a world edit must never break the conversation */ }
+  }
+
+  // When the model omits (or mis-picks) a repo, prefer one whose curated
+  // examples list this name (fuzzy: exact > startsWith > includes) over the
+  // 'khronos' default — e.g. "flamingo" should land in threejs (which HAS a
+  // Flamingo), not khronos (which doesn't and would just fail). Same fuzzy
+  // order GenieSystem._resolveAsset uses within a repo, one level up.
+  _guessRepo(name, api) {
+    try {
+      if (!name || !api || typeof api.repos !== 'function') return null;
+      const want = String(name).trim().toLowerCase();
+      if (!want) return null;
+      const repos = api.repos();
+      const hit = repos.find((r) => (r.examples || []).some((ex) => ex.toLowerCase() === want))
+        || repos.find((r) => (r.examples || []).some((ex) => ex.toLowerCase().startsWith(want)))
+        || repos.find((r) => (r.examples || []).some((ex) => ex.toLowerCase().includes(want)));
+      return hit ? hit.id : null;
+    } catch (e) { return null; }
   }
 
   // Plain-language description of a world edit for the on-screen log.
