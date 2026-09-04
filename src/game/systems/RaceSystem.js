@@ -5,6 +5,7 @@ import { InputManager } from '../core/InputManager.js';
 import { SimpleBot } from '../../agents/SimpleBot.js';
 import { LLMPilot } from '../../agents/LLMPilot.js';
 import { VoiceCopilot } from '../../agents/VoiceCopilot.js';
+import { createCopilotConsole } from '../ui/CopilotConsole.js';
 import { autoModelFor } from '../../agents/modelRouting.js';
 import { llmBudget } from '../../agents/llmBudget.js';
 import { discoverLocalEndpoints, describeEndpoint, preferredModel } from '../../agents/localEndpoints.js';
@@ -971,21 +972,49 @@ export class RaceSystem extends System {
   runVoiceChat() {
     const api = typeof window !== 'undefined' ? window.agentAPI : null;
     if (!api) { this._toast('Agent API is not ready yet', '#ffcc66'); return false; }
-    if (this._voiceCopilot) { this._voiceCopilot.listen(); return true; }
+    if (this._voiceCopilot) {
+      // Already running — Talk again just re-opens the console (it may have
+      // been closed) and, mic permitting, opens a fresh listen turn.
+      if (this._copilotConsole) this._copilotConsole.show();
+      if (this._hasSpeechRecognition()) this._voiceCopilot.listen();
+      return true;
+    }
     const cfg = this._resolveVoiceConfig();
     if (!cfg) return false;
+    // The console is the conversation surface now — _toast stays for
+    // transient operational notices only (loading/failed/off), never turns.
+    // Created before the VoiceCopilot so onText/onState have somewhere to
+    // land the instant vc.start() gets going; the catch below tears it back
+    // down if construction itself fails, so it never outlives the attempt.
+    this._copilotConsole = createCopilotConsole({
+      onSubmit: (text) => { if (this._voiceCopilot) this._voiceCopilot.say(text); },
+      onClose: () => { /* the console just hides — the co-pilot keeps running until Voice Off */ },
+    });
     try {
       const vc = new VoiceCopilot(api, {
         config: cfg,
-        onText: ({ role, text }) => this._toast(`${role === 'user' ? 'You' : '🪄'}: ${text}`, role === 'user' ? '#ffffff' : '#66ffee'),
-        onState: (s) => { this._voiceState = s; },
+        onText: (turn) => { if (this._copilotConsole) this._copilotConsole.push(turn); },
+        onState: (s) => { this._voiceState = s; if (this._copilotConsole) this._copilotConsole.setState(s); },
         // When the companion actually takes the controls, stop any other autonomous driver.
         onGoal: (g) => { if (g && g.type !== 'manual') this._stopOtherDrivers('voice'); },
       });
       this._voiceCopilot = vc;
       this._toast(cfg.tts === 'kokoro' ? 'Loading voice model…' : 'Starting voice…', '#66ffee');
       vc.start()
-        .then(() => { this._toast('Voice ready — press 🎙 Talk and speak', '#66ffee'); vc.listen(); })
+        .then(() => {
+          if (this._copilotConsole) this._copilotConsole.show();
+          // Speech is a bonus, not a requirement — Firefox and friends have no
+          // SpeechRecognition at all, and the console works fine without it.
+          if (this._hasSpeechRecognition()) {
+            this._toast('Voice ready — press 🎙 Talk and speak', '#66ffee');
+            vc.listen();
+          } else {
+            this._toast('Co-Pilot ready — type below', '#66ffee');
+            if (this._copilotConsole) {
+              this._copilotConsole.push({ role: 'system', text: 'Speech input isn’t available in this browser (try Chrome for voice) — typing works here too.' });
+            }
+          }
+        })
         .catch((error) => {
           Logger.warn('RaceSystem: voice failed', error);
           this._toast(`Voice failed: ${error && error.message ? error.message : 'error'}`, '#ff7777');
@@ -995,16 +1024,32 @@ export class RaceSystem extends System {
     } catch (error) {
       Logger.warn('RaceSystem: voice failed to start', error);
       this._toast('Voice failed to start', '#ff7777');
+      // The VoiceCopilot never came up, so this._voiceCopilot was never set —
+      // stopAutonomousDrivers()/destroy() would have nothing to tear the
+      // console down with. Kill it here instead of leaving an orphaned panel
+      // with a dead input (onSubmit no-ops with no copilot to hand text to).
+      if (this._copilotConsole) {
+        try { this._copilotConsole.destroy(); } catch (destroyError) { /* best effort */ }
+        this._copilotConsole = null;
+      }
       return false;
     }
   }
 
-  /** Stop the voice co-pilot and silence any speech. */
+  _hasSpeechRecognition() {
+    return typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+
+  /** Stop the voice co-pilot, silence any speech, and tear down the console. */
   stopVoiceChat() {
     if (this._voiceCopilot) {
       try { this._voiceCopilot.stop(); } catch (error) { /* best effort */ }
     }
     this._voiceCopilot = null;
+    if (this._copilotConsole) {
+      try { this._copilotConsole.destroy(); } catch (error) { /* best effort */ }
+      this._copilotConsole = null;
+    }
     this._toast('Voice off');
     return true;
   }
