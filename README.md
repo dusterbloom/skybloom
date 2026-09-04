@@ -47,6 +47,7 @@ Pick a brain in the Agent tab:
 | Groq | Free tier | Needs a Groq API key (the panel links to where you get one). Model list is fetched live from Groq once the key is entered. |
 | OpenRouter | Free tier | Needs an OpenRouter API key (the panel links to where you get one). The model dropdown is filtered to the `:free` models only — the ones that actually cost nothing. |
 | Local server | Free, no key | Any OpenAI-compatible endpoint. LM Studio, Jan, Ollama, llama.cpp and vLLM are detected on their default ports and offered before you are asked for anything. |
+| Apple FM | Free, no key | macOS 26+ with `fm serve` running (`localhost:1976`) — auto-detected like the other local servers, no key, no model to download. Two models: `pcc` is the default here — fast and consistently accurate — but it is a call to Apple's Private Cloud Compute, not your Mac; `system` runs fully on-device but measured noticeably less reliable and about 2x slower. |
 | On-device | Free, no key | WebLLM on WebGPU. Offline once the weights are cached. |
 
 Every key is scoped to the brain it was issued for — a key saved for Groq is never sent to

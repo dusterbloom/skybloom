@@ -125,7 +125,12 @@ function createOpenAIProvider({ baseURL = 'http://localhost:1234/v1', apiKey = '
         method: 'POST',
         signal,
         headers,
-        body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.4 }),
+        // `stream: false` is explicit, not the OpenAI default relied on implicitly:
+        // Apple's `fm serve` (macOS 26+) streams SSE unless told not to, and
+        // res.json() below can't parse that. false is already what every other
+        // OpenAI-compatible server does when the field is omitted, so this is a
+        // no-op for LM Studio, Jan, Ollama, vLLM, llama.cpp, and hosted OpenAI.
+        body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.4, stream: false }),
       });
       if (!res.ok) throw new Error(`OpenAI-compat ${res.status}${await errDetail(res)}`);
       const data = await res.json();

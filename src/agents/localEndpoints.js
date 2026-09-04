@@ -27,12 +27,22 @@
 /**
  * Default ports, preferred first. Order matters: the first one to answer is what
  * gets offered (and auto-adopted for a player who has configured nothing), so
- * Higgs — this project's own inference server — leads, then LM Studio, which is
- * the most common and the one whose defaults let a browser reach it unconfigured.
+ * Higgs — this project's own inference server — leads, then Apple FM, which
+ * ranks second for the same reason Higgs leads: on a macOS 26+ machine with
+ * `fm serve` running it needs zero setup, no key and no model download — it's
+ * already there. Then LM Studio, which is the most common third-party server
+ * and the one whose defaults let a browser reach it unconfigured.
  * Move a row to change the preference; nothing else reads this order.
+ *
+ * An entry may also carry `preferModels: [id, ...]` — see preferredModel()
+ * below — for servers whose model list isn't already sorted best-first.
  */
 export const KNOWN_ENDPOINTS = [
   { name: 'Higgs', baseURL: 'http://localhost:9000/v1' },
+  // fm serve lists `system` (on-device) before `pcc` (Private Cloud Compute),
+  // but pcc measured faster AND far more reliable — preferModels overrides
+  // that array order rather than silently defaulting to the weaker model.
+  { name: 'Apple FM', baseURL: 'http://localhost:1976/v1', preferModels: ['pcc', 'system'] },
   { name: 'LM Studio', baseURL: 'http://localhost:1234/v1' },
   { name: 'Jan', baseURL: 'http://localhost:1337/v1' },
   { name: 'Ollama', baseURL: 'http://localhost:11434/v1' },
@@ -85,7 +95,11 @@ export async function probeEndpoint(candidate, { timeoutMs = DEFAULT_TIMEOUT_MS,
     // OpenAI shape is {data:[{id}]}; be tolerant of servers that return a bare list.
     const list = Array.isArray(data && data.data) ? data.data : (Array.isArray(data) ? data : []);
     const models = list.map((m) => (typeof m === 'string' ? m : m && m.id)).filter(Boolean);
-    return { name: candidate.name || hostLabel(baseURL), baseURL, models };
+    // Carry the candidate's model preference (if any) onto the result, so
+    // preferredModel() can honour it without re-deriving which endpoint this was.
+    const found = { name: candidate.name || hostLabel(baseURL), baseURL, models };
+    if (Array.isArray(candidate.preferModels)) found.preferModels = candidate.preferModels;
+    return found;
   } catch (e) {
     return null; // closed port, CORS, mixed content, timeout — all the same to us
   } finally {
@@ -114,17 +128,38 @@ export async function discoverLocalEndpoints({ timeoutMs = DEFAULT_TIMEOUT_MS, s
   return results.filter(Boolean);
 }
 
-/** The model a found endpoint should be used with: its first loaded model. */
+/**
+ * The model a found endpoint should be used with.
+ *
+ * Default is "its first loaded model" — fine when a server's /models order is
+ * already best-first. Some servers' order is NOT a quality ranking (Apple FM
+ * lists on-device `system` before the far more reliable `pcc`), so an endpoint
+ * can carry `preferModels: [id, ...]` — see KNOWN_ENDPOINTS — naming ids in
+ * priority order. The first one the endpoint actually reports wins; if none of
+ * the preferred ids are present (or there's no preference at all), this falls
+ * back to models[0]. Pure function of `found`, so it's trivially unit-testable
+ * without a network probe.
+ */
 export function preferredModel(found) {
   if (!found) return 'local-model';
-  return (found.models && found.models[0]) || 'local-model';
+  const models = found.models || [];
+  if (Array.isArray(found.preferModels)) {
+    const hit = found.preferModels.find((id) => models.includes(id));
+    if (hit) return hit;
+  }
+  return models[0] || 'local-model';
 }
 
-/** Short human label for a discovered endpoint, e.g. "LM Studio · qwen2.5-7b". */
+/**
+ * Short human label for a discovered endpoint, e.g. "LM Studio · qwen2.5-7b".
+ * Names preferredModel()'s pick, not just models[0] — otherwise the "Found …"
+ * banner could name a different model than the one Adopt actually configures
+ * (e.g. showing Apple FM's `system` while adoption sets `pcc`).
+ */
 export function describeEndpoint(found) {
   if (!found) return '';
-  const model = found.models && found.models[0];
-  return model ? `${found.name} · ${model}` : found.name;
+  const model = preferredModel(found);
+  return model && model !== 'local-model' ? `${found.name} · ${model}` : found.name;
 }
 
 function sameEndpoint(a, b) {
