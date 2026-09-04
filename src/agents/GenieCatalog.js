@@ -97,10 +97,64 @@ export class GenieCatalog {
     return stored;
   }
 
-  /** Synchronous read from the mirror (call init() once first). */
+  /**
+   * Synchronous EXACT read from the mirror (call init() once first). Kept
+   * strict on purpose: internal callers that already hold a name they just
+   * stored (e.g. the entry.name a save()/spawn() call handed back) know it's
+   * correct and want a plain, unsurprising Map lookup — no guessing. Callers
+   * fed a name from OUTSIDE (model output, voice transcript, UI text field)
+   * want `resolve()` instead, which tolerates case and slug drift.
+   */
   get(name) { return this._mem.get(name) || null; }
 
   has(name) { return this._mem.has(name); }
+
+  /**
+   * Resolve a name the way a human or model would type it — not the way
+   * uniqueName() stored it — to the catalogue entry they meant. `get()` stays
+   * a strict Map lookup on the stored slug; this exists because callers on
+   * the OUTSIDE of the catalogue (a model's "vehicle":"Flamingo" op, a typed
+   * catalog name) never see the slug uniqueName() actually wrote, so an exact
+   * lookup silently misses ("Flamingo" vs the stored "flamingo").
+   *
+   * Matching, in order (mirrors GenieSystem._resolveAsset's exact > startsWith
+   * > includes so the two name-resolution paths in this codebase behave the
+   * same way):
+   *   1. "Family" match — the query slugifies to the same base uniqueName()
+   *      would use, so it matches the base entry AND any of its "-2", "-3"…
+   *      collision siblings (but NOT an unrelated entry that merely shares a
+   *      text prefix, e.g. "flamingo-jr" saved under an explicit `as` name —
+   *      that only matches on '-<digits>', which uniqueName never produces
+   *      for anything but true collisions of the same base).
+   *   2. Slug startsWith the query.
+   *   3. Slug includes the query.
+   * Whichever tier fires, looser tiers are never consulted — an exact/family
+   * hit always wins over a fuzzier one, so a same-prefix but different object
+   * can't steal the match out from under it.
+   *
+   * When a tier produces more than one candidate (repeated imports of the
+   * same name leave "flamingo", "flamingo-2", "flamingo-3" all matching), the
+   * newest one (highest createdAt) wins — "summon a flamingo, then ride it"
+   * should ride the one just summoned, not the stalest same-named entry.
+   *
+   * Returns the entry, or null for no match / empty / null / undefined input.
+   */
+  resolve(name) {
+    if (!name) return null;
+    const slug = GenieCatalog.slugify(name);
+    if (!slug) return null;
+
+    const entries = Array.from(this._mem.values());
+    if (!entries.length) return null;
+
+    const familyRe = new RegExp(`^${slug}(-\\d+)?$`);
+    let candidates = entries.filter((e) => familyRe.test(e.name));
+    if (!candidates.length) candidates = entries.filter((e) => e.name.startsWith(slug));
+    if (!candidates.length) candidates = entries.filter((e) => e.name.includes(slug));
+    if (!candidates.length) return null;
+
+    return candidates.reduce((best, e) => ((e.createdAt || 0) > (best.createdAt || 0) ? e : best));
+  }
 
   /** Lightweight listing for UI/agent — no heavy glb bytes. */
   list() {
@@ -123,11 +177,22 @@ export class GenieCatalog {
    * then "pyramid-2", "pyramid-3"… so repeated conjurings never collide.
    */
   uniqueName(base) {
-    const slug = String(base || 'thing').trim().toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'thing';
+    const slug = GenieCatalog.slugify(base) || 'thing';
     if (!this._mem.has(slug)) return slug;
     let n = 2;
     while (this._mem.has(`${slug}-${n}`)) n++;
     return `${slug}-${n}`;
+  }
+
+  /**
+   * The slug rule shared by uniqueName() (writing entries) and resolve()
+   * (reading them back by a name typed elsewhere) — factored out so the two
+   * can never drift apart. Unlike uniqueName(), this has NO 'thing' fallback:
+   * an empty/symbols-only query should resolve to nothing, not accidentally
+   * match a real entry that happens to be named "thing".
+   */
+  static slugify(base) {
+    return String(base || '').trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
 }

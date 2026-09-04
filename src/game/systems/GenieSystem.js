@@ -287,9 +287,15 @@ export class GenieSystem extends System {
       // Resolve the catalogue entry to instantiate from. For a fresh primitive,
       // build+measure+SAVE once; for a catalogue name, just look it up.
       let entry = null;
+      // opts.catalog is a name typed by the model/caller, not the stored
+      // slug — resolve() tolerates case/slug drift and, on a collision family
+      // (repeated imports), picks the newest, same as vehicle(). Falls
+      // through to the shape branch below if it doesn't resolve, same as the
+      // old has()-gated lookup did for an unknown name.
+      const resolved = opts.catalog ? this.catalog.resolve(opts.catalog) : null;
 
-      if (opts.catalog && this.catalog.has(opts.catalog)) {
-        entry = this.catalog.get(opts.catalog);
+      if (resolved) {
+        entry = resolved;
       } else if (opts.shape && (PRIMITIVES[opts.shape] || RIGS[opts.shape])) {
         // Create-from-scratch: measure a sample, then SAVE the spec (not the mesh).
         const isRig = !!RIGS[opts.shape];
@@ -525,7 +531,10 @@ export class GenieSystem extends System {
         return true;
       }
 
-      const entry = this.catalog.get(set);
+      // `set` is model/voice-supplied text ("Flamingo"), not the stored slug
+      // ("flamingo") — resolve() is what makes case and repeat-import drift
+      // not silently miss the ride (see module header: this was the bug).
+      const entry = this.catalog.resolve(set);
       if (!entry) { Logger.warn(`GenieSystem.vehicle: "${set}" not in catalogue.`); return false; }
 
       const obj = await this._objectFromEntry(entry);
