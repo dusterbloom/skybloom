@@ -607,7 +607,11 @@ export class RaceSystem extends System {
       // predating this field default to auto — the model they hold was the shipped
       // default rather than a deliberate choice.
       modelMode: cfg.modelMode === 'manual' ? 'manual' : 'auto',
-      tts: cfg.tts || 'supertonic',
+      // The OS voice (id 'browser') is the default: free and instant — no
+      // onnxruntime-web/kokoro-js download, no ONNX weights fetch from
+      // HuggingFace before the first word. A saved 'supertonic'/'kokoro' choice
+      // is left exactly as the player set it; only the *unset* default changed.
+      tts: cfg.tts || 'browser',
     };
   }
 
@@ -737,7 +741,13 @@ export class RaceSystem extends System {
     const model = input(cfg.model, 'text', 'claude-haiku-4-5');
     const baseURL = input(cfg.baseURL, 'text', 'http://localhost:1234/v1');
     const apiKey = input(cfg.apiKey, 'password', 'sk-ant-… (blank for local)');
-    const tts = select(['supertonic', 'kokoro', 'browser'], cfg.tts);
+    // OS voice listed first (and the default): free, instant, no download.
+    // Neural voices are an explicit opt-in — the label says why they cost more.
+    const tts = select(['browser', 'supertonic', 'kokoro'], cfg.tts, {
+      browser: 'system voice (free, instant)',
+      supertonic: 'Supertonic (neural, downloads)',
+      kokoro: 'Kokoro (neural, downloads)',
+    });
 
     // Offer whatever is already running on this machine before asking for a key.
     // Populated asynchronously by _scanLocalEndpoints; hidden until it finds one.
@@ -999,7 +1009,7 @@ export class RaceSystem extends System {
         onGoal: (g) => { if (g && g.type !== 'manual') this._stopOtherDrivers('voice'); },
       });
       this._voiceCopilot = vc;
-      this._toast(cfg.tts === 'kokoro' ? 'Loading voice model…' : 'Starting voice…', '#66ffee');
+      this._toast(cfg.tts !== 'browser' ? 'Loading voice model…' : 'Starting voice…', '#66ffee');
       vc.start()
         .then(() => {
           if (this._copilotConsole) this._copilotConsole.show();

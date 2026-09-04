@@ -2,8 +2,9 @@
  * VoiceCopilot — talk to the carpet, it talks back AND does what you ask. Fully
  * in the browser, no server: the browser's Speech Recognition for input, a
  * pluggable LLM provider (cloud Claude / OpenAI-compatible / on-device WebLLM)
- * for the brain, and a pluggable voice for output: the browser's speechSynthesis,
- * or on-device neural TTS — Kokoro or Supertonic-3 — via config.tts.
+ * for the brain, and a pluggable voice provider for output (see
+ * voiceProviders.js): the OS's own speechSynthesis, or on-device neural TTS —
+ * Kokoro or Supertonic-3 — via config.tts.
  *
  * It is open-ended, not racing-only: each turn the LLM returns a spoken reply AND
  * an intent, which it hands to a Companion controller — roam, go to a landmark,
@@ -18,12 +19,16 @@
  *   v.listen();              // push-to-talk one turn
  *   v.say('take me to the crystal formation');
  *
- * Voice (config.tts): 'supertonic' (default, English), 'kokoro', or 'browser'. Supertonic-3
- * extras: supertonicVoice 'F1'..'F5'/'M1'..'M5' (default 'M2'), supertonicSteps
- * (flow-matching denoise steps, default 4). A neural voice that fails to load
- * falls back to the browser voice — it never blocks the co-pilot.
+ * Voice (config.tts): 'browser' (default — the OS's own voice, free and instant),
+ * 'kokoro', or 'supertonic'. Both neural voices are an explicit "download a
+ * better voice" opt-in: they cost a CDN/HuggingFace fetch before the first word.
+ * Supertonic-3 extras: supertonicVoice 'F1'..'F5'/'M1'..'M5' (default 'M2'),
+ * supertonicSteps (flow-matching denoise steps, default 4). A neural voice that
+ * fails to load, or throws mid-speech, falls back to the browser voice
+ * permanently for the session — it never blocks or wedges the co-pilot.
  */
 import { createProvider, extractJSON } from './llmProviders.js';
+import { createVoice, normalizeTtsId } from './voiceProviders.js';
 import { resolveTask } from './modelRouting.js';
 import { Companion } from './Companion.js';
 
@@ -56,8 +61,9 @@ export class VoiceCopilot {
   constructor(api = window.agentAPI, opts = {}) {
     this.api = api;
     this.config = opts.config || {};
-    // Supertonic-3 (English) is the default voice; pass config.tts to override.
-    this.tts = ['browser', 'kokoro', 'supertonic'].includes(this.config.tts) ? this.config.tts : 'supertonic';
+    // The OS voice is the default; pass config.tts to opt into a downloaded
+    // neural voice (see the file header and voiceProviders.js).
+    this.tts = normalizeTtsId(this.config.tts);
     this.lang = this.config.lang || 'en-US';
     this.onText = opts.onText || (() => {});
     this.onState = opts.onState || (() => {});
@@ -67,11 +73,9 @@ export class VoiceCopilot {
     this.companion = null;
     this._rec = null;
     this._listening = false;
-    this._kokoro = null;
-    this._supertonic = null;
-    this._voice = this.config.voice || 'af_heart';
+    this._voiceOut = null; // the active voice provider, from createVoice()
+    this._speakCtrl = null; // AbortController for the in-flight utterance, so stop() can silence it
     this._audioCtx = null;
-    this._activeSrc = null; // the WebAudio source currently speaking, so stop() can silence it
     this._gen = 0; // bumped by stop(); in-flight start()/say() work from an older gen must not land
     this._sayChain = Promise.resolve(); // serializes say() turns
     this.state = 'idle';
@@ -95,15 +99,22 @@ export class VoiceCopilot {
       return this;
     }
     this._provider = provider;
-    try {
-      if (this.tts === 'kokoro') await this._initKokoro();
-      else if (this.tts === 'supertonic') await this._initSupertonic();
-    } catch (e) {
-      // a TTS that won't load must not block the co-pilot — fall back to the browser voice
-      this.onText({ role: 'system', text: `(${this.tts} voice unavailable — using the browser voice)` });
-      this.tts = 'browser';
+    // createVoice never throws — a neural voice that won't load, or that fails
+    // mid-speech later, reports once via onStatus and permanently falls back to
+    // the browser voice internally (see voiceProviders.js).
+    this._voiceOut = await createVoice({
+      ...this.config,
+      tts: this.tts,
+      lang: this.lang,
+      getAudioContext: () => this._audioCtx, // VoiceCopilot owns the context — see _ensureAudio()
+      onStatus: (text) => this.onText({ role: 'system', text }),
+    });
+    if (gen !== this._gen) {
+      // stopped while the voice loaded — dispose it and stay off
+      try { Promise.resolve(this._voiceOut.dispose()).catch(() => {}); } catch (e) { /* ignore */ }
+      this._voiceOut = null;
+      return this;
     }
-    if (gen !== this._gen) return this; // stopped while the voice loaded
     // Pre-fetch a small sample of importable models so the genie can answer
     // "what can you summon?" conversationally, without a tool round-trip.
     try {
@@ -141,10 +152,17 @@ export class VoiceCopilot {
     this._gen++; // cancels any in-flight start()/say() from going live on this instance
     this.stopListening();
     if (this.companion) { try { this.companion.stop(); } catch (e) { /* ignore */ } this.companion = null; }
-    try { if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
-    // Silence the neural voice too: stop the in-flight WebAudio source...
-    if (this._activeSrc) { try { this._activeSrc.stop(); } catch (e) { /* already ended */ } this._activeSrc = null; }
-    // ...and close the AudioContext (browsers cap live contexts; leaking one per
+    // Abort the in-flight utterance — the voice provider silences its own
+    // playback (stops the AudioBufferSourceNode for a PCM voice, or
+    // speechSynthesis.cancel() for the browser voice). No more reaching into
+    // TTS internals here — see voiceProviders.js.
+    if (this._speakCtrl) { try { this._speakCtrl.abort(); } catch (e) { /* ignore */ } this._speakCtrl = null; }
+    if (this._voiceOut) {
+      const vo = this._voiceOut;
+      this._voiceOut = null;
+      try { Promise.resolve(vo.dispose()).catch(() => {}); } catch (e) { /* ignore */ }
+    }
+    // Close the AudioContext (browsers cap live contexts; leaking one per
     // restart eventually mutes the neural voice). A fresh start() recreates it.
     if (this._audioCtx) {
       const ctx = this._audioCtx;
@@ -405,106 +423,23 @@ export class VoiceCopilot {
     } catch (e) { return 'unknown'; }
   }
 
+  // Speak through whichever voice provider start() resolved. Fallback (a neural
+  // voice that won't load, or throws mid-speech) lives entirely in
+  // voiceProviders.js now — this is just a call through it, bounded by an
+  // AbortController stop() can fire to silence mid-sentence.
   async _speak(text) {
-    if (!text) return;
-    if (this.tts === 'kokoro' && this._kokoro) {
-      try { return await this._speakKokoro(text); } catch (e) { this._ttsFellBack('Kokoro', e); }
+    if (!text || !this._voiceOut) return;
+    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    this._speakCtrl = ctrl;
+    try {
+      await this._voiceOut.speak(text, ctrl ? { signal: ctrl.signal } : {});
+    } catch (e) {
+      // Swallow anything: an abort from stop() is expected and already
+      // silenced; any other throw here is a dead voice provider — either way
+      // a TTS failure must never break the turn or leave state stuck at 'speaking'.
+    } finally {
+      if (this._speakCtrl === ctrl) this._speakCtrl = null;
     }
-    if (this.tts === 'supertonic' && this._supertonic) {
-      try { const out = await this._supertonic.generate(text); return await this._playPCM(out.audio, out.sampleRate); } catch (e) { this._ttsFellBack('Supertonic', e); }
-    }
-    return this._speakBrowser(text);
-  }
-
-  // Surface a neural-voice failure once, then fall back to the browser voice.
-  _ttsFellBack(name, err) {
-    if (!this._ttsWarned) {
-      this._ttsWarned = true;
-      this.onText({ role: 'system', text: `(${name} voice failed — using the browser voice. ${err && err.message ? err.message : ''})`.trim() });
-    }
-  }
-
-  _speakBrowser(text) {
-    return new Promise((resolve) => {
-      try {
-        if (typeof window === 'undefined' || !window.speechSynthesis) return resolve();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = this.lang;
-        u.rate = 1.0;
-        u.onend = () => resolve();
-        u.onerror = () => resolve();
-        window.speechSynthesis.speak(u);
-      } catch (e) { resolve(); }
-    });
-  }
-
-  // ponytail: Kokoro loads from a CDN only when chosen — no npm dep. Defensive
-  // about the kokoro-js return shape so a minor API bump won't break it.
-  //
-  // Pinned for the same reason as WEBLLM_CDN in llmProviders.js: this is
-  // third-party code executing in our origin next to the player's saved API key,
-  // so the version it runs is a decision, not whatever the registry serves today.
-  async _initKokoro() {
-    const mod = await import(/* @vite-ignore */ 'https://esm.run/kokoro-js@1.2.1');
-    const KokoroTTS = mod.KokoroTTS || (mod.default && mod.default.KokoroTTS) || mod.default;
-    const model = this.config.kokoroModel || 'onnx-community/Kokoro-82M-v1.0-ONNX';
-    const gpu = typeof navigator !== 'undefined' && !!navigator.gpu;
-    // Try the fast path first, then fall back. The WebGPU backend can't run the
-    // q8-quantized weights (it needs fp32) and some GPUs fail outright, so if
-    // WebGPU/fp32 errors we retry on wasm/q8 before giving up to the browser voice.
-    const attempts = [];
-    if (this.config.kokoroDtype) attempts.push({ dtype: this.config.kokoroDtype, device: gpu ? 'webgpu' : 'wasm' });
-    if (gpu) attempts.push({ dtype: 'fp32', device: 'webgpu' });
-    attempts.push({ dtype: 'q8', device: 'wasm' });
-    let lastErr;
-    for (const opt of attempts) {
-      try {
-        this.onText({ role: 'system', text: `(loading Kokoro on ${opt.device}…)` });
-        this._kokoro = await KokoroTTS.from_pretrained(model, opt);
-        return;
-      } catch (e) { lastErr = e; }
-    }
-    throw lastErr || new Error('Kokoro failed to load');
-  }
-
-  async _speakKokoro(text) {
-    const out = await this._kokoro.generate(text, { voice: this._voice });
-    const pcm = out.audio || out.waveform || (out.data && out.data.audio) || out;
-    const rate = out.sampling_rate || out.sampleRate || 24000;
-    return this._playPCM(pcm, rate);
-  }
-
-  // ponytail: Supertonic-3 loads from a CDN/HF only when chosen — no npm dep.
-  async _initSupertonic() {
-    const { createSupertonicTTS } = await import('./supertonicTTS.js');
-    this._supertonic = await createSupertonicTTS({
-      voice: this.config.supertonicVoice || (this._voice && /^[FM][1-5]$/.test(this._voice) ? this._voice : 'M2'),
-      lang: String(this.lang).split('-')[0] || 'en',
-      steps: this.config.supertonicSteps || 4,
-      onStatus: (s) => this.onText({ role: 'system', text: `(supertonic: ${s})` }),
-    });
-  }
-
-  // Float32 PCM -> WebAudio, shared by Kokoro and Supertonic.
-  async _playPCM(pcm, rate) {
-    if (!pcm || !pcm.length) return;
-    const ctx = this._ensureAudio();
-    if (!ctx) return;
-    if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) { /* ignore */ } }
-    // A context still suspended (no user gesture yet) would never fire onended
-    // and wedge the turn at 'speaking' — throw so _speak falls back to the
-    // browser voice instead.
-    if (ctx.state === 'suspended') throw new Error('audio locked (needs a user gesture)');
-    const buf = ctx.createBuffer(1, pcm.length, rate);
-    buf.copyToChannel(pcm instanceof Float32Array ? pcm : Float32Array.from(pcm), 0);
-    await new Promise((resolve) => {
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.connect(ctx.destination);
-      src.onended = () => { if (this._activeSrc === src) this._activeSrc = null; resolve(); };
-      this._activeSrc = src; // kept so stop() can silence mid-sentence
-      src.start();
-    });
   }
 
   _setState(s) { this.state = s; this.onState(s); }
